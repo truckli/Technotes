@@ -1,0 +1,143 @@
+%!Mode:: "TeX:UTF-8"
+\section{代码：去除C++代码中的注释}
+
+条件是该源程序语法正确。源代码分为行注释部分、块注释部分和无注释部分。
+注释的起始位置只会出现在无注释部分，且不会出现在字符串中。
+
+如何判断字符串？
+双引号作为字符串起点的条件：在字符串之外，未被转义，未被单引号括起（\verb$'"'$）。
+
+如何判断字符是否被转义？
+在反斜线后，且反斜线本身未被转义。转义反斜线只会出现在字符串或单字符常量结构（\verb$'a'$）中。作行连接时也会用反斜线。
+
+如何判断字符是否出现在单引号字符结构中？
+单引号作为字符常量起点的条件是，该单引号未必转义，且未出现在字符串中。
+
+另外，不必担心出现\verb$ int *p; a = b/*p $ 这种代码，它不能通过编译，必须在除号后面加空格。
+
+\begin{lstlisting}[language=C++]
+
+#include <iostream>
+#include <fstream>
+#include <sys/stat.h>
+
+using namespace std;
+
+class CommentEraser {
+    public:
+        static void erase(const char *in, char *out, size_t len);
+};
+
+void CommentEraser::erase(const char *in, char *out, size_t len)
+{
+    if (!in || !out || !len) return;
+
+    const char *p = in, *pend = in + len;
+    char *q = out, oldc = 0;
+    bool in_dq = false, in_sq = false, in_esc = false;
+    bool in_lc = false, in_bc = false;
+    
+    //escape sign must be in either dq or sq
+    //' can be in dq without escaping, be in sq with escaping
+    //" can be in dq with escaping, be in sq with or without escaping
+    // which means, " is no quotation sigh when in sq or when escaped
+    
+    while (p != pend) {
+       char c = *p; 
+       if (in_lc) {
+           if ('\n' == c) {
+               in_lc = false;
+               *q++ = '\n';
+           }
+       } else if (in_bc) {
+           if ('/' == c && '*' == oldc) {
+               in_bc = false;
+           }
+       } else { //not in comment
+           if ('\\' == c) {//backslash
+                   in_esc = !in_esc;
+           } else { // not backslash 
+               if ('\'' == c) { //'
+                   if (!in_esc && !in_dq) {
+                       in_sq = !in_sq;//true single quotation
+                   }
+               } else if ('"' == c) {
+                   if (!in_esc && !in_sq)
+                       in_dq = !in_dq;//true double quotation
+               } else if ('/' == c) {
+                   if (!in_dq && '/' == oldc)
+                       in_lc = true;
+               } else if ('*' == c) {
+                   if (!in_dq && '/' == oldc)
+                       in_bc = true;
+               }
+               in_esc = false;
+           }
+           if (in_lc || in_bc)//new comment 
+               q--;//unwrite '/'
+           else
+               *q++ = c;
+       }//not in comment
+       oldc = c;
+       p++;
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc < 2) {
+        cout << "Usage: " << argv[0] << " filename " << endl;
+    }
+
+    ifstream is(argv[1], ios::binary);
+    if (!is) {
+        cout << "Cannot open file " << argv[1] << "!" << endl;
+    }
+    
+    struct stat astat;
+    if (stat(argv[1], &astat) < 0) {
+        cout << "Cannot get length of file " << argv[1] << "!" << endl;
+    }
+    
+    size_t insize = astat.st_size;//file size
+    char *inbuf = new char[insize]; 
+
+    is.read(inbuf, insize);
+    is.close();
+
+    char *outbuf = new char[insize + 1];//last byte for \0
+    CommentEraser::erase(inbuf, outbuf, insize); 
+    outbuf[insize]  = 0;
+    cout << outbuf << endl;
+    return 0;
+}
+
+
+\end{lstlisting}
+
+以下源程序可用作测试输入。
+\begin{lstlisting}[language=C++]
+
+#include <iostream>
+#include <fstream>
+#include <sys/stat.h>
+
+using namespace std;
+
+/*ss*/
+/*s * ' '' "" 
+ *
+ * s*/
+
+int main(int argc, char *argv[])
+{
+    char *str = "ss ' \"  //  /*ss*/ //// /**/ ";
+    char c = '"';
+    char d = '\"';//sss
+    cout << str << endl;
+    //ss
+    cout << c << endl;
+    cout <<d << endl;
+    return 0;
+}
+\end{lstlisting}

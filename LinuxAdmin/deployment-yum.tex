@@ -1,0 +1,33 @@
+\section{Yum}
+
+
+\subsection{EPEL}
+
+Extra Packages for Enterprise Linux(EPEL) 
+is a package that provides extra and newer packages for server-oriented stations.
+
+
+\begin{verbatim}
+    rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+    yum -y install epel-release
+\end{verbatim}
+
+\subsection{Private Repo}
+
+Create /etc/yum.repos.d/local.repo:
+\begin{verbatim}
+[local]
+name=centos7
+baseurl=ftp://10.250.192.19/pub/centos7
+gpgcheck=0
+enabled=1
+priority=1
+\end{verbatim}
+
+Repo management:
+\begin{verbatim}
+yum repolist
+yum info python-devel
+yum deplist python-devel
+\end{verbatim}

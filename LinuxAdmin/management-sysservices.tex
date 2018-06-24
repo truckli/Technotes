@@ -1,0 +1,105 @@
+%!Mode:: "TeX:UTF-8"
+
+
+\section{Linux运行与服务}
+
+
+\subsection{rc scripts}
+
+init.d/存放各种服务器和程序的二进制文件存放目录。
+
+对每个运行级别x，rcx.d/存放各个启动级别的执行程序连接目录，里头的东西都是指向init.d/的一些软连接。
+
+CentOS/Ubuntu下的/etc/rc.local脚本将在所有其他init脚本之后执行，用户可将自己想要开机执行的指令追加到这个脚本里。
+
+rc是runcom(runcom应该是运行命令的意思)的简称。
+
+/etc/inittab is only used by upstart for the default runlevel.
+System initialization is started by /etc/init/rcS.conf.
+ Individual runlevels are started by /etc/init/rc.conf
+ Terminal gettys are handled by /etc/init/tty.conf and /etc/init/serial.conf,
+ with configuration in /etc/sysconfig/init.
+
+
+
+\subsection{systemd}
+
+systemd的启动级别配置文件位于 /lib/systemd/system/目录下。
+
+更改默认启动级别：
+\begin{verbatim}
+systemctl set-default TARGET.target
+\end{verbatim}
+查看默认启动级别:
+\begin{verbatim}
+systemctl get-default
+\end{verbatim}
+
+\subsection{xrdp}
+\begin{verbatim}
+systemctl start xrdp.service
+ systemctl enable xrdp.service
+ chcon -t bin_t /usr/sbin/xrdp
+chcon -t bin_t /usr/sbin/xrdp-sesman
+\end{verbatim}
+
+\subsection{Ubuntu系统服务}
+
+Ubuntu使用service命令来临时启动和停止服务。service是一个脚本，调用start,stop等可执行文件。
+
+Ubuntu上可以使用工具update-rc.d或sysv-rc-conf来管理服务，但经尝试似乎效果不理想。
+
+\begin{verbatim}
+sysv-rc-conf --list 
+sysv-rc-conf apache2 on
+\end{verbatim}
+
+\subsection{RHEL系统服务}
+service命令运行\verb+/etc/init.d+目录下的System V脚本或\verb+/etc/init+目录下的upstart jobs。
+这些脚本应至少支持start, stop参数，有些支持status, restart参数。
+
+service runs a System V init script or upstart job in as predictable environment as possible, removing most environment variables and with current working directory set to \verb+/+.  
+
+重启网络：
+\begin{verbatim}
+service network restart
+\end{verbatim}
+
+查看所有服务的状态
+\begin{verbatim}
+service --status-all
+将所有支持status命令的服务运行一遍
+\end{verbatim}
+
+
+\subsection{at工具}
+在CentOS及Ubuntu系统上，at命令所在的软件包为at。
+
+atd所执行的内容由标准输入提供，或者通过-f选项指定一个脚本。
+例如，如果需要立即执行“wall haha”命令：
+
+\begin{verbatim}
+echo wall haha|at now
+\end{verbatim}
+
+\subsection{cron工具}
+
+cron执行时，也就是要读取三个地方的配置文件：一是/etc/crontab，二是/etc/cron.d目录下的所有文件，三是每个用户的配置文件. 
+
+
+以下命令编辑用户crontab表：
+\begin{verbatim}
+crontab -e
+\end{verbatim}
+
+表的列依次表示：分，时，日，月，周几，命令。
+
+亦可直接编辑/var/spool/cron/目录下的文件，某用户对应的crontab文件的文件名为其用户名。
+\begin{verbatim}
+echo "8 8 * * * /usr/sbin/logrotate /etc/logrotate.d/active-prober.conf" >> /var/spool/cron/root
+\end{verbatim}
+
+以下命令查看crontab表：
+\begin{verbatim}
+crontab -l
+\end{verbatim}

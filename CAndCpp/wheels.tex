@@ -1,0 +1,51 @@
+%!Mode:: "TeX:UTF-8"
+﻿%!Mode:: "TeX:UTF-8"
+
+\section{针对C语言的轮子}
+Glib库为Gnome项目的基础，可独立用于其他项目做轮子。
+Glib项目的test目录可作为demo以供学习。
+
+\subsection{boost}
+
+在Linux下编译：
+\begin{verbatim}
+./bootstrap.sh
+./b2
+\end{verbatim}
+
+在mingw环境下编译：
+\begin{verbatim}
+./bootstrap.bat mingw
+./b2.exe --toolset=gcc --build-type=complete
+\end{verbatim}
+
+
+\subsection{日志调试}
+
+Glib的功能中包含了日志调试，但是不甚便利。
+默认情况下，debug和info级别的日志默认是不打开的，其他级别的日志都是打开的。
+可以通过设置环境变量\verb$G_MESSAGES\_DEBUG=all$打开所有日志。
+如果需要对级别进行精细调控，需要自定义日志处理handler，自己的handler可以调用默认的\verb$g_log_default_handler()$。
+glib并未提供定义好的给定阈值控制法。
+
+GitHub项目\href{https://github.com/HardySimpson/zlog}{zlog}提供了较好的日志功能。
+快速配置时，将配置文件myzlog.conf，zlog.h头文件和静态库文件置入当前项目路径。编译时要同时链接pthread库。
+参考该项目的README.md文件。
+\begin{verbatim}
+#include <stdio.h>
+    #include "zlog.h"
+
+    int main()
+    {
+
+       if (dzlog_init("myzlog.conf", "my_cat")) {
+          printf("init failed\n");
+          return -1;
+      }
+
+      dzlog_info("%d: %d, %d", high_freq_bcounts, ok, bad);
+      zlog_fini();
+      return 0;
+  }
+
+\end{verbatim}

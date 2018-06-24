@@ -1,0 +1,116 @@
+\section{supervisor}
+
+
+\begin{verbatim}
+pip install supervisor 
+\end{verbatim}
+
+需新建配置文件/etc/supervisord.conf，这是supervisor寻找配置的默认路径。
+在Ubuntu下如果采用apt系统安装supervisor，则配置文件路径有所不同，默认为/etc/supervisor/supervisord.conf。
+
+\begin{verbatim}
+echo_supervisord_conf > /etc/supervisord.conf
+\end{verbatim}
+
+也可以在运行supervisord时指定配置文件：
+\begin{verbatim}
+supervisord -c supervisord.conf
+\end{verbatim}
+上述-c选项是冗余的，因为supervisor也会默认搜索当前目录。
+
+
+A basic init.d script:
+
+\begin{lstlisting}
+
+#!/bin/bash
+#
+# supervisord   This scripts turns supervisord on
+#
+# Author:       Mike McGrath <mmcgrath@redhat.com> (based off yumupdatesd)
+#
+# chkconfig:    - 95 04
+#
+# description:  supervisor is a process control utility.  It has a web based
+#               xmlrpc interface as well as a few other nifty features.
+# processname:  supervisord
+# config: /etc/supervisord.conf
+# pidfile: /var/run/supervisord.pid
+#
+# source function library
+. /etc/rc.d/init.d/functions
+RETVAL=0
+start() {
+        echo -n $"Starting supervisord: "
+        daemon supervisord
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/supervisord
+}
+stop() {
+        echo -n $"Stopping supervisord: "
+        killproc supervisord
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/supervisord
+}
+restart() {
+        stop
+        start
+}
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|force-reload|reload)
+        restart
+        ;;
+  condrestart)
+        [ -f /var/lock/subsys/supervisord ] && restart
+        ;;
+  status)
+        status supervisord
+        RETVAL=$?
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+        exit 1
+esac
+exit $RETVAL
+\end{lstlisting}
+
+And start supervisor:
+
+\begin{verbatim}
+    chmod +x /etc/init.d/supervisord
+    mkdir /etc/supervisord.d/
+    chkconfig --add supervisord
+    chkconfig supervisord on
+    service supervisord start    
+\end{verbatim}
+
+\begin{verbatim}
+[include]
+files = /etc/supervisord.d/*.conf
+\end{verbatim}
+
+ 
+一个经典配置文件，在docker容器中用supervisor管理ssh和apache两个守护进程，如下：
+\begin{verbatim}
+[supervisord]
+nodaemon=true
+
+[program:sshd]
+command=/usr/sbin/sshd -D
+
+[program:apache2]
+command=/bin/bash -c "source /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND"
+\end{verbatim}
+
+如下创建docker容器即可：
+\begin{verbatim}
+docker run -it -d --name=prober5 --restart=always  prober5 /usr/bin/supervisord
+\end{verbatim}
+

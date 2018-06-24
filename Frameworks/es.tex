@@ -1,0 +1,62 @@
+\section{Elastic Search}
+
+\subsection{management}
+\begin{verbatim}
+List all indices
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+Delete by queries:
+curl -XPOST 'localhost:9200/twitter/_delete_by_query?pretty' -d'
+{
+  "query": { 
+    "match": {
+      "message": "some message"
+    }
+  }
+}'
+
+
+\end{verbatim}
+
+\subsection{search examples}
+\begin{verbatim}
+
+curl -XGET 'localhost:9200/twitter/_search?q=user:kimchy&pretty'
+curl -XGET 'localhost:9200/kimchy,elasticsearch/tweet/_search?q=tag:wow&pretty'
+
+
+Index information query:
+curl -XGET 172.30.30.247:9200/cdds/?pretty
+
+Query all records about one sip
+curl -XGET 172.30.30.247:9200/cdds/bj_20160219/_search?pretty -d '{"query":{"match":{"sip":"137.236.30.78"}}}'
+
+
+\end{verbatim}
+
+\subsection{Elasticsearch in Python}
+elasticsearch-py requires the following dependancies: urllib3, linecache2,
+argparse, six, pbr, traceback2, unittest2.
+
+
+
+\subsection{Elasticsearch in Spark}
+
+\url{https://www.elastic.co/guide/en/elasticsearch/hadoop/current/spark.html}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,134 @@
+%!Mode:: "TeX:UTF-8"
+\section{strtol和atoi}
+\begin{lstlisting}[language=C++]
+/*stdlib.h*/
+int atoi(const char *nptr);
+long int strtol(const char *nptr, char **endptr, int base);
+\end{lstlisting}
+
+出错测试结论（32位机，gcc4.6.3）：
+atoi在转换失败时返回0,不设置errno，无从判断转换是否失败。
+strtol在转换失败时也返回0,不设置errno，但endptr会指向nptr。
+strtol在溢出时errno设置为ERANGE,返回LONG\_MAX或LONG\_MIN，atoi也有类似行为，返回INT\_MAX或INT\_MIN。
+
+int和long的上下限在limits.h中定义：
+\begin{lstlisting}[language=C++]
+#  define INT_MIN	(-INT_MAX - 1)
+#  define INT_MAX	2147483647
+
+#  if __WORDSIZE == 64
+#   define LONG_MAX	9223372036854775807L
+#  else
+#   define LONG_MAX	2147483647L
+#  endif
+
+#  define LONG_MIN	(-LONG_MAX - 1L)
+\end{lstlisting}
+
+以下为测试程序：
+\begin{lstlisting}[language=C++]
+#include <iostream>
+#include <cstdlib>
+
+using namespace std;
+
+void test_strtol(const char *str)
+{
+    char *endptr = nullptr;
+    long result;
+    int errsave;
+    errno = 0;
+    result = strtol(str, &endptr, 10);
+    errsave = errno;
+
+    cout << 
+	__FUNCTION__ << 
+	"(\"" << str << 
+	"\"), endptr shift: " << (long)(endptr - str) << 
+	", result: " << result << 
+	", errno: " << errsave << endl;
+}
+
+void test_atoi(const char *str)
+{
+    long result;
+    int errsave;
+    errno = 0;
+    result = atoi(str);
+    errsave = errno;
+
+    cout << 
+	__FUNCTION__ << 
+	"(\"" << str << 
+	"\"), result: " << result << 
+	", errno: " << errsave << endl;
+}
+
+int main()
+{
+    void (*f)(const char *) = test_strtol;
+    f("-485stop");
+    f("--485stop");
+    f("-0-485stop");
+    f("+2147483647stop");
+    f("+2147483648stop");
+    f("+21474836488stop");
+    f("-2147483648stop");
+    f("-2147483649stop");
+
+    f = test_atoi;
+    f("-485stop");
+    f("--485stop");
+    f("-0-485stop");
+    f("+2147483647stop");
+    f("+2147483648stop");
+    f("+21474836488stop");
+    f("-2147483648stop");
+    f("-2147483649stop");
+
+    return 0;
+}
+\end{lstlisting}
+
+以下为测试程序输出：
+\begin{verbatim}
+test_strtol("-485stop"), endptr shift: 4, result: -485, errno: 0
+test_strtol("--485stop"), endptr shift: 0, result: 0, errno: 0
+test_strtol("-0-485stop"), endptr shift: 2, result: 0, errno: 0
+test_strtol("+2147483647stop"), endptr shift: 11, result: 2147483647, errno: 0
+test_strtol("+2147483648stop"), endptr shift: 11, result: 2147483647, errno: 34
+test_strtol("+21474836488stop"), endptr shift: 12, result: 2147483647, errno: 34
+test_strtol("-2147483648stop"), endptr shift: 11, result: -2147483648, errno: 0
+test_strtol("-2147483649stop"), endptr shift: 11, result: -2147483648, errno: 34
+test_atoi("-485stop"), result: -485, errno: 0
+test_atoi("--485stop"), result: 0, errno: 0
+test_atoi("-0-485stop"), result: 0, errno: 0
+test_atoi("+2147483647stop"), result: 2147483647, errno: 0
+test_atoi("+2147483648stop"), result: 2147483647, errno: 34
+test_atoi("+21474836488stop"), result: 2147483647, errno: 34
+test_atoi("-2147483648stop"), result: -2147483648, errno: 0
+test_atoi("-2147483649stop"), result: -2147483648, errno: 34
+\end{verbatim}
+
+                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

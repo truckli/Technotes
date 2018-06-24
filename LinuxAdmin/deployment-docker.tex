@@ -1,0 +1,53 @@
+\section{Docker}
+
+\subsubsection{命令}
+
+
+容器创建：
+\begin{verbatim}
+docker run -it -d --name=prober4a --privileged=true --restart=always -p 8082:8082 -p 8083:8083 -p 8084:8084 -p 23922:22 -v /home:/home -v /var/log:/var/log prober4 
+docker run -it -d --name=prober4a --privileged=true --restart=always -p 8082:8082 -p 8083:8083 -p 8084:8084 -p 23922:22 -v /home:/home -v /var/log:/var/log prober4 
+mkdir /Coding
+mount.vboxsf Coding /Coding
+docker run -it -d --name=ubox -p 23922:22 -p 8082:8082 -p 8083:8083 -v /c:/c -v /Coding:/Coding myubuntu:20151223
+\end{verbatim}
+
+清除全部容器，但正在运行的容器删除不会成功
+\begin{verbatim}
+docker rm $(docker ps -a -q) 
+\end{verbatim}
+
+
+
+进入容器：
+\begin{verbatim}
+docker exec -it myubuntu /bin/bash
+\end{verbatim}
+
+也可通过安装nsenter进入容器：
+\begin{verbatim}
+docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+nsenter --target $(docker inspect --format {{.State.Pid}} myubuntu) --mount --uts --ipc --net --pid
+\end{verbatim}
+
+容器命令执行：
+\begin{verbatim}
+docker exec -t -i myubuntu /bin/bash
+docker exec -t -i prober2 /bin/bash -c "cd /home;ls"
+docker exec -t -i prober2 /bin/bash -c "service atd start"
+docker exec -t -i prober5 /bin/bash -c "cd /home/prober/run; nohup ./run.sh start" 
+\end{verbatim}
+
+容器导入导出：
+\begin{verbatim}
+docker export prober4 > prober4.tar
+cat prober4.tar | docker import - prober4image
+\end{verbatim}
+
+镜像导入导出：
+\begin{verbatim}
+docker commit <Container> [Repository:tag]
+docker save -o prober4.tar prober4
+docker load < prober4.tar
+\end{verbatim}
+

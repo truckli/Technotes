@@ -1,0 +1,107 @@
+%!Mode:: "TeX:UTF-8"
+\section{Spark}
+\subsection{Installation on Ubuntu}
+
+\url{http://blog.prabeeshk.com/blog/2014/10/31/install-apache-spark-on-ubuntu-14-dot-04/}
+
+\begin{verbatim}
+sudo apt-get install openjdk-6-jdk
+sudo apt-get install scala
+wget http://SomeHost/spark-1.6.1-bin-hadoop2.6.tgz
+\end{verbatim}
+
+
+
+\subsection{Installation on Mac OS}
+
+\begin{verbatim}
+export SCALA_HOME=/usr/local/Cellar/scala/2.11.8/
+\end{verbatim}
+
+\url{http://genomegeek.blogspot.com/2014/11/how-to-install-apache-spark-on-mac-os-x.html}
+
+\subsection{Installation Pitfalls on sbt}
+
+Configure mirror for Chinese mainland Internet.
+
+Create file \verb$repositories$ on path \verb$~/.sbt/$.
+
+\begin{verbatim}
+[repositories]
+local
+osc: http://maven.oschina.net/content/groups/public/
+typesafe: http://repo.typesafe.com/typesafe/ivy-releases/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext], bootOnly
+sonatype-oss-releases
+maven-central
+sonatype-oss-snapshots
+\end{verbatim}
+
+
+
+\subsection{Compilation}
+On Eclipse, scala compiler version on be selected to match spark jar files.
+Eclipse can import scala packets to jar files. Or else, we can use
+\verb$sbt package$ to generate a jar file.
+
+
+\subsection{Spark Submitting}
+\begin{verbatim}
+spark-submit --class=entropy.SimpleApp 1.jar
+spark-submit --master yarn-client --jars spark-streaming-kafka-assembly_2.10-1.6.1.jar --class entropy.StreamingApp  1.jar 2>&1
+\end{verbatim}
+
+
+\subsection{Spark Log Collecting}
+
+For spark deployed on yarn, retrieve logs this way:
+\begin{verbatim}
+yarn logs -applicationId application_1462496183306_0399
+\end{verbatim}
+
+Application ID can be obtained from management urls.
+
+
+
+
+\subsection{Spark Shell}
+
+\begin{verbatim}
+/opt/spark-1.6.2-bin-hadoop2.6/bin/spark-shell --executor-memory 1g
+--driver-memory 30g --executor-cores 4 --num-executors 5 
+\end{verbatim}
+
+
+
+
+\subsection{PySpark}
+
+\begin{verbatim}
+/usr/bin/pyspark2 --queue=chanct --master yarn-client --driver-memory 10g --executor-memory 20g  --executor-cores 6 --num-executors 20 
+\end{verbatim}
+
+
+
+\begin{verbatim}
+from pyspark.sql import SparkSession, HiveContext
+from pyspark.sql import functions as F
+
+spark=SparkSession.builder.enableHiveSupport().getOrCreate()
+
+df.agg(F.min(df.c_timestamp), F.avg(df['c_homecode']).alias('tt')).show()
+df.orderBy('c_timestamp', ascending=False).first()['c_uli']
+
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

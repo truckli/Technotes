@@ -1,0 +1,312 @@
+%!Mode:: "TeX:UTF-8"
+\section{SQL}
+SQL是介于关系代数和关系演算之间的结构化查询语言，已经成为关系数据库的标准语言。
+
+
+SQL is a set-based, declarative query language, not an imperative language like C or BASIC. However, there are extensions to Standard SQL which add procedural programming language functionality, such as control-of-flow constructs. SQL/PSM (SQL/Persistent Stored Modules) is an ISO standard mainly defining an extension of SQL with a procedural language for use in stored procedures. However, the major SQL vendors have historically included their own proprietary procedural extensions. 
+
+SQL包含3个部分：
+\begin{itemize}
+    \item 
+“数据定义语言”（DDL : Data Definition Language）是SQL语言集中，负责数据结构定义与数据库对象定义的语言，由CREATE、ALTER与DROP三个语法所组成，最早是由 Codasyl (Conference on Data Systems Languages) 数据模型开始，现在被纳入 SQL 指令中作为其中一个子集。
+    \item 
+“数据操纵语言”（DML : Data Manipulation Language）负责对数据库对象运行数据访问工作的指令集，以INSERT、UPDATE、DELETE三种指令为核心，分别代表插入、更新与删除。Performing read-only queries of data is sometimes also considered a component of DML.有很多开发人员都把加上SQL的SELECT语句的四大指令以“CRUD”来称呼。SELECT \ldots INTO是非标准的持久化操作。
+    \item 
+“数据控制语言”（DCL : Data Control Language）是一种可对数据访问权进行控制的指令，它可以控制特定用户帐户对数据表、查看表、预存程序、用户自定义函数等数据库对象的控制权。由 GRANT 和 REVOKE 两个指令组成。
+\end{itemize}
+
+\begin{figure}[htpb]
+    \begin{center}
+        \includegraphics[keepaspectratio,width=0.5\paperwidth]{Pictures/SqlANATOMY.png}
+    \end{center}
+    \caption{SQL language elements}
+    \label{fig:SQL lan elem}
+\end{figure}
+
+某些数据库强制要求语句后有分号。
+
+\subsection{真值逻辑}
+
+空值(关键字NULL),关系数据库中对数据属性未知或缺失的一种标识。数据库表主键的取值不能为空值。在SQL的Where条件式去判断字段是否为Null时，where id = null 是无法正确执行的，必须写成 where id is null, 其否定条件是is not null。
+
+三值逻辑:true, false, unknown。false AND unknown为false，true OR unknown为true。与null比较运算的结果是unknown.
+
+expr1 IS NOT DISTINCT FROM expr2 表示二者的值相同或二者都为NULL。其否定为IS DISTINCT FROM。
+
+
+\subsection{ANSI SQL数据类型}
+\begin{itemize}
+   \item 
+ CHARACTER(n) or CHAR(n): fixed-width n-character string, padded with spaces as needed
+   \item 
+CHARACTER VARYING(n) or VARCHAR(n): variable-width string with a maximum size of n characters
+   \item 
+NATIONAL CHARACTER(n) or NCHAR(n): fixed width string supporting an international character set
+   \item 
+NATIONAL CHARACTER VARYING(n) or NVARCHAR(n): variable-width NCHAR string
+   \item 
+BIT(n): an array of n bits
+   \item 
+BIT VARYING(n): an array of up to n bits
+   \item 
+INTEGER and SMALLINT
+   \item 
+FLOAT, REAL and DOUBLE PRECISION
+   \item 
+NUMERIC(precision, scale) or DECIMAL(precision, scale)，precision为有效数字位数，scale为小数位数
+   \item 
+DATE: for date values (e.g. 2011-05-03)
+   \item 
+TIME: for time values (e.g. 15:51:36). The granularity of the time value is usually a tick (100 nanoseconds).
+   \item 
+TIME WITH TIME ZONE or TIMETZ: the same as TIME, but including details about the time zone in question.
+   \item 
+TIMESTAMP: This is a DATE and a TIME put together in one variable (e.g. 2011-05-03 15:51:36).
+   \item 
+TIMESTAMP WITH TIME ZONE or TIMESTAMPTZ: the same as TIMESTAMP, but including details about the time zone in question.
+\end{itemize}
+
+
+
+
+
+\subsection{关键词}
+关键词\textbf{DISTINCT}用于返回唯一不同的值。
+\begin{verbatim}
+SELECT DISTINCT 列名称 FROM 表名称
+\end{verbatim}
+
+
+\textbf{IN}操作符允许我们 WHERE子句中规定多个值。
+
+\begin{verbatim}
+SELECT column_name(s)
+FROM table_name
+WHERE column_name IN (value1,value2,...)
+\end{verbatim}
+
+操作符 \textbf{BETWEEN ... AND} 会选取介于两个值之间的数据范围。这些值可以是数值、文本或者日期。然而区间的开闭性因厂商而异。
+
+\begin{verbatim}
+SELECT column_name(s)
+FROM table_name
+WHERE column_name
+BETWEEN value1 AND value2
+\end{verbatim}
+
+通过使用AS，可以为列名称和表名称指定别名（Alias）。
+
+\begin{verbatim}
+SELECT column_name(s)
+FROM table_name
+AS alias_name
+\end{verbatim}
+
+TOP 子句用于规定要返回的记录的数目。并非所有的数据库系统都支持 TOP 子句。
+SQL Server 的语法： 
+\begin{verbatim}
+SELECT TOP number|percent column_name(s)
+FROM table_name
+\end{verbatim}
+
+MySQL 语法：
+\begin{verbatim}
+SELECT column_name(s)
+FROM table_name
+LIMIT number
+\end{verbatim}
+
+Oracle 语法：
+\begin{verbatim}
+SELECT column_name(s)
+FROM table_name
+WHERE ROWNUM <= number
+\end{verbatim}
+
+
+\subsection{举例}
+
+关系定义、删除与修改：
+\begin{lstlisting}[language=SQL]
+CREATE TABLE My_table(
+ my_field1 INT,
+ my_field2 VARCHAR(50),
+ my_field3 DATE NOT NULL,
+ PRIMARY KEY (my_field1, my_field2)
+);
+
+CREATE TABLE employees (
+    id            INTEGER      PRIMARY KEY,
+    first_name    VARCHAR(50)  NULL,
+    last_name     VARCHAR(75)  NOT NULL,
+    dateofbirth   DATE         NULL
+);
+
+CREATE TABLE MovieStar (
+  name CHAR(30),
+  address VARCHAR(255),
+  gender CHAR(1),
+  birthdate DATE
+);
+
+DROP TABLE My_table;
+
+ALTER TABLE MovieStar ADD phone CHAR(3) NOT NULL;
+ALTER TABLE MovieStar DROP birthdate;
+\end{lstlisting}
+
+索引创建与删除：
+\begin{lstlisting}[language=SQL]
+CREATE INDEX YearIndex ON Movie(year);
+CREATE INDEX keyIndex ON Movie(title,year);
+DROP INDEX YearIndex;
+\end{lstlisting}
+
+视图创建与删除：
+\begin{lstlisting}[language=SQL]
+CREATE VIEW ParamountMovie AS
+  SELECT title, year
+  FROM Movie
+  WHERE studioName = 'Paramount';
+  
+CREATE VIEW MovieProd(movieTitle, prodName) AS
+  SELECT title, year
+  FROM Movie, MovieExe
+  WHERE producerC# = cert#;
+  
+DROP VIEW ParamountMovie;
+\end{lstlisting}
+
+数据更新：
+\begin{lstlisting}[language=SQL]
+INSERT INTO My_table
+ (field1, field2, field3)
+ VALUES
+ ('test', 'N', NULL);
+
+UPDATE My_table
+ SET field1 = 'updated value'
+ WHERE field2 = 'N';
+
+DELETE FROM My_table
+ WHERE field2 = 'N';
+ 
+TRUNCATE TABLE My_table;--清零
+\end{lstlisting}
+
+权限操作：
+\begin{lstlisting}[language=SQL]
+GRANT SELECT, UPDATE
+ ON My_table
+ TO some_user, another_user;
+ 
+REVOKE SELECT, UPDATE
+ ON My_table
+ FROM some_user, another_user;
+\end{lstlisting}
+
+数据查询：
+\begin{lstlisting}[language=SQL]
+SELECT *
+ FROM Book
+ WHERE price > 100.00
+ ORDER BY title;
+
+ SELECT * FROM Persons
+WHERE City LIKE 'N%'
+--从"Persons" 表中选取居住在以 "N" 开始的城市里的人
+--提示："%" 可用于定义通配符（模式中缺少的字母）。
+
+
+SELECT Book.title AS Title,
+ COUNT(*) AS Authors
+ FROM Book JOIN Book_author
+ ON Book.isbn = Book_author.isbn
+ GROUP BY Book.title;
+
+SELECT * FROM Persons
+WHERE LastName IN ('Adams','Carter')
+
+SELECT * FROM Persons
+WHERE LastName
+BETWEEN 'Adams' AND 'Carter'
+
+SELECT title,
+ COUNT(*) AS Authors
+ FROM Book NATURAL JOIN Book_author
+ GROUP BY title;
+
+SELECT isbn,
+ title,
+ price,
+ price * 0.06 AS sales_tax
+ FROM Book
+ WHERE price > 100.00
+ ORDER BY title;
+
+SELECT isbn, title, price
+ FROM Book
+ WHERE price < (SELECT AVG(price) FROM Book)
+ ORDER BY title;
+
+SELECT Customer,SUM(OrderPrice) FROM Orders
+GROUP BY Customer
+-- 在 SQL 中增加 HAVING子句原因是，WHERE 关键字无法与合计函数一起使用。
+HAVING SUM(OrderPrice)<2000
+
+SELECT CASE WHEN i IS NULL THEN 'Null Result'  
+-- This will be returned when i is NULL
+            WHEN     i = 0 THEN 'Zero'         
+-- This will be returned when i = 0
+            WHEN     i = 1 THEN 'One'          
+-- This will be returned when i = 1
+            END
+FROM t;
+
+\end{lstlisting}
+
+
+事务：
+\begin{lstlisting}[language=SQL]
+START TRANSACTION;
+ UPDATE Account SET amount=amount-200 WHERE account_number=1234;
+ UPDATE Account SET amount=amount+200 WHERE account_number=2345;
+ 
+IF ERRORS=0 COMMIT;
+IF ERRORS<>0 ROLLBACK;
+
+CREATE TABLE tbl_1(id INT);
+ INSERT INTO tbl_1(id) VALUES(1);
+ INSERT INTO tbl_1(id) VALUES(2);
+COMMIT;
+ UPDATE tbl_1 SET id=200 WHERE id=1;
+SAVEPOINT id_1upd;
+ UPDATE tbl_1 SET id=1000 WHERE id=2;
+ROLLBACK TO id_1upd;
+ SELECT id FROM tbl_1;
+\end{lstlisting}
+
+
+\subsection{SQL 分页查询}
+
+\begin{lstlisting}[language=SQL]
+-- SQL SERVER
+SELECT TOP 页大小 * FROM table1 WHERE id NOT IN ( SELECT TOP 页大小*(页数-1) id FROM table1 ORDER BY id ) ORDER BY id
+--MYSQL
+SELECT * FROM TT LIMIT startline, linecount
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

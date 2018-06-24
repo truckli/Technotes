@@ -1,0 +1,39 @@
+%!Mode:: "TeX:UTF-8"
+\section{Nginx配置}
+
+Linux系统下搭建Web服务器的一个简易方法是使用Python的SimpleHTTPServer模块：
+
+\begin{verbatim}
+python -m SimpleHTTPServer 8080
+\end{verbatim}
+
+CentOS的epel仓库中包含了一个nginx软件包，可通过yum从epel中安装nginx：
+\begin{verbatim}
+yum -y install epel-release
+yum -y install nginx
+service nginx start
+\end{verbatim}
+
+在Ubuntu 14.04下使用apt-get安装后，可执行文件在/usr/bin目录,
+配置文件在/etc/nginx目录，网页文件在/usr/share/nginx/html目录。
+
+核心的配置文件为nginx.conf，其可用include指令包含任意其他配置文件，默认包含conf.d子目录下的文件。
+
+使用文件拷贝来安装配置Nginx(前提是configure时指定prefix局限在一个用户目录中)，需要修改某些配置以便同别人区分开：
+更改server块下listen配置，修改端口号；更改pid配置，修改pid文件路径；修改\verb$lua_packet_path$这种参数。
+
+
+
+配置代理服务器
+\begin{verbatim}
+server {
+        listen 8000;
+        root html;
+        index index.html index.htm;
+
+        location / { 
+                proxy_pass http://127.0.0.1:8082;    
+        }
+}
+
+\end{verbatim}

@@ -1,0 +1,7 @@
+%!Mode:: "TeX:UTF-8"
+\section{Code Review工具}
+
+\begin{verbatim}
+svn diff -r 18153:18168 > a.diff
+rbt post --server=http://192.168.110.4 --diff-filename=a.diff
+\end{verbatim}

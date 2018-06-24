@@ -1,0 +1,136 @@
+%!Mode:: "TeX:UTF-8"
+\section{C/C++中的日期和时间}
+
+\subsection{基本常识}
+
+世界标准世界(Coordinated Universal Time, UTC)：协调世界时，又称格林威治标准时间(Greenwich Mean Time，GMT)。中国内地的时间与UTC的时差为+8，也就是UTC+8。美国是UTC-5。 
+
+日历时间(Calendar Time):代表从一个日历参考点到此时的时间经过的秒数。日历参考点(Epoch)因编译器而异，如Unix系统通常使用UTC时间1970年元旦零点作为参考点，称作Unix时间或POSIX时间。
+
+时钟计时单元（clock tick, 而不把它叫做时钟滴答次数）:一个时钟计时单元的时间长短是由CPU控制的，但一个clock tick未必是CPU的一个时钟周期，而是C/C++的一个基本计时单位。
+
+
+\subsection{程序时间：毫秒级精度}
+time.h提供了如下计时函数clock()，返回从开启这个程序进程到程序中调用该函数时之间的CPU时钟计时单元（clock tick）数，称为挂钟时间（wall-clock）：
+\begin{lstlisting}[language=C]
+clock_t clock(void);
+\end{lstlisting}
+
+函数其中clock\_t定义在time.h文件中，经常是long类型。time.h文件还定义了一个常量表示一秒钟会有多少个时钟计时单元： 
+\begin{lstlisting}[language=C]
+#define CLOCKS_PER_SEC ((clock_t)1000) 
+\end{lstlisting}
+表达式\verb|clock()/CLOCKS_PER_SEC|返回一个进程自身的运行时间。
+
+\subsection{日历时间：秒级精度}
+time.h通过time()函数返回日历时间，为从日历参考点到此时的秒数。
+\begin{lstlisting}[language=C]
+time_t time(time_t * timer); 
+\end{lstlisting}
+
+time\_t定义于time.h中，可能是long型。如果time\_t类型占32位，且日历参考点为Unix时间，则其表示的时间不能晚于2038年1月18日19时14分07秒。一些编译器厂商引入了64位甚至更长的整形数来保存日历时间。比如微软在Visual C++中采用\verb+__time64_t+数据类型来保存日历时间，并通过\verb|_time64()|函数来获得日历时间（而不是通过使用32位字的time()函数），这样就可以通过该数据类型保存3001年1月1日0时0分0秒（不包括该时间点）之前的时间。 
+
+time.h提供difftime函数，实现两个日历时间值的简单相减(虽然返回值被转换为double型)，无大用:
+\begin{lstlisting}[language=C]
+time_t difftime(time_t t1, time_t t2); 
+\end{lstlisting}
+
+
+\subsection{分解时间}
+
+标准C/C++通过time.h定义tm结构保存时间结构： 
+\begin{lstlisting}[language=C]
+#ifndef _TM_DEFINED 
+struct tm { 
+int tm_sec; /* 秒 – 取值区间为[0,59] */ 
+int tm_min; /* 分 - 取值区间为[0,59] */ 
+int tm_hour; /* 时 - 取值区间为[0,23] */ 
+int tm_mday; /* 一个月中的日期 - 取值区间为[1,31] */ 
+int tm_mon; /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */ 
+int tm_year; /* 年份，其值等于实际年份减去1900 */ 
+int tm_wday; /* 星期 – 取值区间为[0,6]，其中0代表星期天，1代表星期一，以此类推 */
+int tm_yday; /* 从每年的1月1日开始的天数 – 取值区间为[0,365]，其中0代表1月1日，1代表1月2日，以此类推 */ 
+int tm_isdst; /* 夏令时标识符，实行夏令时的时候，tm_isdst为正。不实行夏令时的进候，tm_isdst为0；不了解情况时，tm_isdst()为负。*/ 
+}; 
+#define _TM_DEFINED 
+#endif 
+\end{lstlisting}
+
+ANSI C标准称使用tm结构的这种时间表示为分解时间(broken-down time)。
+
+time.h提供了以下函数实现日历时间和分解时间的相互转换: 
+\begin{lstlisting}[language=C]
+struct tm *gmtime(const time_t *timer); 
+struct tm *localtime(const time_t *timer); 
+time_t mktime(struct tm *timeptr); 
+\end{lstlisting}
+
+\subsection{时间显示}
+asctime函数将tm结构转换为字符串：
+\begin{lstlisting}[language=C]
+char *asctime(const struct tm *timeptr);
+\end{lstlisting}
+
+asctime通过以下格式显示时间：
+\begin{verbatim}
+星期几 月份 日期 时:分:秒 年\n\0 
+例如：Wed Jan 02 02:03:55 1980\n\0 
+\end{verbatim}
+
+ctime函数将日历时间转换为字符串，相当于嵌套调用localtime和asctime：
+\begin{lstlisting}[language=C]
+char * ctime(const time_t *timer); 
+\end{lstlisting}
+
+time.h还提供strftime实现更灵活的时间显示格式:
+\begin{lstlisting}[language=C]
+size_t strftime(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr); 
+\end{lstlisting}
+
+strftime()根据format指向字符串中指定的格式命令把timeptr中保存的时间信息放在strDest指向的字符串中，最多向strDest中存放maxsize个字符。该函数返回向strDest指向的字符串中放置的字符数，使用方式类似于snprintf()。关于显示格式，strftime用\%B表示月份，\%G表示年份，等等。
+
+\subsection{POSIX下的时间获取与设置：微秒精度}
+sys/time.h提供了以下函数用于时间获取和设置：
+\begin{lstlisting}[language=C]
+int gettimeofday(struct timeval *tv, struct timezone *tz);
+int settimeofday(const struct timeval *tv, const struct timezone *tz);
+\end{lstlisting}
+
+其中timeval结构代表自日历参考点以来的时间：
+
+\begin{lstlisting}[language=C]
+    struct timeval {
+    time_t      tv_sec;     /* seconds */
+    suseconds_t tv_usec;    /* microseconds */
+    };
+\end{lstlisting}
+
+timezone结构定义如下：
+\begin{lstlisting}[language=C]
+    struct timezone {
+    int tz_minuteswest;     /* minutes west of Greenwich */
+    int tz_dsttime;         /* type of DST correction */
+    };
+\end{lstlisting}
+
+timezone结构的使用已经过时，应该设置为NULL。尤其是tz\_dsttime字段，其在内核中的使用被视作bug。
+
+这两个函数调用成功则返回零，失败则返回-1,同时设置errno。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

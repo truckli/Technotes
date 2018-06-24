@@ -1,0 +1,44 @@
+%!Mode:: "TeX:UTF-8"
+\section{Curl工具}
+ \begin{verbatim}
+curl -svo /dev/null test/abc -x 127.0.0.1:2432
+
+curl -X PUT \
+     -H 'Content-Type: application/json' \
+          -d '{"firstName":"Kris", "lastName":"Jordan"}'
+               echo.httpkit.com
+
+curl -X PUT \
+     -H 'Content-Type: application/json' \
+     -d @example.json
+     echo.httpkit.com
+
+curl -d "firstName=Kris" \
+     -d "lastName=Jordan" \
+     echo.httpkit.com
+
+curl -F "firstName=Kris" \
+     -F "publicKey=@idrsa.pub;type=text/plain" \
+     echo.httpkit.com
+
+ \end{verbatim}
+
+
+-x 指定服务端地址
+
+-H 指定头部值
+
+-X 指定方法名
+
+-A 指定User-Agent值
+
+-o 指定本地保存文件名称
+
+-O 使用同服务端相同的文件名称来保存
+
+-d 指定请求body，以application/x-www-form-urlencoded类型发送，可用于发送JSON等消息体。使用@指定文件作为body
+
+-F 指定HTML表格请求body，以multipart/form-data类型发送
+
+
+

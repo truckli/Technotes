@@ -1,0 +1,91 @@
+%!Mode:: "TeX:UTF-8"
+\section{Ftp配置}
+
+
+\subsection{Ftp命令}
+
+登录某ftp服务器，ftp命令的参数可以是主机，也可不带参数，而在ftp命令界面下采用open命令：
+\begin{lstlisting}
+	ftp 1.1.1.1
+\end{lstlisting}
+
+close和disronnect命令关闭与远程机的连接，但是使用户留在本地计算机的ftp程序中。
+
+bye命令都关闭用户与远程机的连接，然后退出用户机上的ftp程序。
+
+cd, ls, pwd等命令是针对远程主机的。
+
+'!ls'或'!dir'命令相当于本机下的ls命令。lcd则在本机切换目录。'!pwd'是本地端的pwd。
+
+other useful commands:
+\begin{lstlisting}
+	open 1.1.1.1
+	send FILENAME
+	get FILENAME
+	dir # list remote folder
+\end{lstlisting}
+
+The \verb|passive| command can turn on/off passive mode.
+
+
+
+\subsection{vsftpd配置}
+配置文件位于/etc/vsftpd目录下，ftpusers文件存放的是黑名单，user\_list可以是白名单或黑名单。
+可在vsftpd.conf中设置userlist\_deny=NO，表示此为白名单，应将有登录权限的用户名追加于此文件。
+
+通过设置SELinux，运行ftp访问用户目录：
+\begin{lstlisting}
+setsebool -P ftp_home_dir=1
+\end{lstlisting}
+
+Allow local login for test purposes:
+\begin{lstlisting}
+LOCAL_ENABLE = YES
+\end{lstlisting}
+
+Restrict PASV port to a small range:
+\begin{lstlisting}
+pasv_enable=YES
+pasv_max_port=11021
+pasv_min_port=11020
+\end{lstlisting}
+
+
+
+\subsection{tFtp配置}
+Ubuntu下，安装tftp-hpa。在/etc/default/tftp-hpa目录下配置。
+RHEL/CentOS环境下，安装tftp-server。守护进程名称为in.tftpd。
+
+tftp的配置文件在/etc/xinetd.d/tftp，可修改disable=no，默认路径等参数。然后执行:
+\begin{lstlisting}
+    service xinetd restart
+\end{lstlisting}
+
+可用netstat命令查看69号端口是否开启。测试发现xinetd开启若干分钟后,in.tftpd守护进程才启动。此时可在另一台主机上测试：
+
+\begin{lstlisting}
+    tftp (serverip)
+    tftp>get (some_file_name)
+\end{lstlisting}
+
+如果结果是
+\begin{lstlisting}
+Error code 0: Permission denied
+\end{lstlisting}
+可能是selinux问题。运行
+\begin{lstlisting}
+ls -alZ
+\end{lstlisting}
+结果应包含：
+\begin{lstlisting}
+ user_u:object_r:tftpdir_t
+\end{lstlisting}
+
+解决办法是：
+\begin{lstlisting}
+restorecon -Rv /tftpboot 
+\end{lstlisting}
+
+
+
+

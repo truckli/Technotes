@@ -1,0 +1,55 @@
+\section{virtualenv}
+
+\subsection{virtualenv}
+Just install the package with pip, create a virtual environment and activite it.
+\begin{verbatim}
+pip install virtualenv
+virtualenv --python=/path/to/python/interpreter my_venv
+source my_venv/bin/activate
+deactivate
+\end{verbatim}
+
+We can copy the whole environment folder to another machine which is disconnected to the Internet. 
+Dynamic libraries such as /usr/lib/libpython2.7.so.1.0  should be transfered together.
+
+
+\subsection{virtualenvwrapper}
+
+Installation:
+\begin{verbatim}
+    pip install virtualenvwrapper
+\end{verbatim}
+
+To start using virtualenvwrapper:
+\begin{verbatim}
+    export WORKON_HOME=~/PyEnv
+    export PROJECT_HOME=~/PyPro
+    source /usr/local/bin/virtualenvwrapper.sh
+    lsvirtualenv
+\end{verbatim}
+
+
+
+Common commands:
+\begin{verbatim}
+    
+mkvirtualenv my_env
+workon my_env
+deactivate
+
+mkproject my_project
+workon my_project
+deactivate
+
+rmvirtualenv my_project
+cdvirtualenv
+
+\end{verbatim}
+
+
+\subsection{Anaconda as virtualenv}
+
+Anaconda can act as virtualenv, even in offline environment:
+\begin{verbatim}
+    conda create --name test_env_name --offline python=2.7
+\end{verbatim}

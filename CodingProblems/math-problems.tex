@@ -1,0 +1,45 @@
+%!Mode:: "TeX:UTF-8"
+\section{数学题举例}
+\subsection{卡特兰数(Catalan Number)}
+
+Catalan数:$h(n)=C_{2n}^{n} - C_{2n}^{n+1} = \frac{1}{n+1}C_{2n}^{n}$．
+
+$h(n)=\sum^k{h(k)h(n-1-k)}, (n>=1,k=0，...，n-1)$, $h(0)=1, h(1)=1, h(2)=2$
+
+这个问题还需深究。Catalan数的相关文章和例题：
+
+\url{http://www.cnblogs.com/wuyuegb2312/p/3016878.html#common}
+
+\begin{enumerate}
+  \item 有足够量的2分、5分、1分硬币，如果想凑齐一元钱，可以有（A）种方法
+A、541    B、270   C、1024    D、128
+  \item n对小括号，能构成的合法匹配的序列有多少种？h(n)
+  \item 在图书馆一共6个人在排队，3个还《面试宝典》一书，3个在借《面试宝典》一书，图书馆此时没有了面试宝典了，求他们排队的总数？
+h(3)=5；所以总数为5*3！*3！=180.
+	\item 线段三分，构成三角形的概率是四分之一。
+	\item n个矩阵相乘式的加括号方案，相当于n-1对括号的合法顺序，有h(n-1)种
+	\item 某个城市的某个居民，每天他须要走过2n个街区去上班（他在其住所以北n个街区和以东n个街区处工作）。如果他不跨越（但可以碰到）从家到办公室的对角线，那么有多少条可能的道路？2h(n)。他可以限定在对角线以北或以南走。
+	\item 在圆上选择2n个点，将这些点成对连接起来，且所得n条线段不相交，求可行的方法数。h(n)
+	\item n个(完全相同的)结点可构造多少个不同形状的二叉树？h(n)
+\end{enumerate}
+
+\subsection{阿克曼函数(Ackermann Function)}
+
+ \begin{equation}
+   A(m,n) = 
+\left\{ \begin{array}{ll}
+n+1, & \mathrm{if} \quad m=0\\
+A(m-1,1), & \mathrm{if} \quad m>0 \quad \mathrm{and} \quad n=0\\
+A(m-1,A(m,n-1)), & \mathrm{if} \quad m>0 \quad \mathrm{and} \quad n>0
+\end{array} \right. 
+ \label{FormulaAckermann}
+ \end{equation}
+可推出有：
+\begin{itemize}
+\item $A(0,n)=n+1$
+\item $A(1,n)=n+2$
+\item $A(1,n)=2 n+3$
+\item $A(3,n)=2^{n+3}-3$
+\end{itemize}
+
+

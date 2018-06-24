@@ -1,0 +1,57 @@
+%!Mode:: "TeX:UTF-8"
+\section{YouCompleteMe的安装}
+Vim的插件YCM(YouCompleteMe)为多种语言提供了代码分析、自动补全功能，社区评价高，可以用来取代传统的基于字符串匹配的代码补全方案，如ctags和cscope。然而YCM的安装未必容易，可能会出现各种闹心的错误(作者称之为hassles)。我的建议是认真阅读作者的安装说明，严格遵照文章中提到的步骤进行，不要看网上各种帖子。YCM依赖于clang，作者的安装说明要求自行安装官方clang，不能使用发行版提供的clang。而对于32位系统，clang官方是不提供二进制包的，只能自己从源代码编译。整个安装过程可能很不顺畅。
+\subsection{基于Ubuntu14.04的快速安装}
+
+幸运的是，Ubuntu用户可以利用包管理工具快速安装YCM和其他VIM插件，极大地简化了安装流程。 首先用apt-get工具安装VAM和vim-youcompleteme软件：
+\begin{verbatim}
+sudo apt-get install vim-addon-manager
+sudo apt-get install vim-youcompleteme
+\end{verbatim}
+接着执行VAM的插件安装命令：
+\begin{verbatim}
+vam install youcompleteme
+\end{verbatim}
+这样，如果不需要C系语言(C++, Objective-C等等)补全，YCM就安装成功了。
+为了开启C系语言语法补全，需要告诉Vim一件事：\verb$ycm_extra_conf.py$这个文件在哪里。
+
+\subsection{基于Windows的安装(失败)}
+YCM对Windows不提供官方支持。
+
+通过vundle下载YCM的安装文件。
+
+接着，编译安装YCM：
+
+\begin{verbatim}
+cd ~/.vim/bundle/YouCompleteMe 
+git submodule update --init --recursive
+./install.py --clang-completer
+
+ set(USE_SYSTEM_LIBCLANG "ON")
+C:\Program Files (x86)\LLVM\bin
+
+/c/Program Files (x86)/LLVM/bin
+
+ ./install.py --clang-completer --system-libclang
+ 
+ ~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/CMakeLists.txt
+ 
+ ./configure --with-features=huge --enable-pythoninterp --with-python-config-dir=
+ 
+ \end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,125 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{杂问题举例}
+
+\subsection{最优围栏问题}
+阿里巴巴2013年面试问题:为某n边形地皮建立围栏，围栏材料总长度等于地皮周长，需要切成n段，每次切分的开销等于被切法材料的长度，求最优切法顺序。方法：构建霍夫曼树，每个围栏线段的长度为叶子节点。
+
+\subsection{装箱问题的首次适应算法}
+\cite{pp}14.6.5。
+问题：将n个权值在(0,1)之间的数字分配到最少数目的单位容量箱。首次适应启发式算法按序考虑权值，按升序扫描箱，装入第一个合适的箱中。将箱组织成堆状结构，叶子结点为每个箱的剩余容量，其他结点的值为其子树中最空的箱的剩余容量。在选箱时，如果左右子树都合适，则选左树。选箱时间为对数，插入权值后沿插入路径更新剩余容量。
+
+\subsection{日期计算}
+\cite{pp}3.7.4，计算日期差、某天是周几以及为某月生成日历。历法常识参\ref{subsec:leapyear}。
+日期差:基本思想是转换为各日期与相应元旦的差值，加上各元旦之间的差值。首先分别计算两个日期在所在年之内的编号，用后者减去前者，再加上年份差的365倍，再为每个闰年(包括起年，不包括止年)加1。求周几:需要计算给定日期和已知周日之间的天数，再做模运算。计算日历:需要知道该月1号为周几以及该月有多少天。
+
+\subsection{大空间初始化避免}
+\cite{pp}1.6.9。大数组data[0\dots n-1]需要初始化(如data[i]='a'+i\%26)，采取以空间换时间的即用即初始化策略回避对整个数组的初始化。开辟长度亦n的整数辅助数组history,eventNumber,变量top置0。检查data[i]是否已经初始化(访问过):\verb|if(0<=eventNumber[i]<top AND history[eventNumber[i]] is i)|。对data[i]的首次访问使用:\verb|eventNumber[i]=top;history[top]=i;init data[i];top++|，history数组记录初始化历史，依次指向各初始化事件的依此人。eventNumber[i]表示data[i]是第几例初始化(在history数组中的位置)。\label{problem:removeInit}
+
+\subsection{区间[0,n-1]随机取出m个整数}
+
+问题1:输出m个有序不重复整数(\cite{pp}12.5.8)。
+方法1:候选空间遍历。(\cite{acp}3.4.2算法S，\cite{pp}12.2)\verb|s=m, r=n, for i in [0,n) { w.p.s/r{select i;s--;} r--;}|。该算法可保证如果r下降到同s相等则剩余候选数以概率1全部选中。时间同n成正比，当n很大时低效。$w.p.s/r$(with probability \verb|s/r|)实现为\verb|if (bigrand()%r < s)|。r和s分布代表select(剩余名额)和remaining(剩余候选集合)。
+方法2：随机抽取,排序去重(\cite{pp}12.3)。可以使用C++ set模板类自动完成排序和去重，然后输出整个set。每次执行集合插入需要$O(logm)$，总时间$O(mlog m)$。如果使用其他数据结构\cite{self}，要求方便地实现排序和搜索，如BST，有序数组，有序链表。而heap不适合搜索，很难实现去重。Bob Floyd给出了改进(\cite{pp}12.5.9)，使得每次的抽样都不重复(第i次抽样空间为[0,i+n-m]，且如果同以往重复则抛弃刚才的抽样，转而选取取门限值i+n-m作为抽样值，高于往次门限，必不重复)。这样，不要求数据结构本身具有方便搜索的功能，只要便于排序即可，可以使用堆。
+方法3：候选集合洗牌，头部排序。(\cite{pp}12.3)。
+
+\begin{verbatim}
+for i in [0,n) x[i]=i; 
+for j in [0,m) 
+    swap(j, rand(j,n-1)); sort(x,0,m);return x[0..m-1]
+\end{verbatim}
+
+
+空间复杂度正比于n，n很大时难以接受。初始化时间正比于n(可以避免，参\ref{problem:removeInit})，洗牌时间正比于m，排序时间$O(mlogm)$。
+
+问题2:输出m个随机序不重复整数(\cite{pp}1.6.4)。
+问题1方法3,去掉排序环节;方法2，改为排序前输出，即每次取样值(该值首次)插入数据结构时即输出，而不是输出数据结构,可用使用Floyd改进。
+
+问题3:输出m个有序可重复整数(\cite{pp}12.5.8)。
+问题1方法2, 选择集合之外的便于排序的数据结构(heap, BST, 有序数组，有序链表，C++ multimap)，抽取时不判断重复性，且不使用Floyd改进方案。
+
+问题4:输出m个随机序可重复整数(\cite{pp}12.5.8)。
+随机抽取，直接输出。问题3和4要求输出可重复整数，基于候选空间的算法不可用，只能基于抽取。
+
+
+\subsection{计算浮点数均值}
+\cite{pp}14.6.4.c, 11.5.1。两个差异较大的浮点数相加会产生精度问题。需要每次取集合中较小的两个数相加(类似于霍夫曼编码)，可以用优先级队列来完成。
+
+\subsection{矩阵的幂}
+\cite{bop}2.9提及，计算$A^n=A^{2} \cdot A^{4} \cdot A^{8}\dots$,时间复杂度为$O(logn)$。网上有说将矩阵相似对角化，可加速计算。
+\label{matrixexpo}
+\subsection{Fibonacci数列}
+\cite{bop}2.9。方法一：求出通项公式。方法二：$(F_n,F_{n-1})=(F_{n-1},F_{n-2})\cdot A, A=  \left( \begin{array}{cc}1&1\\1&0\end{array}\right)$,进而转化为求$A^n$。
+
+见\ref{matrixexpo}节。
+
+
+
+\subsection{运算方式受限的连续自然数求和}
+\cite{ms100}第12题。求$ \sum_{i=1}^{n}i $，不得使用乘除法、循环、和判断语句。方法：判断语句可用短路语句替代，固定循环可以展开，然而依赖
+于变量的不定循环难以替代。根据$ \sum_{i=1}^{n}i = (n^{2}+n)<<1$，而$n^{2}=\sum_{k=0}^{32}I\{\textrm{n的第k位为1}\}(n<<k)$，循环展开即可。
+\subsection{不定子向量频繁增减不定值}
+\cite{pp}8.7.12。x[n]长度为n，并执行n次运算:\verb|x[l:u] += v|,其中l,u,v每次会变。该过程消耗平方时间。如果使用差分数组$diff[i]=x[i+1]-x[i]$,\verb|x[l:u] += v|转化为\verb|diff[l-1] += v, diff[u] -=v |，运算n次后再恢复出x，只需线性时间。
+
+\subsection{除掉一个数，使剩余数乘积最大}
+\cite{bop}2.13\\
+要求不使用除法。方法一：根据所有数乘积为正、负、零三种情况讨论，会发现不需要进行任何运算，很容易可以得到解法。方法二：记数组长度为N，s[i]为前i个数乘积，t[j]为后j个数乘积，耗费O(N)的时间和空间能求出s，t两个数组，那么除去第k个数的所有数的乘积为s[k-1]t[N-k-1],总时间为线性。
+
+
+
+\subsection{坐标系中最近点对}
+\cite{bop}2.11\\
+方法零：枚举，$O(N^2)$;方法一：按X坐标分治，$O(N^2)$;方法二：按X坐标分治，求出不跨界的最近点对的距离为L;探索跨界点对距离时，范围缩小至距界线不超过L的范围，由此进行枚举，总复杂度仍为$O(N^2)$。跨界最近点对必处于Y方向距离小于L的带状区内(面积$2L^2$)，且区内点数不超过8,左右半区点数各不超过4，则最近点对在Y方向间的点不会超过6个。书上说用$O(N)$时间完成对所有带状区内最近点对的查找，总时间$O(NlgN)$，具体方法不明。如果在X方向上2L区域内对点按Y值排序，$O(lgN)$，则总时间$O(Nlg^{2}N)$，比枚举法有进步。
+扩展题2要求坐标系中最远点对，不解。
+
+\subsection{目标区间是否包含于源区间并集}
+\cite{bop}2.19\\
+先对源区间进行排序$O(NlogN)$和合并$O(N)$，此后，目标区间包含于源区间并集当且仅当目标区间包含于某个源区间。如果目标区间反包含某源区间，或同某源区间交叠，均不成立。
+
+\subsection{二级指针的应用}
+\subsubsection{有序链表插入}
+
+链表插入的繁琐之处在于，要判断头指针是否为空，以及是否需要更新头指针(头前插)。
+通过哨兵(存放上限值，\cite{pp}13.2)使得链表至少有一个元素，无需检查head是否为空。
+通过使用指向指针的指针(\cite{pp}13.6.4)，避免区分头前和头后插入两种情况。
+\begin{lstlisting}[language=C++]
+for(pp=&head;(*pp)->val<t;pp=&((*pp))->next);
+if (*pp)->val == t:return; 
+*pp=new node(val=t, next=*pp);
+\end{lstlisting}
+\label{problem:listInsert}
+
+\subsubsection{简洁实现BST插入}
+通过哨兵(存放待搜索值)和指向指针的指针(\cite{pp}13.6.7)，使得BST至少有一个元素，且无需单独判断是否需要更新root指针的值。
+\begin{lstlisting}[language=C++]
+sentinel->val=t;
+for (pp=&root; (*pp)->val!=t;
+	pp=(t<(*pp)->val)?
+		(&((*pp)->left)):
+		(&((*pp)->right)));
+if (*pp == sentinel)
+	*pp=new node(val=t, left=right=sentinel);
+\end{lstlisting}
+\label{problem:BSTInsert}
+
+\subsubsection{链表条件删除}
+Linus推荐用二级指针实现结点的删除：
+\begin{lstlisting}[language=C++]
+void remove_if(node ** head, remove_fn rm)
+{
+    for (node** curr = head; *curr; )
+    {
+        node * entry = *curr;
+        if (rm(entry))
+        {
+            *curr = entry->next;
+            free(entry);
+        }
+        else
+            curr = &entry->next;
+    }
+}
+\end{lstlisting}
+
+
+

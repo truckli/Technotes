@@ -1,0 +1,22 @@
+%!Mode:: "TeX:UTF-8"
+\section{Vim之taglist插件}
+用法：
+\begin{verbatim}
+:TlistToggle 打开或关闭列表
+<CR> 跳转至列表所指对象
+<Space> 显示原型
+u 更新列表
+s 更新排序方式(按出场顺序或名称)
+x 伸缩列表宽度
+\end{verbatim}
+
+常见设置(.vimrc)
+\begin{verbatim}
+let Tlist_Show_One_File = 1            "不同时显示多个文件的tag，只显示当前文件的
+let Tlist_Exit_OnlyWindow = 1          "如果taglist窗口是最后一个窗口，则退出vim
+let Tlist_Use_Right_Window = 1         "在右侧窗口中显示taglist窗口
+let Tlist_GainFocus_On_ToggleOpen = 1
+map <silent> <leader>tl :TlistToggle<cr>
+\end{verbatim}
+
+

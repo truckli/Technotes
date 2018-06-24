@@ -1,0 +1,171 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Basic Configurations After OS Installation}
+
+
+\subsection{Ubuntu自动选源}
+\begin{verbatim}
+deb mirror://mirrors.ubuntu.com/mirrors.txt precise main restricted universe multiverse
+deb mirror://mirrors.ubuntu.com/mirrors.txt precise-updates main restricted universe multiverse
+deb mirror://mirrors.ubuntu.com/mirrors.txt precise-backports main restricted universe multiverse
+deb mirror://mirrors.ubuntu.com/mirrors.txt precise-security main restricted universe multiverse
+\end{verbatim}
+
+\subsection{设置时区}
+\begin{verbatim}
+cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+\end{verbatim}
+
+\subsection{网络对时}
+一次性对时，可采用ntp服务或ntpdate程序：
+\begin{verbatim}
+ntpd -q -p cn.pool.ntp.org
+ntpdate ntp.sjtu.edu.cn
+ntpdate cn.pool.ntp.org
+ntpdate 3.asia.pool.ntp.org
+ntpdate time.windows.com
+ntpdate 0.pool.ntp.org
+ntpdate 1.pool.ntp.org
+ntpdate time.nist.gov
+ntpdate wwv.nist.gov
+ntpdate s1a.time.edu.cn 
+\end{verbatim}
+
+另外，需要经常性地调整本机时间，确保不再次出现偏差。这需要在系统上部署ntp服务。
+ntp服务维护了一个远程NTP服务器列表，自动完成经常性的对时功能，且对系统时间的修改比较缓和。
+
+\begin{verbatim}
+yum -y install ntp
+service ntpd start
+chkconfig ntpd on
+\end{verbatim}
+
+ntp服务的配置文件位于/etc/ntp.conf目录，可适当对该文件进行修改，如追加ntp服务器列表。
+
+参考:
+
+\href{pool.ntp.org中国服务器列表}{http://www.pool.ntp.org/zone/cn}
+
+\href{http://tf.nist.gov/tf-cgi/servers.cgi} { NIST Internet Time Servers }
+
+
+
+\subsection{CentOS network configuration}
+/etc/sysconfig/network-scripts目录下设置各个网卡，注意ONBOOT选项。
+
+一个例子，ifcfg-enp0s3:
+\begin{verbatim}
+TYPE=Ethernet
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+NAME=enp0s3
+UUID=00f4f6d9-f69d-4d52-92ae-b44adfc16038
+DEVICE=enp0s3
+ONBOOT=yes
+IPADDR=172.28.3.95
+PREFIX=24
+GATEWAY=172.28.3.1
+DNS1=159.226.59.158
+DNS2=159.226.8.6
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+\end{verbatim}
+
+
+DNS可以在network-scripts中配置，也可在/etc/resolv.conf中配置。
+如果选择后者，需在network-scripts中设置PEERDNS=NO。
+
+如果将网卡设置成DHCP，只需将BOOTPROTO设置成dhcp，并删除IPADDR等信息。
+
+\subsection{Mac OS X配置}
+Go2Shell选择打开的终端
+\begin{verbatim}
+open -a Go2Shell --args config
+\end{verbatim}
+
+显示 Mac 隐藏文件的命令：
+ 
+defaults write com.apple.finder AppleShowAllFiles -bool true
+隐藏 Mac 隐藏文件的命令：
+ 
+defaults write com.apple.finder AppleShowAllFiles -bool false
+
+sshpass
+brew install https://raw.github.com/eugeneoden/homebrew/eca9de1/Library/Formula/sshpass.rb
+
+
+\subsection{重装备份}
+
+
+
+
+重装系统时，需要备份的文件包括：
+\begin{verbatim}
+/etc/hosts
+/etc/fstab
+/etc/lightdm/lightdm.conf
+
+.bash*
+.vimrc
+.gitconfig
+.ssh/*
+.config/Chromium/User*
+\end{verbatim}
+
+
+\subsection{安装版XP}
+使用安装版CD安装Windows XP，大致需要四五十分钟。其中，二十分钟后会提示输入地域、账户、序列号等信息。余下不需要刻意关注。
+
+在实验室电脑安装KVM版虚拟XP时，没有额外安装任何驱动程序。显示外观在全屏时比较模糊。设置以1280*800分辨率使得全屏时恰好覆盖整个屏幕。
+
+如果是在PC上安装真实XP，第一件是安装网卡驱动和其他驱动,推荐使用自带网卡驱动的驱动精灵。此外，我至少需安装的软件包括360浏览器和安全卫士，输入法, Chrome浏览器。然后运行激活工具。
+
+\subsection{克隆版XP安装}
+要点有二:MBR和设置活动分区。
+
+克隆版在复制C盘数据的过程中不更新MBR。因此，对于MBR不需要改动的情形，克隆版可以顺利安装。否则，就需要改动MBR。可以使用WinPE安装XP，PE下带有分区管理工具，在分区后可以先设置C盘为活动分区。然后使用本工具或另一款分区修复工具，更新MBR。
+
+
+
+\subsection{VirtualBox安装XP虚拟机}
+使用虚拟机安装克隆版XP经常发生蓝屏错误，提示processor.sys出现了问题。
+可以通过PE系统修改\verb+C:/windows/system32/drivers/processor.sys+的名称，使系统找不到这个文件。
+
+对于某些机构IP和MAC绑定上网的情形，VirtualBox联网方式设置成NAT方式。
+在虚拟机里无需更改MAC地址，只需要设置正确的DNS服务器地址就好。
+
+\subsection{虚拟机共享文件夹}
+假如共享目录命名为\verb$public_dir$。
+那么在VBox的Linux客户机中执行\verb$sudo /sbin/mount.vboxsf public_dir /mnt/$。
+
+或者在/etc/fstab中设置自动加载：
+\begin{verbatim}
+sharename   mountpoint   vboxsf   defaults  0   0
+\end{verbatim}
+VirtualBox的详细设置方式见\url{https://www.virtualbox.org/manual/ch04.html#sharedfolders}。
+
+在Vmware Linux Guest下，可在/mnt/hgfs下看到共享目录。如果看不到，执行：
+
+\begin{verbatim}
+sudo vmware-config-tools.pl
+\end{verbatim}
+
+Vmware虚拟机使用共享文件夹的方式详见\href{https://www.vmware.com/support/ws5/doc/ws_running_shared_folders.html}{VMware
+Workstation 5.0 Using Shared Folders}。
+
+
+
+
+
+
+
+
+
+
+
+

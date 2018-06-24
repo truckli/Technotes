@@ -1,0 +1,122 @@
+%!Mode:: "TeX:UTF-8"
+\section{关系数据库}
+
+数据模型的三要素是\textbf{数据结构、数据操作和完整性约束}。根据数据结构的不同，常见的数据模型包括\textbf{层次模型，网状模型和关系模型}。
+
+\textbf{实体完整性}要求每一个表中的主键字段都不能为空或者重复的值。
+\textbf{域完整性}限制了某些属性中出现的值，把属性限制在一个有限的集合中。例如，如果属性类型是整数，那么它就不能是101.5或任何非整数。
+\textbf{引用完整性}表示任何引用表中的外键都必须总引用被引用表中的一个有效行。引用完整性确保两表间的关系在更新和删除期间保持同步。
+如果要删除被引用的对象，那么也要删除引用它的所有对象，或者把引用值设置为空(如果允许的话)。
+\textbf{用户定义完整性}(user defined integrity)则是根据应用环境的要求和实际的需要，对某一具体应用所涉及的数据提出约束性条件。
+这一约束机制一般不应由应用程序提供，而应有由关系模型提供定义并检验。
+
+设FK是基本关系R的一个或一组属性，但不一定是关系R的主关键字。如果FK与基本关系S的主关键字相对应，则称FK是基本关系R的外关键字，并称基本关系R为引用关系，基本关系S为被引用关系。
+
+\subsection{关系数据库的设计范式}
+\textbf{第一范式（1NF）}是指数据库表的每一列都是不可分割的基本数据项，同一列中不能有多个值，即实体中的某个属性不能有多个值或者不能有重复的属性。
+
+\textbf{第二范式}要求数据表里的所有数据都要和该数据表的主键有完全依赖关系；如果有哪些数据只和主键的一部份有关的话，就得把它们独立出来变成另一个数据表。如果一个数据表的主键只有单一一个字段的话，它就一定符合第二范式。所谓\textbf{完全依赖}是指不能存在仅依赖主关键字一部分的属性。
+
+\textbf{第三范式}需要确保数据表中的每一列数据都和候选码直接相关，而不能间接相关。
+若$R \in 3NF$，则$R$的每一个非主属性既不部分函数依赖于候选码也不传递函数依赖于候选码。
+
+\textbf{BC范式(BCNF,3.5NF)}
+是在第三范式的基础上加上更严格约束，每个BCNF关系是第三范式的子集，有从属关系。它的定义是：
+如果对于关系模式$R \in 1NF$中存在的任意一个\textbf{非平凡函数依赖}(非平凡指A不说X子集)$X \to A$，都满足X是R的一个候选键，那么关系模式$R \in BCNF$。
+
+函数依赖和多值依赖是两种最重要的数据依赖。如果只考虑函数依赖，则修正第三范式后的BCNF的关系模式规范化程度已经是最高的了。
+\textbf{第四范式}涵义：$R \in 1NF$，如果对于R的每个非平凡多值依赖$X \to \to Y$，X都含有候选码，则$R \in 4NF$。
+设R(U)是属性集U上的一个关系模式。X，Y，Z是U的子集,并且Z=U-X-Y。关系模式R(U)中\textbf{多值依赖}$X \to \to Y$成立，当且仅当对R(U)的任一关系r,给定的一对(x，z)值有一组Y的值，这组值仅仅决定于x值而与z值无关。若$X \to \to Y$,而Z为空集，则称$X \to \to Y$为平凡的多值依赖；若Z不为空，则称其为非平凡的多值依赖。
+
+
+\subsection{流行的关系数据库}
+
+\textbf{MySQL} 5作为当今最流行的开放源码数据库之一，MySQL数据库为用户提供了一个相对简单的解决方案，适用于广泛的应用程序部署，能够降低用户的TCO。
+MySQL是一个多线程、结构化查询语言(SQL)数据库服务器。MySQL的执行性能高， 运行速度快，容易使用。
+
+\textbf{PostgreSQL}是一个功能齐全、开放源码的对象一关系性数据库管理系统 (ORDBMS)。目前，PostgreSQL的稳定版本为8.4版，具有丰富的特性和商业级数据库管理系统的特质。这是一次向高质量大型数据库管理系统方向的飞跃。
+PostgreSQL是很富特色的开源数据库管理系统，其特性覆盖SQL-2/SQL-92和SQL-3/SQL-99。
+
+
+商用数据库包括IBM DB2，Oracle，Informix，Sybase，SQL Server。
+
+\subsection{关系代数}
+
+投影(projection)操作用来从关系R中生成一个新的关系，包含R的部分列，记作$\pi_{A_1,A_2,\dots,A_n}(R)$。
+
+选择(selection)操作作用到R上，产生的新关系的元组必须满足涉及某属性的条件C，记作$\sigma_C(R)$。
+
+\textbf{内连接}包括\textbf{相等连接}，\textbf{自然连接}，\textbf{$\theta$连接}和\textbf{交叉连接}等。
+
+\textbf{交叉连接}(cross join)，又称\textbf{笛卡尔连接}(cartesian join)或叉乘(Product)，它是所有类型的内连接的基础。把表视为行记录的集合，交叉连接即返回这两个集合的笛卡尔积。这其实等价于内连接的链接条件为"永真"，或连接条件不存在.如果 A 和 B 是两个集合，它们的交叉连接就记为: A × B.用于交叉连接的 SQL 代码在 FROM 列出表名，但并不包含任何过滤的连接谓词.
+显式的交叉连接实例:
+
+\begin{verbatim}
+SELECT *
+FROM   employee CROSS JOIN department
+\end{verbatim}
+
+隐式的交叉连接实例:
+
+\begin{verbatim}
+SELECT *
+FROM   employee，department;
+\end{verbatim}
+
+
+\textbf{$\theta$连接}用于筛选出符合一定条件的元组。满足条件C的关系R和S的$\theta$连接记作$R \Join _{C} S$。
+
+\textbf{相等连接} (equi-join，或 equijoin)，是比较连接({$\theta$连接})的一种特例，它的连接谓词只用了相等比较。使用其他比较操作符(如 <)的不是相等连接。
+\begin{verbatim}
+SELECT *
+FROM   employee 
+INNER JOIN department 
+ON employee.DepartmentID = department.DepartmentID
+\end{verbatim}
+
+\begin{verbatim}
+SELECT *  
+FROM   employee，department 
+WHERE  employee.DepartmentID = department.DepartmentID
+\end{verbatim}
+
+ \textbf{自然连接}比相等连接的进一步特例化。两表做自然连接时，两表中的所有名称相同的列都将被比较，这是隐式的。自然连接得到的结果表中，两表中名称相同的列只出现一次。R与S的自然连接表示为$R \Join S$。
+
+\begin{verbatim}
+SELECT *
+FROM   employee NATURAL JOIN department
+\end{verbatim}
+
+\textbf{外连接}并不要求连接的两表的每一条记录在对方表中都一条匹配的记录. 连接表保留所有记录 -- 甚至这条记录没有匹配的记录也要保留. 外连接可依据连接表保留左表, 右表或全部表的行而进一步分为左外连接, 右外连接和全连接.在标准的 SQL 语言中, 外连接没有隐式的连接符号.
+
+\textbf{左外连接}(left outer join), 亦简称为左连接(left join), 若 A 和 B 两表进行左外连接, 那么结果表中将包含"左表"(即表 A)的所有记录, 即使那些记录在"右表" B 没有符合连接条件的匹配. 这意味着即使 ON 语句在 B 中的匹配项是0条, 连接操作还是会返回一条记录, 只不过这条记录的中来自于 B 的每一列的值都为 NULL. 这意味着左外连接会返回左表的所有记录和右表中匹配记录的组合(如果右表中无匹配记录, 来自于右表的所有列的值设为 NULL). 如果左表的一行在右表中存在多个匹配行, 那么左表的行会复制和右表匹配行一样的数量, 并进行组合生成连接结果.
+\textbf{全连接}是左右外连接的并集. 连接表包含被连接的表的所有记录, 如果缺少匹配的记录, 即以 NULL 填充.一些数据库系统(如 MySQL)并不直接支持全连接, 但它们可以通过左右外连接的并集(union)来模拟实现.
+
+自连接就是和自身连接.
+
+\begin{verbatim}
+SELECT F.EmployeeID, F.LastName, S.EmployeeID, S.LastName, F.Country
+FROM Employee F, Employee S
+WHERE F.Country = S.Country
+AND F.EmployeeID < S.EmployeeID
+ORDER BY F.EmployeeID, S.EmployeeID
+-- 雇员表 Employee
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,72 @@
+%!Mode:: "TeX:UTF-8"
+\section{Redis}
+
+\subsection{Installation and Start}
+
+To install on CentOS 6:
+\begin{verbatim}
+yum install epel-release
+yum install redis
+service redis start
+\end{verbatim}
+
+To start a redis client connecting to local server:
+\begin{verbatim}
+redis-cli
+redis-cli -h 172.30.35.1 
+\end{verbatim}
+
+To allow remote access, modify redis.conf:
+\begin{verbatim}
+bind 0.0.0.0
+\end{verbatim}
+
+Before connecting to a remote database, we can first try to ping it:
+\begin{verbatim}
+redis-cli -h 172.30.35.1 ping
+\end{verbatim}
+
+Simple manipulation:
+\begin{verbatim}
+redis 127.0.0.1:6379> set age 22
+OK
+redis 127.0.0.1:6379> incr age
+(integer) 23
+redis 127.0.0.1:6379> get age
+"24"
+redis 127.0.0.1:6379> set name 'ka'
+OK
+redis 127.0.0.1:6379> get name
+"ka"
+\end{verbatim}
+
+We can delete a key by using 
+\begin{verbatim}
+DEL keynname
+\end{verbatim}
+
+
+To list all keys matching a wildcard, type like this:
+\begin{verbatim}
+KEYS *
+\end{verbatim}
+
+\subsection{Programming Redis with Python}
+Python API is provided with the \textbf{redis} package.
+
+\begin{verbatim}
+import redis
+r = redis.Redis(host='localhost', port=6379, db=0)
+x = r.get('age')
+r.set('foo', 'bar')
+y = r.get('foo')
+\end{verbatim}
+
+
+
+
+
+
+
+
+

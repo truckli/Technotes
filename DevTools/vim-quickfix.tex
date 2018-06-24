@@ -1,0 +1,25 @@
+%!Mode:: "TeX:UTF-8"
+\section{Vim之quickfix插件}
+Vim标准插件，无需安装。
+
+在代码窗口中执行:make命令后，按回车可以定位到第一个error或warning。
+
+用法：
+\begin{verbatim}
+:cc                显示详细错误信息 ( :help :cc )
+:cp                跳到上一个错误 ( :help :cp )
+:cn                跳到下一个错误 ( :help :cn )
+:cl                列出所有错误 ( :help :cl )
+:cw                如果有错误列表，则打开quickfix窗口 ( :help :cw )
+:col               到前一个旧的错误列表 ( :help :col )
+:cnew              到后一个较新的错误列表 ( :help :cnew ) 
+\end{verbatim}
+
+常见设置(.vimrc)
+\begin{verbatim}
+"quickfix
+nmap <F6> :cn<cr>
+nmap <F7> :cp<cr>
+\end{verbatim}
+
+

@@ -1,0 +1,58 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{errno与错误}
+\subsection{errno}
+在C++中errno被定义为宏，最终展开成为一个int型左值。
+在C语言中，errno可以是一个有外部链接的整型变量。
+程序启动时errno被初始化为0,任意函数均可改变其值，因此在调用需要查错的函数前应先将errno设置为0。
+
+
+支持多线程的库应该在每个线程定义errno，对于C11和C++11兼容的库这是基本要求。
+
+stdio.h定义了perror检查errno变量，打印出对应的描述性文字，可以配置打印前缀。
+\begin{lstlisting}[language=C]
+void perror(const char *str);
+\end{lstlisting}
+
+string.h定义了strerror将整型错误码转为描述性文字，其返回值为静态分配的字符串，不应被修改，多次调用strerror可能会覆盖其内容。
+\begin{lstlisting}[language=C]
+char *strerror(int errnum);
+\end{lstlisting}
+
+以下例子说明了perror的用法：
+\begin{lstlisting}[language=C++]
+/* perror example */
+#include <stdio.h>
+
+int main ()
+{
+  FILE * pFile;
+  pFile=fopen ("unexist.ent","rb");
+  if (pFile==NULL)
+    perror ("The following error occurred");
+  else
+    fclose (pFile);
+  return 0;
+}
+\end{lstlisting}
+
+以下例子说明了strerror的用法：
+\begin{lstlisting}[language=C++]
+/* strerror example : error list */
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+int main ()
+{
+  FILE * pFile;
+  pFile = fopen ("unexist.ent","r");
+  if (pFile == NULL)
+    printf ("Error opening file unexist.ent: %s\n",strerror(errno));
+  return 0;
+}
+\end{lstlisting} 
+
+
+
+

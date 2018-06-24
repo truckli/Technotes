@@ -1,0 +1,124 @@
+%!Mode:: "TeX:UTF-8"
+\section{Linux启动过程}
+
+
+\subsection{BIOS}
+BIOS是英文"Basic Input Output System"的缩略语，它是一组固化到计算机内主板上一个ROM芯片上的程序，它保存着计算机最重要的基本输入输出的程序、系统设置信息、开机后自检程序和系统自启动程序。 其主要功能是为计算机提供最底层的、最直接的硬件设置和控制。
+
+\textbf{Bootloader即引导装入程序}，是由BIOS用来把操作系统内核镜像装载到RAM中所调用的一个程序。
+它在系统上电时开始执行，初始化硬件设备、准备好软件环境，最后调用系统内核。
+Linux在x86下的引导装入程序有Linux Loader(LILO)和GRUB，GRUB更高级，本文假定使用LILO。
+
+硬盘的第一个扇区称为MBR(Master Boot Record)，该扇区包含一个分区表和一个小程序，这个小程序用来装载被启动的操作系统所在分区的第一个扇区。Windows 98使用分区表中的active标志来标示活动分区，只有内核镜像存在活动分区中的操作系统才可被启动。而Linux的处理方式更为灵活，用一个Bootloader取代这个MBR中不完善的程序，允许用户来选择要启动的操作系统。
+LILO或许在MBR上，取代了那个小程序，或许被装在每个分区的引导扇区上。
+
+用户选择引导Linux后，LILO调用BIOS例程打印“Loading”信息，从磁盘读取内核镜像。
+\verb$setup()$函数的代码在内核镜像文件的0x200处，LILO装载完内核镜像后会跳转到\verb$setup()$函数处。
+\verb$setup()$最终跳转到\verb$startup_32()$函数处。
+
+\verb$startup_32()$函数有两个，依次执行。
+其中第二个\verb$startup_32()$会创建被称作进程0的内核线程(又称\textbf{idle进程或swapper进程})。进程0是内核的一部分，不执行任何磁盘程序。
+进程0调用\verb$start_kernel()$。
+
+\verb$start_kernel()$初始化内核所需的所有数据结构(此前只有少数几个数据结构被建立)，激活中断，创建一个叫进程1的内核线程，又叫\textbf{init进程}。
+init进程执行\verb$init()$函数，\verb$init()$完成内核初始化。\verb$init()$函数调用\verb$execve()$装入可执行程序init，结果
+init内核线程变成了一个普通进程，并拥有了自己的per-process内核数据结构。在系统关闭前，init进程一直存活，因为它创建和监控在操作系统外层执行的所有进程的活动。
+
+\subsection{init进程}
+
+系统加电之后，首先进行的硬件自检，然后是bootloader对系统的初始化，加载内核。
+内核被加载到内存中之后，就开始执行了。
+一旦内核启动运行，对硬件的检测就会决定需要对哪些设备驱动程序进行初始化。
+从这里开始，内核就能够挂装根文件系统。
+内核挂装了根文件系统，并已初始化所有的设备驱动程序和数据结构等之后，就通过启动一个叫init的用户级程序，完成引导进程。
+
+由0号进程创建1号进程（内核态），1号负责执行内核的部分初始化工作及进行系统配置，并创建若干个用于高速缓存和虚拟主存管理的内核线程。随后，1号进程调用execve()运行可执行程序init，并演变成用户态1号进程，即init进程。它按照配置文件/etc/initab的要求，完成系统启动工作，创建编号为1号、2号...的若干终端注册进程getty。每个getty进程设置其进程组标识号，并监视配置到系统终端的接口线路。当检测到来自终端的连接信号时，getty进程将通过函数\verb$execve()$执行注册程序login，此时用户就可输入注册名和密码进入登录过程，如果成功，由login程序再通过函数\verb$execve()$执行shell，该shell进程接收getty进程的pid，取代原来的getty进程。再由shell直接或间接地产生其他进程。
+
+上述过程可描述为：0号进程->1号内核进程->1号内核线程->1号用户进程（init进程）->getty进程->shell进程。
+
+
+\subsection{init程序}
+
+init是 Unix 和 类Unix 系统中用来产生其它所有进程的程序。它以守护进程的方式存在，其进程号为1。
+
+BSD init 运行存放于'/etc/rc'的初始化 shell 脚本，然后启动基于文本模式的终端(getty)或者基于图形界面的终端(窗口系统，如 X)。
+这里没有运行模式的问题，因为文件 'rc' 决定了 init 如何执行。
+
+现代的 BSD 派生系统一直支持使用 'rc.local'
+文件的方式，它将在正常启动过程接近最后的时间以子脚本的方式来执行。这样做减少了整个系统无法启动的风险。然后，第三方软件包可以将它们独立的 start/stop 脚本安装到一个本地的 'rc.d' 目录中(通常这是由 ports collection/pkgsrc 完成的)。 FreeBSD 和 NetBSD 现在默认使用 rc.d ，该目录中所有的用户启动脚本，都被分成更小的子脚本，和 SysV 类似。
+
+System V init 检查 '/etc/inittab' 文件中是否含有 'initdefault' 项。 这告诉 init
+系统是否有一个默认运行模式。如果没有默认的运行模式，那么用户将进入系统控制台，手动决定进入何种运行模式。
+
+systemd意欲取代System V和BSD风格的init的程序。
+在RHEL6中采用的init程序为upstart。在RHEL7中开始采用systemd。
+
+   
+\subsection{运行级别}
+\begin{itemize}
+  \item 0为停机，机器关闭。 
+  \item 1为单用户模式，就像Win9x下的安全模式类似。 
+  \item 2为多用户模式，但是没有NFS支持。 
+  \item 3为完整的多用户模式，是标准的运行级。除了需要在登录后手动启动图形界面外，与级别5相同。
+  \item 4一般的发行版没定义这个级别。
+  \item 5就是X11，进到X Window系统了。 
+  \item 6为重启，运行init 6机器就会重启。 
+\end{itemize}
+在Ubuntu 14.04上尝试进入级别2,3,4,5均处于X11界面，进入级别1系统退出并卡死。
+
+查看运行级别命令：
+　\begin{verbatim}
+　runlevel
+\end{verbatim}
+先后显示系统上一次和当前运行级别。如果不存在上一次运行级别，则用N表示。在Ubuntu上运行结果为“N 2”。
+
+改变提供运行级别命令：
+　\begin{verbatim}
+　init ［0123456］
+\end{verbatim}
+
+
+    
+\subsection{内核线程}
+除了idle和init进程之外，其他内核线程包括：
+\begin{description}
+  \item[keventd] 执行\verb$kevent_wq$工作队列中的函数。
+  \item[kapmd] 处理与APM(高级电源管理)相关的事件。
+  \item[kswapd] 执行内存回收。
+  \item[pdflush] 刷新脏内存的内容到磁盘以回收内存。
+  \item[kblockd] 执行\verb$kblockd_workqueue$工作队列中的函数。它周期性激活块设备驱动程序, 因为一些需要激活驱动程序的work已被延迟以求提高性能。
+  \item[ksoftirqd] 每个CPU都有一个ksoftirqd，运行tasklet。
+\end{description}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

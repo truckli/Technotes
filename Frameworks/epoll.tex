@@ -1,0 +1,108 @@
+%!Mode:: "TeX:UTF-8"
+\section{I/O复用}
+
+\subsection{select API}
+
+\begin{lstlisting}[language=C++]
+int select(int nfds, fd_set *readfds, fd_set *writefds, 
+  fd_set *exceptfds, struct timeval *timeout);
+\end{lstlisting}
+
+select对应于内核中的sys\_select调用，sys\_select首先将第二三四个参数指向的fd\_set拷贝到内核，然后对每个被SET的 述符调用进行poll，并记录在临时结果中（fdset），如果有事件发生，select会将临时结果写到用户空间并返回；当轮询一遍后没有任何事件发生时，如果指定了超时时间，则select会睡眠到超时，睡眠结束后再进行一次轮询，并将临时结果写到用户空间，然后返回。
+
+poll本质上和select没有区别，它将用户传入的数组拷贝到内核空间，然后查询每个fd对应的设备状态，如果设备就绪则在设备等待队列中加入一项并继续遍历，如果遍历完所有fd后没有发现就绪设备，则挂起当前进程，直到设备就绪或者主动超时，被唤醒后它又要再次遍历fd。这个过程经历了多次无谓的遍历。
+它没有最大连接数的限制，原因是它是基于链表来存储的，但是同样有一个缺点：
+大量的fd的数组被整体复制于用户态和内核地址空间之间，而不管这样的复制是不是有意义。
+poll还有一个特点是“水平触发”，如果报告了fd后，没有被处理，那么下次poll时会再次报告该fd。
+
+epoll支持水平触发和边缘触发，最大的特点在于边缘触发，它只告诉进程哪些fd刚刚变为就需态，并且只会通知一次。
+在前面说到的复制问题上，epoll使用mmap减少复制开销。
+还有一个特点是，epoll使用“事件”的就绪通知方式，通过epoll\_ctl注册fd，一旦该fd就绪，内核就会采用类似callback的回调机制来激活该fd，epoll\_wait便可以收到通知
+
+
+\subsection{epoll相对select优点}
+select和epoll这两个机制都是多路I/O机制的解决方案，select为POSIX标准中的，而epoll为Linux所特有的。
+
+传统的select/poll每次调用都会线性扫描全部的集合，导致效率呈现线性下降。
+epoll的IO效率不随FD数目增加而线性下降。
+如果所有的socket基本上都是活跃的---比如一个高速LAN环境，过多使用epoll,效率相比还有稍微的下降。但是一旦使用idle connections模拟WAN环境,epoll的效率就远在select/poll之上了。
+
+poll的执行分三部分：
+（1）.将用户传入的pollfd数组拷贝到内核空间，因为拷贝操作和数组长度相关，时间上这是一个O（n）操作
+（2）.查询每个文件描述符对应设备的状态，如果该设备尚未就绪，则在该设备的等待队列中加入一项并继续查询下一设备的状态。 查询完所有设备后如果没有一个设备就绪，这时则需要挂起当前进程等待，直到设备就绪或者超时。设备就绪后进程被通知继续运行，这时再次遍历所有设备，以查找就绪设备。这一步因为两次遍历所有设备，时间复杂度也是O（n），这里面不包括等待时间.
+（3）. 将获得的数据传送到用户空间并执行释放内存和剥离等待队列等善后工作，向用户空间拷贝数据与剥离等待队列等操作的的时间复杂度同样是O（n）。
+
+
+区别（epoll相对select优点）主要有三：
+1.select的句柄数目受限，在linux/posix\_types.h头文件有这样的声明：\verb$#define __FD_SETSIZE 1024$表示select最多同时监听1024个fd。而epoll没有，它的限制是最大的打开文件句柄数目。
+2.epoll的最大好处是不会随着FD的数目增长而降低效率，在selec中采用轮询处理，其中的数据结构类似一个数组的数据结构，而epoll是维护一个队列，直接看队列是不是空就可以了。epoll只会对"活跃"的socket进行操作---这是因为在内核实现中epoll是根据每个fd上面的callback函数实现的。那么，只有"活跃"的socket才会主动的去调用 callback函数（把这个句柄加入队列），其他idle状态句柄则不会，在这点上，epoll实现了一个"伪"AIO。但是如果绝大部分的I/O都是“活跃的”，每个I/O端口使用率很高的话，epoll效率不一定比select高（可能是要维护队列复杂）。
+3.使用mmap加速内核与用户空间的消息传递。无论是select,poll还是epoll都需要内核把FD消息通知给用户空间，如何避免不必要的内存拷贝就很重要，在这点上，epoll是通过内核于用户空间mmap同一块内存实现的。
+
+
+\subsection{epoll API}
+
+1.
+\begin{lstlisting}[language=C++]
+int epoll_create(int size);
+\end{lstlisting}
+
+创建一个epoll的句柄，size用来告诉内核这个监听的数目最大值。用close()来关闭。
+
+2.
+\begin{lstlisting}[language=C++]
+//epoll的事件注册函数
+int epoll_ctl(int epfd, int op, int fd, 
+  struct epoll_event *event);
+\end{lstlisting}
+第一个参数是epoll\_create()的返回值，第二个参数表示动作，用三个宏来表示：
+\begin{verbatim}
+EPOLL_CTL_ADD：注册新的fd到epfd中；
+EPOLL_CTL_MOD：修改已经注册的fd的监听事件；
+EPOLL_CTL_DEL：从epfd中删除一个fd；
+\end{verbatim}
+第三个参数是需要监听的fd，第四个参数是告诉内核需要监听什么事，数据结构如下：
+\begin{lstlisting}[language=C++]
+typedef union epoll_data {
+      void        *ptr;
+      int          fd;
+      uint32_t     u32;
+      uint64_t     u64;
+} epoll_data_t;
+
+struct epoll_event {
+    uint32_t events; /* Epoll events */
+    epoll_data_t data;/* User data variable */
+};
+\end{lstlisting}
+events可以是以下几个宏的集合：
+\begin{lstlisting}[language=C++]
+EPOLLIN ：可读（包括对端SOCKET正常关闭）
+EPOLLOUT：可写
+EPOLLPRI：有紧急的数据可读（这里应该表示有带外数据到来）
+EPOLLERR：表示对应的文件描述符发生错误
+EPOLLHUP：表示对应的文件描述符被挂断
+EPOLLET： 设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的
+EPOLLONESHOT：只监听一次事件就会把这个fd从epoll的队列中删除
+\end{lstlisting}
+
+
+3.
+\begin{lstlisting}[language=C++]
+int epoll_wait(int epfd, struct epoll_event *events, 
+  int maxevents, int timeout);
+\end{lstlisting}
+等待事件的产生，类似于select()调用。参数events用来从内核得到事件的集合，maxevents告之内核这个events有多大，这个maxevents的值不能大于创建epoll\_create()时的size，参数timeout是超时时间（毫秒，0会立即返回，-1是永久阻塞）。该函数返回需要处理的事件数目，如返回0表示已超时
+
+
+
+
+
+
+
+
+
+
+
+
+
+

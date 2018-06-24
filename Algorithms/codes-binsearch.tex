@@ -1,0 +1,248 @@
+%!Mode:: "TeX:UTF-8"
+\section{二分查找代码示例}
+
+注意事项：除以2的操作可改为右移操作。
+
+程序可以有多种写法，主要有如下区别:
+\begin{itemize}
+    \item 不变式区间的开闭性。不变式:待搜数据t不存在，或属于不变式区间。区间可以为[l,u]或(l,u]。区间的开闭性影响迭代更新的方式。
+    \item 每次循环的比较操作次数，可以为1次或两次。每次循环如果作两次判断，效率较低，但循环次数可能会减少，因为可以直接发现目标退出循环。可以将等于比较合并到大于或小于比较中来减少判断。
+\end{itemize}
+
+
+当区间长度至少为3时，下轮迭代区间必能能够缩小。当区间长度为2或1时，按照\verb|m=(u+l)/2|计算到的中点m即为左端点l，如果区间端点按照l=m方式来更新，会导致区间不能缩小。当区间长度为1时，m同时等于l和u，当区间右端点按照u=m来更新时，也会发生区间不能缩小的情形，如编程不慎则会造成死循环。
+
+如果采用全闭区间-两次比较的方式编程，u和l都不会直接赋为m，则只需确保区间长度大于零即可，无死循环之虞。如果区间存在开端，或者只进行一次比较，则需要慎重。
+
+可以对算法提出额外要求，即当存在多个满足条件的值时，应能返回下标最低者。
+
+如果数组长度为固定值，如1000,可以通过循环展开以进一步优化代码。
+虽然二分搜索可以在log时间内完成搜索，但搜索后如果要插入新元素仍需要线性时间。不过，基于数组的连续操作具有很好的cache友好性。
+
+\subsection{半闭区间，单次比较}
+\cite{pp}9.3。 x[-1],x[n]作哨兵，但未真正访问。u和l都会直接赋为m，因此循环条件是区间长度至少为3，即l+1 != u。t包含于(l,u]。左边为开，能够保证返回最低下标。
+\label{codes:binsort}
+
+\begin{lstlisting}[language=C]
+
+int binarysearch3(DataType t)
+{	
+	int l = -1, u = n, m;
+	while (l+1 != u) {
+		m = (l + u) >> 1;
+		if (x[m] < t) l = m;
+		else u = m;
+	}
+	if (u >= n || x[u] != t) return -1;
+	return u;
+}
+\end{lstlisting}
+
+然而，我并未发现为何将u初始化为n，而不是n-1。我认为初始化为n-1更简洁，相应代码为：
+\begin{lstlisting}[language=Python]
+
+#!/usr/bin/env python
+
+"""
+binary sort implementation
+"""
+
+def BinSort(x, t):
+    l = -1
+    u = len(x) - 1
+    while u - l >= 2:
+        m = l + (u - l) / 2;
+        if x[m] < t:
+            l = m
+        else:
+            u = m
+    
+    if x[u] == t:
+        return u
+    else: 
+        return -1
+
+
+
+if __name__ == '__main__':
+
+    assert BinSort([2], 3) == -1
+    assert BinSort([2], 2) == 0
+    assert BinSort([2], 1) == -1
+    assert BinSort([2, 3], 1) == -1
+    assert BinSort([2, 3], 4) == -1
+    assert BinSort([2, 3], 2) == 0
+    assert BinSort([2, 3], 3) == 1
+    assert BinSort([2, 3, 4], 3) == 1
+    assert BinSort([2, 3, 4], 2) == 0
+    assert BinSort([2, 3, 4], 4) == 2
+    assert BinSort([2, 3, 4], 5) == -1
+    assert BinSort([2, 3, 4], 1) == -1
+    assert BinSort([2, 3, 4], 2.5) == -1
+    assert BinSort([2, 3, 4], 3.5) == -1
+    assert BinSort([2, 3, 4, 5], 3.5) == -1
+    assert BinSort([2, 3, 4, 5], 4.5) == -1
+    assert BinSort([2, 3, 4, 5], 4) == 2
+    assert BinSort([2, 3, 4, 5], 0) == -1
+
+\end{lstlisting}
+
+\subsection{半闭区间双次比较}
+将单次比较改为双次比较没有难度。只需要多加一次相等比较。
+
+\begin{lstlisting}[language=C]
+
+int binarysearch3(DataType t)
+{	
+	int l = -1, u = n, m;
+	while (l+1 != u) {
+		m = (l + u) / 2;
+		if (x[m] < t) l = m;
+		else if x[m] &=& t return m;
+		else u = m;
+	}
+	if (u >= n || x[u] != t) return -1;
+	return u;
+}
+\end{lstlisting}
+
+\subsection{闭区间单比较}
+\cite{self}一段Python代码:
+\begin{lstlisting}[language=Python]
+
+def binsearch(x, n, t):
+    #range size >= 1
+    assert n > 0
+
+    if x[0] > t or x[n-1] < t: return -1;
+
+    l = 0
+    u = n-1
+    while (u-l >= 1): 
+        #x[l] <= t <= x[u], l == 0 or x[l-1] < t, range size >= 2
+        m = l + (u - l) / 2;
+        print "[%d - %d], %d"%(l,u,m)
+        if x[m] < t: 
+            l = m + 1
+        else: 
+            u = m
+    
+    #range size is 1 
+    if x[l] == t: return l
+    return -1
+
+\end{lstlisting}
+
+\cite{bop}3.11也给出了闭区间单次比较算法的实现，该实现不满足返回最小下标的条件。代码没有对输入参数进行检查，如果输入区间为零，程序功能可能与期望不符。书中认为求midIndex不可以相加除以2,以防溢出。其实如此大数本不太可能作为数组的长度。
+因为l按照来l=m方式更新，所以区间长度为2时即需要退出循环。更新u的方式也过于保守，是按照开区间的方式进行更新。
+
+其代码的Python等效版本写为:
+\begin{lstlisting}[language=Python]
+
+def binsearch(x,l,u,t):
+    while (l < u - 1): #range lengh >= 3 
+        m = l + (u - l) / 2;
+        print "[%d - %d], %d"%(l,u,m)
+        if x[m] <= t:
+            l = m
+        else: 
+            u = m # better be u = m-1
+    
+    #range size is 2 or 1 
+    if x[u] == t: return u
+    if x[l] == t: return l
+    return -1
+
+\end{lstlisting}
+
+原书程序为:
+
+\begin{lstlisting}[language=C]
+int bisearch(char** arr, int b, int e, char* v)
+{
+    int minIndex = b, maxIndex = e, midIndex;
+    //循环结束有两种情况：
+    //若minIndex为偶数则minIndex ==  maxIndex
+    //否则就是minIndex ==  maxIndex -1
+    while (minIndex < maxIndex -1)
+    {
+	minIndex = minIndex + (maxIndex - minIndex) / 2;
+	if (strcmp(arr[minIndex], v) <= 0)
+	{
+	    minIndex = midIndex;
+	}
+	else
+	{
+	    //不需要minIndex - 1, 防止minIndex == maxIndex
+	    maxIndex = midIndex;
+	}
+    }
+
+    if (!strcmp(arr[maxIndex],v))//先判断序号最大的值
+    {
+	return maxIndex;
+    }
+    else if (!strcmp(arr[minIndex],v))
+    {
+	return minIndex;
+    }
+    else
+    {
+	return -1;
+    }
+}
+\end{lstlisting}
+
+
+\subsection{闭区间双次比较}
+\cite{pp}5.1。t包含于[l,u]。u和l都不会赋值为m。循环条件是区间长度至少为1，即l<=u。退出循环则意味着无解。如果一开始元素个数就为零，自然无法进入循环，算作无解。
+\begin{lstlisting}[language=C]
+int binarysearch2(DataType t)
+{	
+	int l, u, m;
+	l = 0;
+	u = n-1;
+	while (l <= u) //区间大于等于1 
+	{
+		m = (l + u) / 2;
+		if (x[m] < t)
+			l = m+1;
+		else if (x[m] == t)
+			return m;
+		else /* x[m] > t */
+			u = m-1;
+	}
+
+	return -1;
+}
+
+
+\end{lstlisting}
+
+\cite{sedgewick}P99也给出了这种算法:
+
+\begin{lstlisting}[language=Java]
+private int rank(int key)
+{ // Binary search.
+    int lo = 0;
+    int hi = a.length - 1;
+    while (lo <= hi)
+    { // Key is in a[lo..hi] or not present.
+	int mid = lo + (hi - lo) / 2;
+	if (key < a[mid]) hi = mid - 1;
+	else if (key > a[mid]) lo = mid + 1;
+	else
+	return mid;
+    }
+    return -1;
+}
+
+\end{lstlisting}
+
+
+
+
+
+
+
+

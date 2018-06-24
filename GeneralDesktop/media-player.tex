@@ -1,0 +1,44 @@
+%!Mode:: "TeX:UTF-8"
+\section{音视频播放与编辑}
+
+\subsection{视频播放控制}
+\subsubsection{mplayer}
+文件打开命令:mplayer [-af scaletempo [-speed 0.01~100]] filename
+
+其中，-af设置音频过滤器，scaletempo实现变速不变调(pitch)功能。详情见其help输出和man页。
+
+快捷键(man页：INTERACTIVE CONTROL)：
+速度调节: 	[和]，以10\%为幅度。
+进度调节:	左右方向键以10s为精度，上下方向键以分钟为精度，翻页键以10min为精度。
+
+\begin{verbatim}
+
+ p or SPACE       pause movie (press any key to continue)
+ q or ESC         stop playing and quit program
+ + or -           adjust audio delay by +/- 0.1 second
+ o                cycle OSD mode:  none / seekbar / seekbar + timer
+ * or /           increase or decrease PCM volume
+ x or z           adjust subtitle delay by +/- 0.1 second
+ r or t           adjust subtitle position up/down, also see -vf expand
+
+backspace          Reset playback speed to normal.
+ f                 Toggle fullscreen (also see -fs).
+ T                 Toggle stay-on-top (also see -ontop).
+
+v                Toggle subtitle visibility.
+j and J          Cycle through the available subtitles.
+\end{verbatim}
+
+\subsubsection{VLC}
+详情见其help输出和man页。VLC默认为变速不变调。
+
+速度调节:[和]，同mplayer一样的快捷键，只是调节幅度为0.1倍原速。
+
+进度调节:shift/alt/ctrl+左右方向键。shift的精度为5s，alt为10s，ctrl为1min。
+
+
+\subsection{音视频文件编辑}
+Linux下有OpenShot Video Editor。曾用它来裁剪视频文件。
+
+跨平台开源软件audacity，操作方式类似于Adobe Audition(CoolEditPro,不支持Linux)，可以看见音频波形。支持批量导入音频文件。
+

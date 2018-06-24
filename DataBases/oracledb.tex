@@ -1,0 +1,60 @@
+\section{Oracle databses}
+
+
+\subsection{sqlplus instant client installation}
+
+SQLPlus is an interactive and batch query tool that is installed with every Oracle Database installation.
+ It has a command-line user interface, a Windows Graphical User Interface (GUI) and the iSQLPlus web-based user interface.
+
+There is also the SQLPlus Instant Client which is a stand-alone command-line interface available on platforms that support the OCI Instant Client. 
+SQLPlus Instant Client connects to any available Oracle database, but does not require its own Oracle database installation.
+
+Two RPM installers are required, which can be downloaded from official website and installed with \verb|rpm -ivq| or \verb|yum| command:
+\begin{verbatim}
+    yum install oracle-instantclient12.2-basic-12.2.0.1.0-1.x86_64.rpm  
+    yum install oracle-instantclient12.2-sqlplus-12.2.0.1.0-1.x86_64.rpm 
+\end{verbatim}
+
+After installation, some setting is demanded:
+
+\begin{verbatim}
+    export LD_LIBRARY_PATH=/usr/lib/oracle/12.2/client64/lib:$LD_LIBRARY_PATH
+    export PATH=/usr/lib/oracle/12.2/client64/bin:$PATH
+\end{verbatim}
+
+A sqlplus binary is invoked, with USER, PASSWORD, HOST, PORT and DATABASE specified.
+\begin{verbatim}
+    sqlplus "username/mypassword@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(Host=10.98.33.112)(Port=1521))(CONNECT_DATA=(SID=mydb)))"
+    sqlplus "icpuserrt/icpuserrt@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(Host=10.98.33.112)(Port=1521))(CONNECT_DATA=(SID=orcl)))"
+\end{verbatim}
+
+
+
+To check system encoding:
+\begin{verbatim}
+SQL> select userenv('language') from dual;
+
+USERENV('LANGUAGE')
+----------------------------------------------------
+AMERICAN_AMERICA.ZHS16GBK
+\end{verbatim}
+
+For this encoding we need to configure our environment in shell and terminal emulator:
+\begin{verbatim}
+export NLS_LANG="AMERICAN_AMERICA.ZHS16GBK"
+\end{verbatim}
+
+Do not forget the terminal emulator.
+
+
+\subsection{Oracle SQL}
+
+A query statement listing all tables is like:
+\begin{verbatim}
+    select table_name from all_tables;
+\end{verbatim}
+
+A common select-with-limit is:
+\begin{verbatim}
+    select id, dwmc from yhgl_badwxx where shengid=510000 and rownum < 4;
+\end{verbatim}

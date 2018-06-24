@@ -1,0 +1,103 @@
+%!Mode:: "TeX:UTF-8"
+\section{C++多线程}
+
+\subsection{C++多线程一致性模型}
+
+对多线程程序来说，最直观，最容易被理解的执行方式就是\textbf{顺序一致性（Sequential Consistency）}模型:
+\begin{enumerate}
+\item 从单个线程的角度来看，每个线程内部的指令都是按照程序规定的顺序（program order）来执行的；
+\item 从整个多线程程序的角度来看，整个多线程程序的执行顺序是按照某种交错顺序来执行的，且是全局一致的
+\end{enumerate}
+
+尽管顺序一致性模型非常易于理解，但是它却对CPU和编译器的性能优化做出了很大的限制，所以常见的多核CPU和编译器大都没有实现顺序一致性模型。
+乱序优化是串行时代非常普遍的，因为它对单线程程序的语义是没有影响的。
+但是在进入多核时代后，编译器缺少语言级的内存模型的约束，导致其可能做出违法顺序一致性规定的多线程语义的错误优化。
+
+因为现有的多核CPU和编译器都没有遵守顺序一致模型，
+而且C/C++的旧有标准中都没有把多线程考虑在内，所以给编写多线程程序带来了一些问题。
+例如，为了正确地用C++实现Double-Checked Locking，我们需要使用非常底层的内存栅栏（Memory Barrier）指令来显式地规定代码的内存顺序性（memory ordering）。
+然而，这种方案依赖于具体的硬件，因此可移植性很差；而且它过于底层，不方便使用。
+
+为了更容易的进行多线程编程，程序员希望程序能按照顺序一致性模型执行；但是顺序一致性对性能的损失太大了，CPU和编译器为了提高性能就必须要做优化。
+为了在易编程性和性能间取得一个平衡，一个新的模型出炉了：sequential consistency for data race free programs，
+它就是C++1x标准中多线程内存模型的基础。对C++程序员来说，随着C++1x标准的到来，我们终于可以依赖高级语言内建的多线程内存模型来编写正确的、高性能的多线程程序。
+
+该模型的核心思想就是由程序员用同步原语（例如锁或者C++1x中新引入的atomic类型的共享变量）来保证你程序是没有数据竞跑的，这样CPU和编译器就会保证程序是按程序员所想的那样执行的（即顺序一致性）。换句话说，程序员只需要恰当地使用具有同步语义的指令来标记那些真正需要同步的变量和操作，就相当于告诉CPU和编译器不要对这些标记好的同步操作和变量做违反顺序一致性的优化，而其它未被标记的地方可以做原有的优化。编译器和CPU的大部分优化手段都可以继续实施，只是在同步原语处需要对优化做出相应的限制；而且程序员只需要保证正确地使用同步原语即可，因为它们最终表现出来的执行效果与顺序一致性模型一致。由此，C++多线程内存模型帮助我们在易编程性和性能之间取得了一个平衡。
+
+
+在C++1x标准之前，C++是在建立在单线程语义上的。为了进行多线程编程，C++程序员通过使用诸如Pthreads，Windows Thread等C++语言标准之外的线程库来完成代码设计。
+以线程库的形式进行多线程编程在绝大多数应用场景下都是没有问题的。然而，线程库的解决方案也有其先天缺陷。第一，如果没有在编程语言中定义内存模型的话，我们就不能清楚的定义到底什么样的编译器/CPU优化是合法的，而程序员也不能确定程序到底会怎么样被优化执行。例如，Pthreads标准中并未对什么是数据竞跑（Data Race）做出精确定义，因此C++编译器可能会进行一些错误优化从而导致数据竞跑。第二，绝大多数情况下线程库能正确的完成任务，而在极少数对性能有更高要求的情况下（尤其是需要利用底层的硬件特性来实现高性能Lock Free算法时）需要更精确的内存模型以规定好程序的行为。简而言之，把内存模型集成到编程语言中去是比线程库更好的选择。
+
+C++作为一种高性能的系统语言，其设计目标之一就在于提供足够底层的操作，以满足对高性能的需求。在这个前提之下，C++1x除了提供传统的锁、条件变量等同步机制之外，还引入了新的atomic类型。相对于传统的mutex锁来说，atomic类型更底层，具备更好的性能，因此能用于实现诸如Lock Free等高性能并行算法。有了atomic类型，C++程序员就不需要像原来一样使用汇编代码来实现高性能的多线程程序了。而且，把atomic类型集成到C++语言中之后，程序员就可以更容易地实现可移植的多线程程序，而不用再依赖那些平台相关的汇编语句或者线程库。
+
+\begin{lstlisting}[language=C++]
+
+#include <atomic>
+#include <vector>
+#include <iostream>
+#include <thread>  
+
+std::vector<int> data;
+std::atomic_bool data_ready(false);
+
+void writer_thread()
+{
+    data.push_back(10); // 对data的写操作
+    data_ready = true; // 对data_ready的写操作
+}
+
+void reader_thread()
+{
+    while(!data_ready.load()) 
+    {   
+        std::this_thread::yield();
+    }   
+    std::cout << "data is " << data[0] << "\n";
+}
+
+int main(void)
+{
+
+    return 0;
+}                                    
+
+\end{lstlisting}
+
+对常见的数据类型，C++1x都提供了与之相对应的atomic类型。以bool类型举例，与之相对应的atomic\_bool类型具备两个新属性：原子性与顺序性。顾名思义，原子性的意思是说\verb$atomic_bool$的操作都是不可分割的，原子的；而顺序性则指定了对该变量的操作何时对其他线程可见。在C++1x中，为了满足对性能的追求，atomic类型提供了三种顺序属性：sequential consistency ordering（即顺序一致性），acquire release ordering以及relaxed ordering。因为sequential consistency是最易理解的模型，所以默认情况下所有atomic类型的操作都会使sequential consistency顺序。当然，顺序一致性的性能相对来说比较差，所以程序员还可以使用对顺序性要求稍弱一些的acquire release ordering与最弱的relaxed ordering。
+
+
+\subsection{C++多线程语法}
+
+
+std::lock\_guard只允许RAII方式的使用，而std::unique\_lock可以在构造之后调用lock/unlock, 更加灵活一些，但使用的时候出错的机率也更大一些，所以如果没有什么特殊的需求，通常推荐尽量使用std::lock\_guard.
+
+<future> 头文件中包含了以下几个类和函数：
+\begin{itemize}
+\item Providers 类：std::promise, std::package\_task
+\item Futures 类：std::future, shared\_future.
+\item Providers 函数：std::async()
+\item 其他类型：std::future\_error, std::future\_errc, std::future\_status, std::launch.
+\end{itemize}
+
+std::future 可以用来获取异步任务的结果，因此可以把它当成一种简单的线程间同步的手段。std::future 通常由某个 Provider 创建，你可以把 Provider 想象成一个异步任务的提供者，Provider 在某个线程中设置共享状态的值，与该共享状态相关联的 std::future 对象调用 get（通常在另外一个线程中） 获取该值，如果共享状态的标志不为 ready，则调用 std::future::get 会阻塞当前的调用者，直到 Provider 设置了共享状态的值（此时共享状态的标志变为 ready），std::future::get 返回异步任务的值或异常（如果发生了异常）。
+
+一个有效(valid)的 std::future 对象通常由以下三种 Provider 创建，并和某个共享状态相关联。Provider 可以是函数或者类，分别是：
+\begin{itemize}
+\item std::async() 函数
+\item std::promise::get\_future
+\item std::packaged\_task::get\_future
+\end{itemize}
+std::shared\_future 与 std::future 类似，但是 std::shared\_future 可以拷贝、多个 std::shared\_future 可以共享某个共享状态的最终结果。
+
+promise 对象可以保存某一类型 T 的值，该值可被 future 对象读取（可能在另外一个线程中），因此 promise 也提供了一种线程同步的手段。
+std::packaged\_task 包装一个可调用的对象，并且允许异步获取该可调用对象产生的结果，从包装可调用对象意义上来讲，std::packaged\_task 与 std::function 类似，只不过 std::packaged\_task 将其包装的可调用对象的执行结果传递给一个 std::future 对象。
+
+C++11 标准中规定了两大类原子对象，std::atomic\_flag 和 std::atomic，前者 std::atomic\_flag 一种最简单的原子布尔类型，只支持两种操作，test-and-set 和 clear。而 std::atomic 是模板类，一个模板类型为 T 的原子对象中封装了一个类型为 T 的值，并且C++11 标准中除了定义基本 std::atomic 模板类型外，还提供了针对整形(integral)和指针类型的特化实现，提供了大量的 API，极大地方便了开发者使用。
+
+
+
+
+
+
+
+

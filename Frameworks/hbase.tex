@@ -1,0 +1,41 @@
+\section{Hbase API}
+
+\subsection{Accessing HBase with kerberos}
+
+Kerberos authentication is required to write Java™ programs to access HBase.
+
+\begin{verbatim}
+System.setProperty("java.security.krb5.conf", "/etc/krb5.conf");
+conf.set("hadoop.security.authentication", "kerberos");
+conf.set("hbase.security.authentication", "kerberos");
+conf.set("kerberos.kdc.host", "10.96.208.5");
+onf.set("kerberos.principal", "u_chanct@HADOOP.COM");
+conf.set("kerberos.cm.admin.pwd", "111111");
+conf.set("hbase.master.kerberos.principal","hbase /_HOST@HADOOP.COM"); 
+conf.set("hbase.regionserver.kerberos.principal","hbase/_HOST@HADOOP.COM"); 
+conf.set("hbase.zookeeper.property.clientPort", "2181");
+conf.set("hbase.zookeeper.quorum", "10.96.208.1");   
+UserGroupInformation.loginUserFromKeytab("u_chanct@HADOOP.COM", "/home/u_chanct.keytab"); 
+\end{verbatim}
+
+Add configuration directory of HBase (i.e. /etc/hbase/conf ) 
+to classpath if all the configuration items are already in configuration files.
+
+
+
+\begin{verbatim}
+    https://www.ibm.com/support/knowledgecenter/en/SSPT3X_3.0.0/com.ibm.swg.im.infosphere.biginsights.admin.doc/doc/kerberos_hbase.html
+    https://community.hortonworks.com/articles/48831/connecting-to-hbase-in-a-kerberos-enabled-cluster.html
+
+\end{verbatim}
+
+
+\subsection{Accessing HBase from Spark}
+
+\href{Spark Streaming with HBase}{https://mapr.com/blog/spark-streaming-hbase/}
+mentioned how to read and write HBase from Spark's perspective, 
+with newAPIHadoopRDD and saveAsHadoopDataset interfaces.
+
+
+
+

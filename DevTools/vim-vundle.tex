@@ -1,0 +1,38 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Vim之Vundle}
+安装Vundle:
+\begin{verbatim}
+git clone http://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+\end{verbatim}
+
+在Vim下执行Vundle命令：
+\begin{verbatim}
+:BundleInstall
+:BundleSearch
+:BundleClean
+\end{verbatim}
+
+
+插件安装命令也可在Shell中执行：
+\begin{verbatim}
+vim +PluginInstall +qall
+\end{verbatim}
+
+
+vimrc配置：
+
+\begin{verbatim}
+" For vundle
+set nocompatible
+filetype off
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+Bundle 'gmarik/vundle'
+" vim-scripts repos
+Bundle 'bash-support.vim'
+Bundle 'perl-support.vim'
+filetype plugin indent on
+\end{verbatim}
+
+

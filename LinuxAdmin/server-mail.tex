@@ -1,0 +1,279 @@
+%!Mode:: "TeX:UTF-8"
+\section{邮件配置：MTA,MRA,MUA}
+
+邮件的账户，实质上就是邮件服务器主机上的用户账户。
+
+\subsection{Postfix}
+默认安装后，可能需修改/etc/postfix目录下的配置文件。
+另外，要开放防火墙。
+
+
+\begin{verbatim}
+inet_interfaces = all
+mynetworks_style = subnet
+mynetworks = 168.100.189.0/28, 127.0.0.0/8, 172.0.0.0/8
+\end{verbatim}
+
+邮箱格式有mbox(默认)和Maildir两种风格。采用Maildir方式，设置用户的邮箱路径设置为：
+\begin{verbatim}
+home_mailbox = Maildir/
+\end{verbatim}
+
+修改配置文件后需要重新加载：
+\begin{verbatim}
+postfix reload
+\end{verbatim}
+
+但如果修改了inet\_interfaces参数则需要重启服务器:
+\begin{verbatim}
+service postfix restart
+\end{verbatim}
+
+也可如此重启postfix：
+\begin{verbatim}
+sudo postfix stop
+sudo postfix start
+\end{verbatim}
+
+查看启动状态
+\begin{verbatim}
+postfix status
+\end{verbatim}
+
+
+查看参数配置
+\begin{verbatim}
+postconf 
+\end{verbatim}
+
+
+Postfix默认接受相同网络(通过mynetworks参数设置)的邮件客户IP，其他网络的客户端需要经过
+\href{http://www.postfix.org/SASL_README.html}{SASL认证}。
+Postfix支持Cyrus SASL以及Dovecot提供的SASL。
+Cyrus SASL本身又包含多种认证方式，学习起来较为复杂。
+
+如果遭遇到权限错误，需检查selinux设置。 
+
+
+
+Postfix最好能够开启\href{http://www.postfix.org/TLS_README.html}{TLS支持}。
+
+
+
+参考：
+
+\href{https://help.ubuntu.com/community/PostfixBasicSetupHowto}{Ubuntu官方文档：PostfixBasicSetupHowto}
+
+\href{Postfix Howtos and FAQs}{Postfix Howtos and FAQs}
+
+\href{http://www.postfix.org/documentation.html}{Postfix Documentation}
+
+
+
+\subsection{Dovecot}
+
+Dovecot的配置文件位于/etc/dovecot。
+
+在dovecot.conf中设置MRA所支持的协议(pop3, imap等)：
+
+\begin{verbatim}
+# Protocols we want to be serving.
+#protocols = imap pop3 lmtp
+protocols = pop3 imap
+\end{verbatim}
+
+邮箱路径要同MTA的设置一致。可采用mbox风格：
+\begin{verbatim}
+mail_location = mbox:~/mail:INBOX=/var/mail/%u
+mail_access_groups = mail
+\end{verbatim}
+或采用Maildir风格：
+\begin{verbatim}
+mail_location = maildir:~/Maildir
+\end{verbatim}
+
+如果采用mbox风格，且初次运行时并不存在~/.imap/INBOX路径，dovecot将创建它，并将其group设置为mail。
+然后dovecot本身是以具体邮箱用户的身份运行，并无权限将文件的group设置为mail，因为该用户不属于mail组。
+因此需要设置mail\_access\_groups。但如此会导致一些安全隐患。
+
+常用的设置项还有
+\begin{verbatim}
+# Disable LOGIN command and all other plaintext authentications unless
+# SSL/TLS is used (LOGINDISABLED capability). Note that if the remote IP
+# matches the local IP (ie. you're connecting from the same computer), the
+# connection is considered secure and plaintext authentication is allowed.
+disable_plaintext_auth = no
+# SSL/TLS support: yes, no, required. <doc/wiki/SSL.txt>
+ssl = no
+\end{verbatim}
+
+
+查看Dovecot的日志文件存储路径：
+\begin{verbatim}
+% doveadm log find
+\end{verbatim}
+通常其日志文件为/var/log/maillog。
+
+参考
+\href{http://wiki2.dovecot.org/}{Dovecot官方Wiki}。
+
+
+
+
+\subsection{Cyrus SASL认证配置}
+
+
+Cyrus SASL的saslauthd守护进程支持多种认证渠道，包括/etc/shadow, PAM,
+借助IMAP服务器等。除saslauthd外,Cyrus SASL也支持通过sasldb, sql, ldapdb三种插件来进行认证。
+
+Cyrus SASL提供的认证机制包括：plain，login，DIGEST-MD5，CRAM-MD5等。
+
+如果要采用plain和login机制，需要安装相应的包：
+\begin{verbatim}
+yum install cyrus-sasl-plain
+\end{verbatim}
+
+
+
+\begin{verbatim}
+/etc/init.d/saslauthd start
+\end{verbatim}
+
+需要合理设置Maildir的权限，否则SELINUX可能会导致认证失败
+\begin{verbatim}
+setenforce 0
+sestatus
+\end{verbatim}
+
+
+
+testsaslauthd可用于测试账号认证功能：
+\begin{verbatim}
+testsaslauthd -u username -p password
+\end{verbatim}
+
+配置Postfix的认证：
+\begin{verbatim}
+
+/etc/postfix/main.cf:
+	smtpd_sasl_type = cyrus 
+	smtpd_sasl_path = smtpd
+    smtpd_sasl_auth_enable = yes
+    broken_sasl_auth_clients = yes
+
+\end{verbatim}
+
+
+详情可参考:
+
+\href{http://www.postfix.org/SASL_README.html}{Postfix官方文档： SASL Howto}。
+
+\href{http://postfix.state-of-mind.de/patrick.koetter/smtpauth/index.html}{Patrick Ben Koetter: Postfix SMTP AUTH (and TLS) HOWTO}。
+
+
+
+\subsection{Dovecot SASL认证配置}
+前提条件是配置好Dovecot本身的认证机制，然后设置Postfix令其借助于该机制进行认证。
+
+
+\begin{verbatim}
+
+/etc/dotecov/conf.d/10-master.conf:
+    service auth {
+       ...
+       unix_listener /var/spool/postfix/private/auth {
+         mode = 0660
+         # Assuming the default Postfix user and group
+         user = postfix
+         group = postfix        
+       }
+       ...
+     }
+ 
+/etc/dotecov/conf.d/10-auth.conf:
+    auth_mechanisms = plain login
+
+/etc/postfix/main.cf:
+    smtpd_sasl_type = dovecot
+    smtpd_sasl_path = private/auth
+    smtpd_sasl_auth_enable = yes
+    broken_sasl_auth_clients = yes
+    
+\end{verbatim}
+
+
+
+\subsection{mailx发送邮件}
+
+mail命令由软件包mailx(Debian系称作mailutils)提供。mail可连接本地的MTA发送邮件。
+
+以下命令可用于发送邮件，命令行中给出收件人和主题，以shell为编辑器编写邮件正文，以EOT结束编辑。 
+-s参数可给出，也可不给，留在编辑时写出主题。
+\begin{verbatim}
+mail -s MySubject root@zld_02.chanct.com
+\end{verbatim}
+
+也可以在命令行中直接给出邮件的正文内容：
+\begin{verbatim}
+echo “mail content”|mail -s test admin@aispider.com 
+\end{verbatim}
+
+还可以用文件作为正文内容：
+\begin{verbatim}
+mail -s test  admin@aispider.com < file
+\end{verbatim}
+
+
+\subsection{mailx查看邮件}
+不带任何参数执行mail命令，将查看当前用户的邮件。
+用户的邮件位于\verb|/var/spool/mail/用户名|目录下，这一路径由环境变量MAIL设置。
+\begin{verbatim}
+export MAIL=
+\end{verbatim}
+
+在邮件查看界面下可使用一些子命令。
+
+\begin{description}
+  \item [?] 给出命令提示 
+  \item [file|folder] 查看邮箱概要
+  \item [x] 退出mail界面，不执行变更 
+  \item [q] 退出mail界面，执行变更 
+  \item [t|type|p|print msglist] 显示邮件正文 
+  \item [f|from msglist] 显示邮件概要
+  \item [s|save msglist fname] 追加邮件至fname文件, 标记为已保存
+  \item [copy msglist fname] 追加邮件至fname文件, 不标记为已保存
+  \item [n|回车] 迭代至下一封邮件并查看正文 
+  \item [v|visual] 用编辑器打开当前邮件 
+  \item [d msglist] 删除邮件 
+
+\end{description}
+
+子命令中的msglist为邮件的id列表，如“1 3 7”表示第一、第三、第七封邮件，“2-4”表示第二、第三、第四封邮件。
+如果msglist不给出，则认为是上一次被显示的邮件。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

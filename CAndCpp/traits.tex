@@ -1,0 +1,137 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{trait技法}
+
+特性萃取技术依赖于trait模板、category类体系和重载函数体系。
+
+标准STL定义了\verb$struct iterator_traits$，其中的\verb$iterator_category$字段可取五种类型，对应五类迭代器。
+\begin{lstlisting}[language=C++]
+
+struct input_iterator_tag {};
+struct output_iterator_tag {};
+struct forward_iterator_tag : public input_iterator_tag {};
+struct bidirectional_iterator_tag : public forward_iterator_tag {};
+struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+
+template <class Iterator>
+struct iterator_traits {
+  typedef typename Iterator::iterator_category iterator_category;
+  typedef typename Iterator::value_type        value_type;
+  typedef typename Iterator::difference_type   difference_type;
+  typedef typename Iterator::pointer           pointer;
+  typedef typename Iterator::reference         reference;
+};
+
+\end{lstlisting}
+
+迭代器类和迭代器tag类是两个相关联的类体系结构。
+以下是两个迭代器类：
+\begin{lstlisting}[language=C++]
+
+template <class T, class Distance> struct input_iterator {
+  typedef input_iterator_tag iterator_category;
+  typedef T                  value_type;
+  typedef Distance           difference_type;
+  typedef T*                 pointer;
+  typedef T&                 reference;
+};
+
+template <class T, class Distance> struct random_access_iterator {
+  typedef random_access_iterator_tag iterator_category;
+  typedef T                          value_type;
+  typedef Distance                   difference_type;
+  typedef T*                         pointer;
+  typedef T&                         reference;
+};
+
+\end{lstlisting}
+还有一个通用的迭代器类：
+\begin{lstlisting}[language=C++]
+
+
+struct iterator {
+  typedef Category  iterator_category;
+  typedef T         value_type;
+  typedef Distance  difference_type;
+  typedef Pointer   pointer;
+  typedef Reference reference;
+};
+
+\end{lstlisting}
+
+内置指针也是一种迭代器：
+\begin{lstlisting}[language=C++]
+
+template <class T>
+struct iterator_traits<T*> {
+  typedef random_access_iterator_tag iterator_category;
+  typedef T                          value_type;
+  typedef ptrdiff_t                  difference_type;
+  typedef T*                         pointer;
+  typedef T&                         reference;
+};
+
+\end{lstlisting}
+
+这是一个便利函数，返回一个迭代器类对应的\verb$iterator_category$类实例，实现了两个类体系结构的对应：
+\begin{lstlisting}[language=C++]
+
+template <class Iterator>
+inline typename iterator_traits<Iterator>::iterator_category
+iterator_category(const Iterator&) {
+  typedef typename iterator_traits<Iterator>::iterator_category category;
+  return category();
+}
+
+\end{lstlisting}
+
+于是可根据不同的\verb$iterator_category$类实例实现不同的操作：
+\begin{lstlisting}[language=C++]
+
+template <class InputIterator, class Distance>
+inline void advance(InputIterator& i, Distance n) {
+  __advance(i, n, iterator_category(i));
+}
+
+template <class InputIterator, class Distance>
+inline void __advance(InputIterator& i, Distance n, input_iterator_tag) {
+  while (n--) ++i;
+}
+
+template <class RandomAccessIterator, class Distance>
+inline void __advance(RandomAccessIterator& i, Distance n, 
+                      random_access_iterator_tag) {
+  i += n;
+}
+
+
+\end{lstlisting}
+
+SGI STL定义了非标准的$type_traits$把这种技法扩大到了迭代器以外的世界。
+
+\begin{lstlisting}[language=C++]
+template <class ForwardIterator>
+inline void
+__destroy_aux(ForwardIterator first, ForwardIterator last, __false_type) {
+  for ( ; first < last; ++first)
+    destroy(&*first);
+}
+
+template <class ForwardIterator> 
+inline void __destroy_aux(ForwardIterator, ForwardIterator, __true_type) {}
+
+template <class ForwardIterator, class T>
+inline void __destroy(ForwardIterator first, ForwardIterator last, T*) {
+  typedef typename __type_traits<T>::has_trivial_destructor trivial_destructor;
+  __destroy_aux(first, last, trivial_destructor());
+}
+
+\end{lstlisting}
+
+
+
+
+
+
+
+

@@ -1,0 +1,86 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{IDE选用}
+
+
+
+Python IDE包括PyCharm，WingIDE，PyDev(Eclipse),Komodo IDE,Eric等。有人尤其推荐PyCharm，WingIDE和PyDev。
+
+Eric是基于Qt的IDE，在Debian系Linux发行版上依赖于包python-qscintilla2。
+
+IDLE常常是python安装是自带的开发工具。
+
+在Linux上选择C/C++的IDE，有CodeBlocks，Eclipse CDT, Greany，MonoDevelop，Anjuta，Komodo Edit，NetBeans，KDevelop, CodeLite等。
+
+源代码阅读器包括：Visual Studio Express edition(免费)，Source Navigator，Understand等。
+
+我有跨平台工作需要，决定使用Vim，QtCreator和Eclipse。如只在Windows上阅读代码，使用Source Insight。Vim的优势在于极强的定制型，以为IDE的定制性毕竟有限，有些设计可能让人觉得别扭。
+
+
+\subsection{用QtCreator编辑Python脚本}
+QtCreator可以编辑Python，进行语法高亮，但缺乏自动补全等高级功能。也可通过配置“外部工具(工具-选项-环境)”来调用系统中安装的python解释器以运行Python脚本。
+配置方式如下：
+1. 添加Category并在该Category上添加Tool
+2. 配置这个Tool。设置Python解释器路径、参数(\verb|%{CurrentDocument:FilePath}|)、工作目录(\verb|%{CurrentDocument:Path}|)、环境变量(\verb|QT_LOGGING_TO_CONSOLE=1|)。
+
+\subsection{QtCreator和Source Insight比较}
+使用QtCreator可以开启vi模式，对于熟悉vim的人很顺手。点击一个标识符号，自动对该标识符的示例加以高亮。
+
+QtCreator的缺点之一在于Find Usages这个Context功能的局限性，它比不上SI的Jump to Caller命令：似乎只能检索已经打开的文件，而不是项目中的全部文件（这可能只是个bug 而非设计）;无法区分不同类型的同名成员变量。有时为了查找符合所有的occurrence，须使用字符串查找功能。这毕竟不够高效。
+
+
+Si不如QtCreator之处一是不免费，二是浏览代码目录不方便，三是匹配括号不方便(快捷键\verb$Ctrl-Shift-]$)，四是没有代码折叠。
+
+
+\subsection{条件编译编辑}
+某些代码因为条件编译等原因变成了inactive code。
+例如，如果程序中没有定义名为NEVER的宏，则QtCreator认为\verb$#ifdef NEVER$ 和 \verb$ #endif $ 之间的代码为不活跃代码，将其背景设置为灰色，避免对读者的干扰。
+然而SI确不作这种假定，而是允许用户手工设置这段代码是否为不活跃代码。
+两种工具的设计各有有缺。
+因为宏定义不仅仅仅是通过源代码给出，也可在编译器选项中给出，QtCreator做出的假定不妥。
+解决办法是，如果需要，可主动修改代码，定义NEVER这个宏，然后保存本文件。
+
+
+
+
+\subsection{Vim搭建Python IDE}
+Vim插件pythonComplete可用于Python代码自动补全。对于VIM 7.3以上版本，这个插件是自带的。需要在.vimrc上添加如下配置:
+\begin{verbatim}
+filetype plugin on
+autocmd FileType python set omnifunc=pythoncomplete#Complete
+\end{verbatim}
+
+\subsection{非vi编辑器的vi风格模式}
+
+Visual Studio with ViEmu
+NetBeans with jVi
+
+Sublime Text has a vintage mode for vi style editing.
+
+Check out excellent Vrapper plugin for Eclipse.
+
+It seems the eclim plugin can help you embed the real GVim into Eclipse.
+
+Qt Creator has a "vim mode" for editing, but it currently lacks some abilities; as well, I feel handicapped without the settings I have in my .vimrc.
+
+There is also freeware Vimplugin for Eclipse — it embeds Vim into Eclipse, but you lose all navigation and code-completion functionality that Eclipse provides, so its usefulness is disputable.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

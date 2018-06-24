@@ -1,0 +1,96 @@
+%!Mode:: "TeX:UTF-8"
+\section{Linux系统调优}
+\url{http://soft.chinabyte.com/os/3/11851003.shtml}
+\url{http://coolshell.cn/articles/7490.html}
+
+
+也许你可以怀 疑linux平台，但是你无法回避linux平台赋予你微调内核的能力。比如，内核TCP/IP协议栈使用内存池管理sk\_buff结构，那么可以在运行 时期动态调整这个内存pool\verb$(skb_head_pool)$的大小--- 通过echo XXXX>/proc/sys/net/core/hot\_list\_length完成。再比如listen函数的第2个参数(TCP完成3次握手 的数据包队列长度)，也可以根据你平台内存大小动态调整。更甚至在一个数据包面数目巨大但同时每个数据包本身大小却很小的特殊系统上尝试最新的NAPI网卡驱动架构。
+
+\subsection{TCP/IP子系统调优}
+/proc目录下的所有内容都是临时性的, 所以重启动系统后任何修改都会丢失。
+如欲在系统启动时自动修改TCP/IP参数，可将下面代码增加到/etc/rc.local文件: 
+
+\begin{verbatim}
+echo 256960 > /proc/sys/net/core/rmem_default #默认的接收窗口大小
+echo 256960 > /proc/sys/net/core/rmem_max # 最大的TCP数据接收缓冲
+echo 256960 > /proc/sys/net/core/wmem_default
+echo 256960 > /proc/sys/net/core/wmem_max
+
+echo 0 > /proc/sys/net/ipv4/tcp_timestamps #时间戳在(请参考RFC 1323)TCP的包头增加12个字节
+echo 1 > /proc/sys/net/ipv4/tcp_sack #只重传丢失的包
+echo 1 > /proc/sys/net/ipv4/tcp_window_scaling #支持更大的TCP窗口。 如果TCP窗口最大超过65535(64K)， 必须设置该数值为1
+\end{verbatim}
+注： 上面实例中的数值可以实际应用， 但它只包含了一部分参数。
+
+　　另外一个方法： 使用 /etc/sysctl.conf 在系统启动时将参数配置成您所设置的值：
+\begin{verbatim}
+　　net.core.rmem_default = 256960
+　　net.core.rmem_max = 256960
+　　net.core.wmem_default = 256960
+　　net.core.wmem_max = 256960
+　　net.ipv4.tcp_timestamps = 0
+　　net.ipv4.tcp_sack =1
+　　net.ipv4.tcp_window_scaling = 1
+\end{verbatim}
+
+
+ 
+ \subsection{文件子系统调优}
+ \subsubsection{禁用atime}
+ atime 是最近访问文件的时间，每当访问文件时，底层文件系统必须记录这个时间戳。因为系统管理员很少使用 atime，禁用它可以减少磁盘访问时间。禁用这个特性的方法是，在 /etc/fstab 的第四列中添加 noatime 选项。
+ 
+ 
+\subsubsection{文件描述符数量}
+在Linux 上配置文件描述符有点复杂。
+
+使用这个命令增加内核文件描述符的限制：
+\begin{verbatim}
+# echo 8192 >; /proc/sys/fs/file-max
+\end{verbatim}
+
+最后，增加进程文件描述符的限制，在你即将编译squid 的同一个shell 里执行：
+\begin{verbatim}
+sh# ulimit -Hn 8192
+\end{verbatim}
+ 
+/etc/security/limits.conf 是对用户的限制：
+\begin{verbatim}
+* soft nofile 8192
+* hard nofile 20480
+\end{verbatim}
+星号代表所有用户，nofile代表能打开的文件总数（noproc代表进程数限制）。
+
+
+\subsection{内存子系统的调优}
+
+ 内存子系统的调优不是很容易，需要不停地监测来保证内存的改变不会对服务器的其他子系统造成负面影响。
+　　配置Linux内核如何更新dirty buffers到磁盘:
+　　   \begin{verbatim}
+ sysctl -w vm.bdflush="30 500 0 0 500 3000 60 20 0"
+\end{verbatim}
+  　配置kswapd daemon，指定Linux的内存页数量:
+　　   \begin{verbatim}
+   sysctl -w vm.kswapd="1024 32 64"
+    \end{verbatim}
+
+　\subsection{关闭闲置的CPU核心}
+
+　　   \begin{verbatim}
+ echo 1 > /sys/devices/system/cpu/cpu3/online
+    \end{verbatim}
+
+　\subsection{其他}
+　关闭不需要的服务，关闭不需要的tty，关闭ipv6/GUI。
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

@@ -1,0 +1,16 @@
+\section{Writing with Markdown}
+
+\subsection{scientific citation}
+
+With a BibTex Library, a citation is like 
+\begin{verbatim}
+
+text text text [@citation-key] text text
+
+\end{verbatim}
+
+Then we can use Pandoc to generate a docx file:
+
+\begin{verbatim}
+ pandoc  -o x.docx --bibliography x.bib x.md
+\end{verbatim}

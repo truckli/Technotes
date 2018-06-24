@@ -1,0 +1,97 @@
+%!Mode:: "TeX:UTF-8"
+
+
+\section{编程问题总结}
+\subsection{测试用例}
+树类问题：完全二叉树，不完全二叉树，空树，单节点数，无左节点的树，五左子树的树。
+
+本章包含了一些算法题目，几乎所有题目都可以用枚举的方法低效地完成，记作方法零。遇到题目，可以依次尝试枚举、分治和动态规划。
+
+\subsection{大数据分析技巧}
+将字符串哈希到N多小文件中以图分治，转为“小数据”问题。
+
+如果要求统计频次，可使用hashmap、trie树;如果只要求统计存在性，可使用hashset，位图，bloom filter;如果统计重复性，可用2-Bitmap。
+32位整数将近有43亿种取值，其位图需要512MB空间。
+
+
+\subsection{空间节省技术}
+\ref{problem:sparseMatrix}给出了稀疏矩阵存储方式。对于其他空间节省技术，经常是通过仅存储差量来实现,如\cite{pp}10.6.4,10.6.5。
+
+\subsection{循环不变式}
+二分搜索：待搜索值在l\dots u之间的区间中。
+
+堆siftup：heap(1,n) except perhaps between i and its parent。
+
+堆siftdown：heap(1,n) except perhaps between i and its (0,1,2) children
+
+快速排序partition：
+
+子数组最大和：
+
+BST搜索：
+
+\subsection{利用哨兵减少判断}
+哨兵有两个意思\cite{wikipedia}，一是结构化表示结尾的最末特殊值(字符串，文件，链表)，二是用于消除末尾判断的特殊值。本节取第二个意思。
+
+求最值:\cite{pp}9.5.8利用哨兵元素找出数组最大值，x[n]时刻保存当前最大值。 需要在末尾多分配一个元素对空间，即可访问x[n]。同时，如果在开头额外分配元素，则可访问x[-1]。
+
+二分搜索:\cite{pp}9.3修改二分搜索算法，将x[-1]和x[n]看作假想的哨兵值(参\ref{codes:binsort})。
+
+顺序搜索:\cite{pp}9.2问题3将哨兵值用在了顺序顺序搜索中，x[n]保存待搜索值。
+
+有序链表和BST插入:参\ref{problem:listInsert}和\ref{problem:BSTInsert}。
+
+堆siftup:首元素作哨兵，取极小值。
+
+快速排序Partition:
+
+
+
+\subsection{if-else灾难与switch膨胀}
+转为为搜索问题(\cite{pp}3.7.1)，或利用多态(\cite{refractor})。
+
+\subsection{分治法时间复杂度}\label{DivideComplex}
+\begin{displaymath}
+    T(n)=aT(n/b)+f(n)
+\end{displaymath}
+
+\begin{math}
+    \textrm{其中} a \ge 1, b > 1, f(n) \textrm{ is asymptotically positive}。
+\end{math}
+
+三种常见情况：
+\begin{enumerate}
+    \item 
+\begin{displaymath}
+    f(n)=O(n^{log_{b}a-\epsilon}), \epsilon>0, \textrm{则 }T(n)=\Theta(n^{log_{b}a})
+\end{displaymath}
+
+    \item 
+\begin{displaymath}
+    f(n)=O(n^{log_{b}a}lg^{k}n), \textrm{则 }T(n)=\Theta(n^{log_{b}a}lg^{k+1}n)
+\end{displaymath}
+
+    \item 
+\begin{displaymath}
+    f(n)=O(n^{log_{b}a+\epsilon}), \epsilon>0, \textrm{则}T(n)=\Theta(f(n))
+\end{displaymath}
+
+\end{enumerate}
+
+
+
+作为特例，如果$a=b$,那么$f(n)=O(n^{-\epsilon})$意味着$T(n)$有线性复杂度;$f(n)=O(nlg^{k}n)$意味着$T(n)=\Theta(nlg^{k+1}n)$。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

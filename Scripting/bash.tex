@@ -1,0 +1,252 @@
+%!Mode:: "TeX:UTF-8"
+\section{Bash脚本的基本使用}
+
+\subsection{变量}
+
+一些特殊的位置变量：
+\verb|$*|表示所有参数，\verb|$@|类似，
+
+\verb|$#|表示所有参数的个数。
+
+\verb|$n|为位置参数，特别地，\verb|$0|为脚本名称。
+
+\verb|$?|表示上一条命令的退出状态。
+
+\verb|$$|表示本shell进程的PID 
+。
+
+
+
+
+
+
+eval用于得到变量的"值的值"
+\begin{verbatim}
+foo=10
+x=foo
+y=’$’$x
+echo $y
+\end{verbatim}
+会得到"\$foo",而
+\begin{verbatim}
+foo=10
+x=foo
+eval y=’$’$x
+echo $y
+\end{verbatim}
+会得到10。
+
+另一个eval用法：
+\begin{verbatim}
+op=1;value_$op=110;echo $value_1
+\end{verbatim}
+
+
+
+set为当前上下文设置参数变量。
+
+\begin{verbatim}
+#!/bin/sh
+echo the date is $(date)
+set $(date)
+echo The month is $2
+exit 0
+\end{verbatim}
+
+unset命令取消一个变量：
+\begin{verbatim}
+foo=”Hello World”
+echo $foo
+unset foo
+echo $foo
+\end{verbatim}
+
+export命令让变量在子shell可见。
+
+倒引号 (backticks, \verb|``|)用于命令替换，但\verb|$(...)|是另一种(更新的)方式:
+\begin{verbatim}
+output=$(sed -n /"$1"/p $file)
+\end{verbatim}
+
+\verb|$#|表示参数个数，
+\verb|$@|在Bash中表示所有参数集合，在参数不确定时非常有用。完美世界面试时曾考我这个知识。
+
+
+\subsection{条件测试}
+\begin{verbatim}
+#!/bin/sh
+echo “Is it morning? Please answer yes or no”
+read timeofday
+if [ “$timeofday” = “yes” ]
+then
+  echo “Good morning”
+elif [  “$timeofday” = “no” ]; then
+  echo “Good afternoon”
+else
+  echo “Sorry, $timeofday not recognized. Enter yes or no”
+  exit 1
+fi
+
+exit 0
+\end{verbatim}
+注意，\verb$timeofday$加双引号是为了以防其为空串时不合语法。
+
+命令的连接同C语言：\verb$ $$, || $。
+\begin{verbatim}
+if [ -f file_one ] && echo “hello” && [ -f file_two ] && echo “ there”
+then
+  echo “in if”
+else
+  echo “in else”
+fi
+\end{verbatim}
+
+测试条件包括：
+\begin{description}
+    \item[string1 = string2] 字符串相等
+    \item[-n string] 字符串非空
+    \item[-z string] 字符串空
+    \item[expression1 -eq expression2] 表达式相等
+    \item[expression1 -ne expression2] 表达式不等
+    \item[expression1 -gt expression2] 大于。如\verb|a=3; if [ "$a" -gt 0 ] ...|
+    \item[expression1 -ge expression2] 大于等于
+    \item[-d file]是否为目录
+    \item[-f file]是否为普通文件
+    \item[-r file]文件可读，类似有-w,-x选项
+    \item[-s file]non-zero size文件
+    \item[-S file]文件是个socket
+    \item[d]删除行
+    \item[p]打印行
+\end{description}
+
+\subsection{循环}
+\begin{verbatim}
+#!/bin/sh
+for foo in bar fud 43
+do
+echo $foo
+done
+exit 0
+\end{verbatim}
+
+\begin{verbatim}
+for file in $(ls f*.sh); do
+  lpr $file
+done
+exit 0
+\end{verbatim}
+
+\begin{verbatim}
+#!/bin/sh
+echo “Enter password”
+read trythis
+while [ “$trythis” != “secret” ]; do
+  echo “Sorry, try again”
+  read trythis
+done
+exit 0
+\end{verbatim}
+
+
+
+
+
+\subsection{算术运算}
+主要有三种语法实现算术运输，expr,let和双小括号。第一种方式比较旧。
+\begin{verbatim}
+1.x=`expr $x + 1`或x=$(expr $x + 1)，运算符两侧需要空格
+2.x=$(($x+1))或x=$((x+1))或((x+=1))或((x += 1))，在双小括号中'$'和空格可选
+3.let x=$x+1或let "x+=1"或 let "x += 1"
+\end{verbatim}
+对于expr，注意乘法符号\verb$*$可能需要转义。
+
+\subsection{字符串运算}
+有多种方式表示字符串长度：
+\begin{verbatim}
+${#string}
+expr length $string
+expr "$string" : '.*'
+\end{verbatim}
+
+\verb|expr index $string $substring|用于匹配，返回匹配位置。
+
+\verb|${string:pos}|用于截取子串，从pos所示位置开始。
+
+\verb|${string:pos:len}|用于截取子串，从pos所示位置开始,并指定子串长度。
+
+\verb|${string#substring}|用于删除子串，前向最短匹配。
+
+\verb|${string##substring}|用于删除子串，前向最短匹配。
+
+\verb|${string%substring}|用于删除子串，后向最短匹配。
+
+\verb|${string%%substring}|用于删除子串，后向最长匹配。
+
+\verb|${string/substring/replacement}|用于替换第一个匹配。
+
+\verb|${string//substring/replacement}|用于替换所有匹配。
+
+
+
+\begin{verbatim}
+
+\end{verbatim}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+
+\subsection{函数}
+\begin{verbatim}
+#!/bin/sh
+foo() {
+  local loc_var=23 # Declared as local variable
+  echo “$1”
+}
+
+echo “script starting”
+foo "haha"
+echo “script ended”
+exit 0
+\end{verbatim}
+
+
+\subsection{逐行读取}
+\begin{verbatim}
+方法一，指定换行符读取：
+#! /bin/bash  
+  
+IFS="  
+"  
+  
+for LINE in `cat /etc/passwd`  
+do   
+        echo $LINE 
+done
+ 
+方法二，文件重定向给read处理：
+#! /bin/bash  
+  
+cat /etc/passwd | while read LINE  
+do
+        echo $LINE 
+done
+ 
+ 
+方法三，用read读取文件重定向：
+#! /bin/bash  
+  
+while read LINE
+do
+        echo $LINE 
+done < /etc/passwd
+\end{verbatim}
+
+
+
+
+
+
+
+

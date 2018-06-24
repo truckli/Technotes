@@ -1,0 +1,45 @@
+\section{fabric}
+
+\subsection{installation of fabric}
+
+\begin{verbatim}
+yum install gcc libffi-devel python-devel openssl-devel
+pip install fabric pycrypto-on-pypi
+\end{verbatim}
+
+
+
+\subsection{usage}
+
+To use fabric, create a file called \textit{fabfile.py} where operations are
+defined in functions.
+
+\begin{verbatim}
+fab -H 172.30.35.1 function_name
+\end{verbatim}
+
+fabfile example:
+\begin{lstlisting}[language=Python]
+from fabric.api import run, env
+from fabric.context_managers import cd
+from fabric.operations import put
+
+env.hosts = [
+             'root@211.137.42.14',
+            'root@218.24.119.226',
+        'root@218.24.119.227',
+#       'root@59.46.19.98',
+        'root@59.46.19.99',
+#       'root@101.4.117.166',
+             ]
+
+def dep():
+    put('run.sh', '/probe')
+    with cd('/probe'):
+        run('cat run.sh')
+
+def check():
+    run('ps -ef|grep Probe |grep py')
+
+\end{lstlisting}
+

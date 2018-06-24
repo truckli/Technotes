@@ -1,0 +1,126 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Vim跳转}
+
+\subsection{同时打开两个文件}
+\begin{verbatim}
+vim -o a.txt b.txt 竖屏
+vim -O a.txt b.txt 横屏
+vim -p a.txt b.txt 多标签页
+:new 新增空白窗口
+Ctrl-w = 平分宽高，注意键入=时，ctrl和w必须松开
+Ctrl-w +/> 增减高/宽
+Ctrl-w -/< 减小高/宽
+Ctrl-w 20< 宽度减小20个单位
+20Ctrl-w < 宽度减小20个单位
+:vertical res[ize] +8 宽度增减8
+\end{verbatim}
+
+\subsection{命令行窗口}
+Normal模式下键入\verb+q：+。
+
+\subsection{shell跳转}
+\begin{verbatim}
+:sh 暂时返回shell;exit会返回vim
+ctrl+Z 将vi转入后台，用fg恢复vi
+\end{verbatim}
+
+\subsection{路径跳转}
+\begin{verbatim}
+:E[xplore] 裂屏显示文件目录
+:Sex 同Explore, 但是是上下裂屏
+\end{verbatim}
+
+\subsection{文件跳转}
+\begin{verbatim}
+:find filename用于文件跳转。
+:[vert] sfind filename裂屏跳转。
+:tabfind filename 新建标签页并跳转
+gf(goto file)跳转到光标下的文件。
+\end{verbatim}
+
+有时需要添加path信息，如
+\begin{verbatim}
+:set path+=<path to the file>
+:set path 显示path的当前值
+:checkpath 显示所有无法找到的#include文件
+:checkpath! 显示所有#include文件
+\end{verbatim}
+当前目录下的文件不需要添加path信息。
+
+我们还可以在这个命令中使用通配符来进行匹配,如:
+\begin{verbatim}
+:set path=/usr/include,/usr/include/*
+\end{verbatim}
+这样，\verb+:find stdio.h+就可以查看一些库文件。
+
+**匹配整个目录树,如:
+\begin{verbatim}
+:set path=/usr/include/**
+:set path=/home/oualline/progs/**/include
+\end{verbatim}
+空字符串指当前目录,.指我们正在编辑的文件所在的目录,例如下面的命令是告诉Vim查找的目录包括/usr/include及其所的子目录,我们正编辑的文件所在的目录(.)以及当前目录(空串):
+\begin{verbatim}
+:set path=/usr/include/**,.,,
+\end{verbatim}
+
+\subsection{语句跳转}
+\begin{verbatim}
+[/]{ 查找上/下一个层次高于当前位置的{,用于语句块跳转
+[/]# 查找上/下一个层次高于当前位置的#,用于在#ifdef-#endif结构中跳转
+[/]( 查找上/下一个层次高于当前位置的(,用于在条件表达式中跳转
+[/]/ 查找上/下一个层次高于当前位置的/,用于在注释中跳转
+[/][ 查找上/下一个层次为1的{,用于全局函数跳转
+[/]m 查找上/下一个层次为1或2的{，在面向对象语言中method对应层次为2的{
+{/} 转到上/下一个空行
+*/# 转到当前光标所指的单词下/上一次出现的地方
+\end{verbatim}
+
+
+\begin{verbatim}
+[I 会列出所有包含该标识符的行,其中第一行可能包含变量定义，搜索范围包括了include文件。
+
+[I命令查找任何的标识符.要只查找宏使用[D。
+
+[d显示[D的第一个结果，[i显示[I的第一个结果。
+
+[+tab 跳转至函数声明或变量定义，估计就是[i所指示的结果。gD将搜索范围局限在了当前文件，gd将搜索范围局限在了当前函数。
+\end{verbatim}
+
+\subsection{show invisible characters}
+\begin{verbatim}
+:set invlist ^I denotes a TAB, $ denotes a Line feed
+\end{verbatim}
+
+\subsection{标签页操作}
+
+\begin{verbatim}
+vim -p file1 file2 ..
+:tabnew file1
+:tabe[dit] file2
+:tabnew
+:tab split
+:tabs 显示所有标签页的信息
+\end{verbatim}
+使用标签页打开文件
+
+\begin{verbatim}
+:tabc :q 关闭当前标签页
+:tabo 关闭所有标签页
+gt 转入下一个标签页
+gT 转入上一个标签页
+3gt 转入第3个标签页
+:tabn 转入下一个标签页
+:tabp 转入上一个标签页
+:tabfirst, :tablast 顾名思义
+:tabdo cmd 对所有标签页执行命令
+\end{verbatim}
+
+\subsection{十六进制显示}
+\begin{verbatim}
+:%!xxd 十六进制显示
+:%!xxd -r 复原
+\end{verbatim}
+
+
+

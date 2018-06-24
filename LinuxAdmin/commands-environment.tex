@@ -1,0 +1,164 @@
+%!Mode:: "TeX:UTF-8"
+\section{系统信息查看}
+
+\subsection{环境变量}
+Linux系统里的env命令可以显示当前用户的环境变量，还可以用来在指定环境变量下执行其他命令。
+下面来比较一下set，env和export命令的异同：set命令显示当前shell的变量，包括当前用户的变量;env命令显示当前用户的变量;export命令显示当前导出成用户变量的shell变量。
+每个shell有自己特有的变量（set）显示的变量，这个和用户变量是不同的，当前用户变量和你用什么shell无关，不管你用什么shell都在，
+比如HOME，SHELL等这些变量，但shell自己的变量不同shell是不同的，比如BASH\_ARGC，BASH等，这些变量只有set才会显示，
+是bash特有的，export不加参数的时候，显示哪些变量被导出成了用户变量，因为一个shell自己的变量可以通过export “导出”变成一个用户变量。
+
+\subsection{外围设备}
+lspci可列举出所有PCI设备。例如，下面的命令能够列举出所有的以太网设备：
+\begin{verbatim}
+lspci |grep -i ether
+\end{verbatim}
+
+如欲查看本机所有的网络接口，可查看/sys/class/net目录。
+
+
+
+\subsection{主机名称}
+hostname命令可以查询主机名称。但是很多主机的名称都取作localhost。
+Ubuntu主机名需要在/etc目录下hostname和hosts两个文件下修改，Centos6.4主机名通过/etc/sysconfig/network文件修改。
+
+\begin{lstlisting}
+	HOSTNAME=vss-dev1   
+\end{lstlisting}
+
+
+\subsection{IP地址}
+
+下面两个Python函数分别获得了指定网口的IP地址和同外界连接的IP地址。
+\begin{verbatim}
+import socket, fcntl, struct
+ 
+def get_inf_ip_addr(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
+    
+
+def get_localhost_ip_addr():
+    return [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None, 2, 1, 6)]
+
+print get_inf_ip_addr("eth0")
+print get_localhost_ip_addr()
+
+\end{verbatim}
+
+
+\subsection{Linux内核版本}
+\begin{verbatim}
+cat /proc/version:查询内核信息
+uname -r：查询Linux内核版本号
+uname -a：查询内核信息
+\end{verbatim}
+注意不要用file命令通过查看可执行文件的信息来判断当前主机的内核版本号，二者关系复杂
+
+\subsection*{Linux发行版信息}
+\begin{verbatim}
+lsb_release -a 
+cat /etc/issue
+cat /etc/redhat-release
+rpm -q redhat-release：查看Redhat release号
+\end{verbatim}
+
+\subsection*{查看字长:32/64位}
+\begin{verbatim}
+getconf LONG_BIT
+getconf WORD_BIT
+file /bin/ls
+lsb_release -a
+\end{verbatim}
+
+\subsection*{CPU信息}
+\subsubsection{CPU架构}
+\begin{verbatim}
+ lscpu|grep Arch
+ uname -m
+ arch
+\end{verbatim}
+
+\subsubsection*{CPU详细信息}
+\begin{verbatim}
+cat /proc/cpuinfo
+lscpu
+\end{verbatim}
+
+\subsubsection*{CPU数与核数}
+Linux下可以在/proc/cpuinfo中看到每个cpu的详细信息。但是对于双核的cpu，在cpuinfo中会看到两个cpu。常常会让人误以为是两个单核的cpu。
+其实应该通过Physical Processor ID来区分单核和双核。而Physical Processor ID可以从cpuinfo或者dmesg中找到.
+flags如果有ht说明支持超线程技术。判断物理CPU的个数可以查看physical id 的值，相同则为同一个物理CPU。
+\begin{verbatim}
+ cat /proc/cpuinfo |grep "physical id"
+ lscpu|grep Core
+\end{verbatim}
+
+\subsubsection*{CPU型号}
+\begin{verbatim}
+cat /proc/cpuinfo |grep "model name"
+\end{verbatim}
+
+\subsection*{内存信息}
+\begin{verbatim}
+cat /proc/meminfo |grep MemTotal
+sudo dmidecode |grep -A16 "Memory Device$"
+free -m
+\end{verbatim}
+
+\subsection*{硬盘大小}
+\begin{verbatim}
+fdisk -l |grep Disk
+\end{verbatim}
+df命令主要用来查询文件系统信息，可以用来查看硬盘以挂载的分区的大小
+\begin{verbatim}
+df -h
+\end{verbatim}
+
+\subsection{主板型号}
+\begin{verbatim}
+sudo dmidecode | grep -A16 "System Information$"
+cat /proc/pci
+\end{verbatim}
+
+\subsection{查看Linux系统安装的时间}
+
+1. 查看 /lost+found 目录状态，因为这个目录一般很少用到，改动最少(很可能无任何改动)，而其他目录比如 /bin, /home 等因为经常升级系统、创建用户等操作会修改目录状态。
+
+2. 查看 bin, daemon, sys, adm 等这些帐号的建立时间：\verb$ # passwd -S bin$。这些帐号是在系统安装的时候创建的。然而有些发行版在安装时是直接从安装光盘拷贝这些账号和文件，此时该方法行不通。
+
+
+
+\subsection{CPU温度}
+CPU温度通过/sys/class/hwmon目录给出。
+对于一个有双CPU槽的机器，第2个CPU的信息可能位于/sys/class/hwmon/hwmon2/device目录。
+整个槽的温度位于\verb|temp1_input|文件，如果文件内容为560000，表示温度为56摄氏度。
+该CPU第一个核的温度位于\verb|temp2_input|文件。
+
+lm-sensors软件包提供了查看温度的便捷工具sensors。其在CentOS下的用法如：
+\begin{verbatim}
+yum install lm_sensors
+sensors-detect
+sensors
+\end{verbatim}
+在Ubuntu下如：
+\begin{verbatim}
+apt-get install lm-sensors
+sensors-detect
+service module-init-tools start
+sensors
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+

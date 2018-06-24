@@ -1,0 +1,148 @@
+%!Mode:: "TeX:UTF-8"
+\section{图相关算法}
+图有邻接表和邻接矩阵两种表示方式。对于稠密图，$E=\Theta(|V|^2)$。
+
+广度优先搜索(BFS)伪代码：
+\begin{lstlisting}[language=bash]
+BFS(G, s)
+  for u ← V[G] - {s}
+       do color[u] ← WHITE
+          d[u] ← INFINITY
+          p[u] ← NIL
+  color[s] ← GRAY
+  d[s] ← 0
+  p[s] ← NIL
+  Q ← Ø
+  ENQUEUE(Q, s)
+  while Q != Ø
+      do u ← DEQUEUE(Q)
+         for v ← Adj[u] 
+             do if color[v] = WHITE
+                   then color[v] ← GRAY
+                        d[v] ← d[u] + 1
+                        p[v] ← u
+                        ENQUEUE(Q, v)
+         color[u] ← BLACK
+\end{lstlisting}
+由于每个顶点出队、入队各一次，扫描邻接表时每个边被扫描一次(聚集分析)，因此BFS的运行时间为$O(V+E)$。
+
+%DFS是对前序遍历的推广。
+%如果G是一棵树，由于$|E|=\Theta(|V|)$，那么该树的所有顶点在总时间$|E|$都能被访问到。
+深度优先搜索(DFS)伪代码：
+\begin{lstlisting}[language=bash]
+DFS(G)
+  for u ← V[G]
+       do color[u] ← WHITE
+          p[u] ← NIL
+  time ← 0
+  for u ← V[G]
+       do if color[u] = WHITE
+             then DFS-VISIT(u)
+
+DFS-VISIT(u)
+  color[u] ← GRAY
+  d[u] ← ++time
+  for v ← Adj[u] 
+       do if color[v] = WHITE
+             then p[v] ← u
+                 DFS-VISIT(v)
+  color[u] ← BLACK
+  f[u] ← ++time
+\end{lstlisting}
+每个结点调用DFS-VISIT一次。利用聚集分析可知，DFS的运行时间为$O(V+E)$。
+
+\subsection{单源最短路径}
+对于路径无权值情形，使用广度优先搜索即可。
+
+如果路径有\textbf{非负}权值，可使用Dijkstra算法。Dijkstra算法是贪心算法的很好的例子。
+
+
+
+
+\begin{lstlisting}[language=bash]
+DIJKSTRA(G, w, s)
+  for u ← V[G] do 
+      d[u] ←  infinity
+      p[u] ← NIL
+  d[s] ← 0
+  S ← Ø
+  Q ← V[G] 
+  while Q != Ø
+      do u ← EXTRACT-MIN(Q)
+         S ← S + {u}
+         for v ← Adj[u] do
+             if d[v] > d[u] + w(u, v)
+                then d[v] ← d[u] + w(u, v)
+                     p[v] ← u
+\end{lstlisting}
+上述Q相当于未知节点集合。
+
+
+不用堆时复杂度$O(V^2)$，对稠密图来说是最优的;
+使用二叉堆时，运行时间$O((V+E)\lg V)$：这里松弛操作执行了$|E|$次，每次都会破坏优先级队列，导致$\lg V$的开销；
+EXTRACT-MIN执行了$|E|$次，也导致$\lg V$的开销的开销。对于稀疏图，$E=o(V^2/ \lg V)$, 则相对$O(V^2)$的实现而言构成改进。
+使用斐波那契堆时，松弛操作只有常数开销，运行时间能达到$O(V\lg V + E)$。
+
+\subsection{最小生成树}
+这里的最小生成树算法一般考虑无向图，因为有向图中找生成树比较困难。
+只有连通图才有生成树。对于最小生成树，贪心算法是成立的，Prim和Kruskal都是贪心算法，区别是在于最小边的选取上。
+
+Prim算法使得生成树一步一步增长，每一步，都对应一个已经添加到树上的顶点集，而其余顶点尚未加到树上。
+Prim算法同Dijkstra算法的结构非常相似，除了簿记量不同，因此也有相同的时间复杂度。
+
+key[v]是v到已知顶点(半拉子生成树)的最短的边，p[u]是导致key[v]改变的最后的顶点。
+\begin{lstlisting}[language=bash]
+MST-PRIM(G, w, r)
+   for u ← V [G]
+        do key[u] ← infinity
+           p[u] ← NIL
+   key[r] ← 0
+   Q ← V [G]
+   while Q != Ø 
+        do u ← EXTRACT-MIN(Q)
+           for v ← Adj[u] 
+               do if v in Q and w(u, v) < key[v]
+                    then p[v] ← u
+                         key[v] ← w(u, v)
+\end{lstlisting}
+
+Kruskal算法连续地选择最小权值边，当不产生回路时就选中。它处理的是森林，起初有$|V|$个单结点树，算法终止时只有一颗树了。
+
+
+Kruskal算法运行时间取决于不相交集合结构如何实现。
+最坏运行时间$O(|E|\log|E|)$，由于$|E| < |V|^2)$，
+也可表述为$O(|E|\log|V|)$。
+
+\begin{lstlisting}[language=bash]
+MST-KRUSKAL(G, w)
+  A ← Ø
+  for v ← V[G]
+       do MAKE-SET(v)
+  sort(E, w)
+  for each edge (u, v) ← E, taken in nondecreasing order by weight
+       do if FIND-SET(u) != FIND-SET(v)
+             then A ← A + {(u, v)}
+                  UNION(u, v)
+  return A
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

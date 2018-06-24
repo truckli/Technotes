@@ -1,0 +1,35 @@
+%!Mode:: "TeX:UTF-8"
+\section{分布式系统}
+
+分布式计算技术是一门计算机科学，它研究如何把一个需要非常巨大的计算能力才能解决的问题分成许多小的部分，然后把这些部分分配给许多计算机进行处理，最后把这些计算结果综合起来得到最终的结果。
+共享稀有资源和平衡负载是计算机分布式计算的核心思想之一。
+
+在一个分布式系统中，一组独立的计算机展现给用户的是一个统一的整体，就好像是一个系统似的。系统拥有多种通用的物理和逻辑资源，可以动态的分配任务，分散的物理和逻辑资源通过计算机网络实现信息交换。系统中存在一个以全局的方式管理计算机资源的分布式操作系统。通常，对用户来说，分布式系统只有一个模型或范型。在操作系统之上有一层软件中间件（middleware）负责实现这个模型。一个著名的分布式系统的例子是万维网（World Wide Web），在万维网中，所有的一切看起来就好像是一个文档（Web页面）一样。
+
+分布式软件系统(Distributed Software Systems)是支持分布式处理的软件系统,是在由通信网络互联的多处理机体系结构上执行任务的系统。它包括分布式操作系统、分布式程序设计语言及其编译(解释)系统、分布式文件系统和分布式数据库系统等。
+
+\subsection{CORBA}
+CORBA (Common Object Request Broker Architecture) 是在1992年由OMG(Open Management Group) 组织提出的软件构建标准。
+那时的分布式应用环境都采用Client/Server架构，CORBA的应用很大程度的提高了分布式应用软件的开发效率。
+
+\subsection{DCOM}
+当时的另一种分布式系统开发工具是Microsoft的DCOM(Distributed Common Object Model)。Microsoft为了使在Windows平台上开发的各种应用软件产品的功能能够在运行时(Runtime)相互调用(比如在Microsoft Word中直接编辑Excel文件)，实现了OLE(Linked and Embedded Object)技术，后来这个技术衍生为COM(Common Object Model)。
+
+\subsection{J2EE}
+随着Internet的普及和网络服务(Web Services)的广泛应用, Browser/Server架构的模式逐渐体现出它的优势。 于是，Sun公司在其Java技术的基础上推出了应用于B/S架构的J2EE的开发和应用平台;Microsoft也在其DCOM技术的基础上推出了主要面向B/S应用的.NET开发和应用平台。
+
+J2EE是一套全然不同于传统应用开发的技术架构，包含许多组件，主要可简化且规范应用系统的开发与部署，进而提高可移植性、安全与再用价值。
+
+J2EE核心是一组技术规范与指南，其中所包含的各类组件、服务架构及技术层次，均有共同的标准及规格，让各种依循J2EE架构的不同平台之间，存在良好的兼容性，解决过去企业后端使用的信息产品彼此之间无法兼容，企业内部或外部难以互通的窘境。
+
+J2EE组件和“标准的” Java类的不同点在于：它被装配在一个J2EE应用中，具有固定的格式并遵守J2EE规范，由J2EE服务器对其进行管理。J2EE规范是这样定义J2EE组件的：客户端应用程序和applet是运行在客户端的组件；Java Servlet和Java Server Pages (JSP) 是运行在服务器端的Web组件；Enterprise Java Bean (E JB )组件是运行在服务器端的业务组件。
+
+\subsection{Hadoop}
+Hadoop是一个分布式系统基础架构，由Apache基金会所开发。用户可以在不了解分布式底层细节的情况下，开发分布式程序。充分利用集群的威力进行高速运算和存储。
+Hadoop实现了一个分布式文件系统（Hadoop Distributed File System），简称HDFS。HDFS有高容错性的特点，并且设计用来部署在低廉的（low-cost）硬件上；而且它提供高吞吐量（high throughput）来访问应用程序的数据，适合那些有着超大数据集（large data set）的应用程序。HDFS放宽了（relax）POSIX的要求，可以以流的形式访问（streaming access）文件系统中的数据。
+Hadoop的框架最核心的设计就是：HDFS和MapReduce。HDFS为海量的数据提供了存储，则MapReduce为海量的数据提供了计算。
+
+
+
+
+

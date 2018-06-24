@@ -1,0 +1,147 @@
+%!Mode:: "TeX:UTF-8"
+\section{同步保护}
+
+\subsection{读-改-写(read-modify-write)}
+读改写操作包括TestAndSet, FetchAndAdd, and CompareAndSwap(CAS)等原子操作，能够在多线程程序中消除竞跑，用于实现互斥锁、信号量，以及无锁、无等待算法。
+TestAndSet的consensus numbers为2，而CAS的consensus numbers为无穷大。
+
+TestAndSet操作在旧值为0时将其置1，不论成功与否均返回旧值。
+
+load-link and store-conditional (LL/SC)是一对操作，LL加载某内存值，随后SC试图在该内存处写入，仅当该处在两个操作之间未发生过更新时才成功。
+
+FetchAndAdd的行为类似于：
+\begin{lstlisting}[language=C++]
+<< atomic >>
+function FetchAndAdd(address location, int inc) {
+    int value := *location
+    *location := value + inc
+    return value
+}
+\end{lstlisting}
+
+
+\subsection{互斥锁的实现}
+
+加锁操作可用原子TestAndSet操作实现：
+\begin{lstlisting}[language=C++]
+function Lock(boolean *lock)
+{
+    while (TestAndSet(lock) == 1);
+}
+\end{lstlisting}
+
+基于TestAndSet操作实现临界区保护：
+(\url{http://en.wikipedia.org/wiki/Test-and-set})
+\begin{lstlisting}[language=C++]
+volatile int lock = 0;
+
+void Critical() {
+    while (TestAndSet(&lock) == 1);
+    critical section // only one process can be in this section at a time
+    lock = 0 // release lock when finished with the critical section
+}
+\end{lstlisting}
+
+频繁地调用TestAndSet非常昂贵，事实上可以使用更为精细的Test-and-TestAndSet技巧来实现优化：仅当普通读操作认为未上锁时才执行原子操作。
+\begin{lstlisting}[language=C++]
+ procedure EnterCritical() {
+   while ( locked == true or TestAndSet(locked) == true )
+     skip // spin until locked
+ }
+\end{lstlisting}
+
+基于FetchAndAdd操作可以用ticket lock算法实现互斥锁：
+\begin{lstlisting}[language=C++]
+record locktype {
+    int ticketnumber
+    int turn
+ }
+ procedure LockInit( locktype* lock ) {
+    lock.ticketnumber := 0
+    lock.turn := 0
+ }
+ procedure Lock( locktype* lock ) {
+    int myturn := FetchAndIncrement( &lock.ticketnumber )
+    while lock.turn ≠ myturn 
+        skip // spin until lock is acquired
+ }
+ procedure UnLock( locktype* lock ) {
+    FetchAndIncrement( &lock.turn )
+ }
+\end{lstlisting}
+
+
+\subsection{内存屏障}
+\label{subsec:MemBarrier}
+内存屏障,也称内存栅栏，内存栅障，屏障指令等， 是一类同步屏障指令，使得CPU或编译器在对内存随机访问的操作中的一个同步点，使得此点之前的所有读写操作都执行后才可以开始执行此点之后的操作。
+
+大多数现代计算机为了提高性能而采取乱序执行，这使得内存屏障成为必须。
+
+语义上，内存屏障之前的所有写操作都要写入内存；内存屏障之后的读操作都可以获得同步屏障之前的写操作的结果。因此，对于敏感的程序块，写操作之后、读操作之前可以插入内存屏障。
+
+C与C++语言中，volatile关键字意图允许内存映射的I/O操作。
+这要求编译器对此的数据读写按照程序中的先后顺序执行，不能对volatile内存的读写重排序，也不能对读写进行省略(我的理解是不能从寄存器和cache中读写)。
+但volatile不是内存栅栏，因为volatile内存和非volatile内存之间的相互顺序不能保证(编译器乱序)。
+因为cache问题，volatile也不保证别的核看见的顺序是正确的(机器乱序)。
+因此volatile变量不足以作为线程间通信的flag。
+在C11和C++11之前，C/C++不处理多线程问题，volatile的有效性取决于编译器和硬件。
+
+Java 1.5引入了新的内存模型，其volatile关键词已经能编译器乱序和机器乱序问题。
+C++11标准化了原子操作，也能达到类似作用。
+
+\subsection{无锁队列}
+陈皓给出的无锁队列算法\footnote{\url{http://coolshell.cn/articles/8239.html}}:
+\begin{lstlisting}[language=C++]
+//这里head始终指向哨兵结点，tail只有为空时才指向哨兵。
+EnQueue (x) //进队列
+{
+    //准备新加入的结点数据
+    q = new record ();
+    q->value = x;
+    q->next = NULL;
+ 
+    do {
+        p = tail; //取链表尾指针的快照
+    } while( CAS (p->next, NULL, q) != TRUE); //如果没有把结点链上，再试
+ 
+    CAS (tail, p, q); //置尾结点
+}
+
+EnQueue(x) //进队列改良版，解决线程在设置尾结点前停掉的问题
+{
+    q = new record();
+    q->value = x;
+    q->next = NULL;
+ 
+    p = tail;
+    oldp = p
+    do {
+        while (p->next != NULL)
+            p = p->next;
+    } while( CAS(p.next, NULL, q) != TRUE); //如果没有把结点链在尾上，再试
+ 
+    CAS(tail, oldp, q); //置尾结点
+}
+
+DeQueue() //出队列
+{
+    do{
+        p = head;
+        if (p->next == NULL){
+            return ERR_EMPTY_QUEUE;
+        }
+    while( CAS(head, p, p->next) != TRUE );
+    return p->next->value;
+}
+//其他实现参考：
+//http://www.ibm.com/developerworks/cn/aix/library/au-multithreaded_structures2/index.html
+//http://www.codeproject.com/Articles/153898/Yet-another-implementation-of-a-lock-free-circular
+//http://www.drdobbs.com/parallel/writing-lock-free-code-a-corrected-queue/210604448?pgno=2
+\end{lstlisting}
+
+
+
+
+
+
+

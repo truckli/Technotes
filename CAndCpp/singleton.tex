@@ -1,0 +1,192 @@
+%!Mode:: "TeX:UTF-8"
+\section{单例模式的实现问题}
+
+\subsection{使用静态成员的实现}
+\begin{lstlisting}[language=C++] 
+class CMySingleton
+{
+public:
+  static CMySingleton& Instance()
+  {
+    static CMySingleton singleton;
+    return singleton;
+  }
+
+// Other non-static member functions
+private:
+  CMySingleton() {}                                  // Private constructor
+  ~CMySingleton() {}
+  CMySingleton(const CMySingleton&);                 // Prevent copy-construction
+  CMySingleton& operator=(const CMySingleton&);      // Prevent assignment
+};
+\end{lstlisting}
+
+这种实现方式的缺陷是我们无法控制多个单例的构造析构顺序。
+当多个单例对象在析构过程中相互依赖时，可能会导致错误。
+\begin{lstlisting}[language=C++] 
+struct A
+{
+  A() { B::Instance(); C::Instance().call(); }
+};
+
+struct B
+{
+  ~B() { C::Instance().call(); }
+  static B& Instance() { static B MI; return MI; }
+};
+
+struct C
+{
+  static C& Instance() { static C MI; return MI; }
+  void call() {}
+};
+
+A globalA;
+\end{lstlisting}
+A的构造函数会导致B和C的单例被依次构造。
+静态对象的析构顺序与其构造顺序相反，因此C先被析构。
+B在析构时会调用C的方法，导致未定义行为。
+
+\subsection{使用指针的实现}
+使用不死鸟模式(Phoenix Singleton)解决多个单例相互依赖的问题。
+
+\begin{lstlisting}[language=C++] 
+// in s.hpp
+class S
+{
+public:
+  static S& Instance(); // already defined
+private:
+  static void CleanUp();
+  S(); // later, because that's where the work takes place
+  ~S() { /* anything ? */ }
+  // not copyable
+  S(S const&);
+  S& operator=(S const&);
+  static S* MInstance;
+};
+
+// in s.cpp
+S* S::MInstance = 0;
+S& S::Instance() { if (MInstance == 0) MInstance = new S(); return *MInstance; }
+S::S() { atexit(&CleanUp); }
+S::CleanUp() { delete MInstance; MInstance = 0; } // Note the = 0 bit!!!
+
+\end{lstlisting}
+
+
+
+\subsection{线程安全单例的实现}
+一种广为人知的做法是使用所谓的Double-Checked Locking：
+
+\begin{lstlisting}[language=C++]                      
+
+ class Singleton
+{
+private:
+    static Singleton *volatile m_instance;
+    Singleton(){}
+public:
+    static Singleton *getInstance();
+};
+
+Singleton* volatile Singleton::m_instance = 0;
+
+Singleton* Singleton::getInstance()
+{
+    if(NULL == m_instance)
+    {
+        Lock();//借用其它类来实现，如boost
+        if(NULL == m_instance)
+        {
+            m_instance = new Singleton;
+        }
+        UnLock();
+    }
+    return m_instance;
+} 
+\end{lstlisting}
+
+Double-Checked Locking机制不是一个完美的解决方案，
+首先，编译器可能会乱序优化，将Singleton对象的初始化调整到m\_instance赋值之后，使得某个进程得到的m\_instance可能只是未完成构造的裸内存。
+其次，在多处理器(multiprocessors)的情况下，超线程技术必然会混合执行指令，指令的执行顺序更无法保障。
+Java会将整个getInstance标为Syncronized，除此别无他法实现线程安全。
+C++也采取类似做法，引入相关同步对象(synchronization object)：
+\begin{lstlisting}[language=C++]                      
+1 #ifndef SINGLETON_H
+ 2 #define SINGLETON_H
+ 3 
+ 4 #include "synobj.h"
+ 5 
+ 6 class Singleton {
+ 7 public:
+ 8     static Singleton& Instance() { // Unique point of access
+ 9         Lock lock(_mutex);
+10         if (0 == _instance) {
+11             _instance = new Singleton();
+12             atexit(Destroy); // Register Destroy function
+13         }
+14         return *_instance;
+15     }
+16     void DoSomething(){}
+17 private:
+18     static void Destroy() { // Destroy the only instance
+19         if ( _instance != 0 ) {
+20             delete _instance;
+21             _instance = 0;
+22         }
+23     }
+24     Singleton(){} // Prevent clients from creating a new Singleton
+25     ~Singleton(){} // Prevent clients from deleting a Singleton
+26     Singleton(const Singleton&); // Prevent clients from copying a Singleton
+27     Singleton& operator=(const Singleton&);
+28 private:
+29     static Mutex _mutex;
+30     static Singleton *_instance; // The one and only instance
+31 };
+32 
+33 #endif/*SINGLETON_H*/
+\end{lstlisting}
+
+
+
+\subsection{Monoid模式}
+Monoid模式是Flyweight模式的退化，也可看做是在单例模式上应用代理模式。
+思想是所有实例共享相同的状态。
+\begin{lstlisting}[language=C++] 
+class Monoid
+{
+public:
+  void foo() { if (State* i = Instance()) i->foo(); }
+  void bar() { if (State* i = Instance()) i->bar(); }
+private:
+  struct State {};
+  static State* Instance();
+  static void CleanUp();
+  static bool MDestroyed;
+  static State* MInstance;
+};
+
+// .cpp
+bool Monoid::MDestroyed = false;
+State* Monoid::MInstance = 0;
+
+State* Monoid::Instance()
+{
+  if (!MDestroyed && !MInstance)
+  {
+    MInstance = new State();
+    atexit(&CleanUp);
+  }
+  return MInstance;
+}
+
+void Monoid::CleanUp()
+{
+  delete MInstance;
+  MInstance = 0;
+  MDestroyed = true;
+}
+\end{lstlisting}
+
+

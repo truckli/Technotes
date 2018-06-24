@@ -1,0 +1,154 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Mixed Language Programming}
+\subsection{Mixing C with C++}
+\begin{verbatim}
+#ifdef __cplusplus
+extern C {}
+\end{verbatim}
+
+\subsection{Calling C from Python with ctypes}
+
+\url{https://segmentfault.com/a/1190000000479951}
+
+\url{https://www.zhihu.com/question/23003213}
+
+\href{https://docs.python.org/2/library/ctypes.html##ctypes-tutorial}{Ctypes Tutorial}
+
+\href{https://docs.python.org/2/library/ctypes.html#ctypes-reference}{Ctypes Reference}
+
+ 
+ creating a dynamic library from a .o file:
+
+\begin{verbatim}
+ar crv libctest.a c_test.o
+gcc -shared -fPCI -o libctest.so c_test.o
+\end{verbatim}
+
+ctypes example：
+\begin{verbatim}
+from ctypes import *
+libc = CDLL("libc.so.6")
+libc.printf("hello world\n")
+libget = CDLL("libgetinfo.so")
+libget.nisc_get_rx_free_ratio.restype = POINTER(c_double * 24) 
+ratios = libget.nisc_get_rx_free_ratio().contents
+\end{verbatim}
+
+\subsubsection{Returning a pointer to a structure}
+
+C part:
+\begin{verbatim}
+typedef struct pag_stats_node
+{
+	double core_usage;
+	double core_freq;
+	uint32_t buf_size;
+} stats_node_t;
+
+stats_node_t st;
+stats_node_t *test()
+{
+	st.core_usage = 1;
+	st.core_freq = 2;
+	st.buf_size = 3;
+	return &st;
+}
+\end{verbatim}
+
+Python part:
+\begin{verbatim}
+class stat(Structure):
+     _fields_=[("u",c_double),
+              ("f",c_double),
+              ("b",c_uint)]
+
+libget.test.restype = POINTER(stat)
+statv = libget.test()
+print statv.contents.u
+print statv.contents.f
+print statv.contents.b
+\end{verbatim}
+
+
+\subsection{Calling Python from C}
+\begin{verbatim}
+#include <Python.h>
+
+int main(int argc, char *argv[])
+{
+  Py_SetProgramName(argv[0]);
+  Py_Initialize();
+  PyRun_SimpleString("print 'Hello Python!'\n");
+  Py_Finalize();
+  return 0;
+}
+\end{verbatim}
+
+To compile:
+\begin{verbatim}
+gcc my_python.c -o my_python -I/usr/include/python2.7/ -lpython2.7
+\end{verbatim}
+
+\subsection{Calling Java from Python with Py4j}
+
+Solutions include Pyjnius/Jnius, JCC, javabridge, Jpype and Py4j.
+Jpype works pretty well and is proven in many projects (such as
+python-boilerpipe), but Pyjnius is faster and simpler than JPype.
+Py4j is a bit hard to use, as you need to start a gateway, adding another layer
+of fragility.
+
+Here is a simple example for Py4j. 
+Suppose you have a Java project in which your Python code requires access to
+MyClass.
+
+\begin{lstlisting}[language=Java]
+// In MyClass.java
+package py4j.examples;
+
+public class MyClass {
+  public int addOne(int x) {
+    return x+1;
+  }
+}
+
+\end{lstlisting}
+
+To enable Python access, first you write a entry point class in the same
+project:
+
+\begin{lstlisting}[language=Java]
+package py4j.examples;
+
+import py4j.GatewayServer;
+
+public class EntryPoint {
+    public static void main(String[] args) {
+        GatewayServer gatewayServer = new GatewayServer(new EntryPoint());
+        gatewayServer.start();
+        System.out.println("Gateway Server Started ... ");
+    }
+}
+\end{lstlisting}
+
+Then you compile the project into entry.jar and run it:
+
+\begin{verbatim}
+java -cp entry.jar py4j.examples.EntryPoint
+\end{verbatim}
+
+Now your Python code can access MyClass via this entry point:
+
+\begin{lstlisting}
+from py4j.java_gateway import JavaGateway
+gateway = JavaGateway()
+jobj = gateway.jvm.py4j.examples.MyClass()
+print jobj.addOne(5)
+\end{lstlisting}
+
+
+
+
+
+
+

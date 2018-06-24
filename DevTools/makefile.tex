@@ -1,0 +1,37 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Makefile关键用法}
+
+\subsection{字符串批量替换}
+\verb|%=%|能够实现字符串批量替换，从而创造另一个字符串向量。举例：
+\begin{verbatim}
+    CHAPTERS = \
+    Algorithm \
+    CProgram \
+
+CHAP_FILES = $(CHAPTERS:%=Chap_%.tex)
+\end{verbatim}
+
+另一个例子：
+\begin{verbatim}
+CLASSES = InterCitySolution IntraCitySolution
+PREFIX = com/zhaojm/TravelAssistant/solutions
+
+CLASS_FILES = $(CLASSES:%=$(PREFIX)/%.class)
+CLASS_PATHS = $(CLASSES:%=$(PREFIX)/%)
+\end{verbatim}
+
+\subsection{Makefile for循环}
+举例：
+\begin{verbatim}
+ all: $(CLASS_FILES)
+	@for CLASS in $(CLASS_PATHS); do java $${CLASS} ; done
+\end{verbatim}
+注意事项：for循环写在一行中，开头要有@号；上述CLASS为shell变量，需要\verb|$${}|结构，注意是大括号；而CLASS\_PATH为make变量，需要\verb|$()|结构，使用小括号。
+
+
+
+
+
+
+

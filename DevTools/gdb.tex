@@ -1,0 +1,133 @@
+%!Mode:: "TeX:UTF-8"
+\section{GDB调试器使用要略}
+
+
+如果想对elfname程序进行调试，用-g选项编译，调用gdb的方式如：
+\verb+gdb elfname+或\verb+gdb --args elfname arg1 arg2+\ldots
+也可以只输入gdb，在交互界面上设置：
+\begin{verbatim}
+  file elfname
+  set args argv1 argv2
+\end{verbatim}
+
+
+基本的用法，可以在进入gdb后执行help，具体的帮助信息，如关于断点的用法，输入help b。
+退出gdb：quit或q。
+
+每次执行\textbf{run}，会从头开始运行程序。run简称\textbf{r}。
+
+\subsection{查看源码}
+\textbf{list简称l}。list 显示当前位置10行代码。
+
+l funcname：显示某函数附近的10行代码。
+
+l lineno: 显示第lineno行及其上下文10行代码。
+
+
+\subsection{断点}
+首先需要明确，如果在第18行设置断点，指的是在第18行执行之前中止，而非之后。
+
+设置断点:breakpoint命令，简称\textbf{b}，参数为[文件名：]行号或函数名，可以用list命令辅助b命令的参数选择。
+如无参数，为在当前行设置断点。
+
+b 45 if varname > 10： 在第45行之前设置条件断点，如果变量varname大于10则中止。
+
+delete 2或del 2或d 2会删除2号断点， disable 2会冻结2号断点，enable 2会激活2号断点。
+
+i b： 查看当前所有断点的状态。
+
+遇到断点时执行cont或\textbf{c}时程序继续执行直至结束或受阻。
+
+\subsection{步进}
+next命令简称\textbf{n}，用于执行下一条语句。执行完后显示的代码行为尚未执行的下一条语句。
+
+n 5可以前进5行。
+
+Return键用于重复执行上一条命令。
+
+step命令简称\textbf{s}，与next的区别是会进入函数体。
+
+\subsection{查看上下文信息}
+
+backtrace, 简称\textbf{bt},查看堆栈层次信息。最深层的frame号为零，main为最大的frame号。
+
+frame简称\textbf{f}。\textbf{f frameno}会跳到frameno指定的frame层次。
+
+info简称\textbf{i}：
+\begin{description}
+    \item[i line]  显示当前行号。
+    \item[i args]  显示当前函数参数。在main函数中则为程序参数。
+    \item[i source] 查看当前源文件信息。info sources查看所有源文件信息。
+    \item[i locals]  显示当前函数局部变量。
+    \item[i variables]  显示全局和静态变量。
+    \item[i threads]  显示线程信息。thread ID命令跳转到ID所示的线程上。
+    \item[i macros]  显示宏定义。i macro macroname某个宏定义。必须使用 -gdwarf-2 -g3编译选项才能看到宏定义。
+\end{description}
+
+
+
+\subsection{查看指定变量}
+print varname 查看变量。print简称\textbf{p}。
+
+例如，对于char c[5] = {97,98,99,100,101}，
+执行p c[2]显示 99 'c'；p /x c[2]会显示为16进制0x63。
+print /x c[2]@3会显示c[2]开始的3个连续变量{0x63, 0x64, 0x65}。
+
+display varname 添加自动显示变量。
+display添加的变量会在每次程序中止时再次显示。
+
+\subsection{Patching:就地修补}
+set variable varname = varvalue命令用于就地修改变量的值。
+那么，下面的命令在断点处修改变量的值，下次run时生效。
+\begin{verbatim}
+commands 2
+>set variable n = n+1
+>cont
+>end
+\end{verbatim}
+
+
+\subsection{观察值}
+watch varname命令:当程序执行时发现varname被修改时就中止；
+rwatch varname:当varname被读时中止；而awatch是在varname被读或者写时都中止。
+
+注意watch只能观察当前堆栈frame的变量。所以一般要配合断点来使用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

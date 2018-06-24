@@ -1,0 +1,89 @@
+%!Mode:: "TeX:UTF-8"
+\section{sqlite3用法}
+用法：
+\begin{verbatim}
+sqlite3 [options] [databasefile] [SQL]
+\end{verbatim}
+
+举例：
+\begin{verbatim}
+sqlite3 -line mydata.db 'select * from memos where priority > 20;'
+sqlite3 bankinfo.db 'select * from BAcounts'
+\end{verbatim}
+
+\subsection{basic navigation}
+\begin{verbatim}
+.help
+.schema ?TABLE?: Show the CREATE statements.
+databases: List names and files of attached databases
+.tables: Shows all tables
+\end{verbatim}
+
+\subsection{backup and restore}
+\begin{verbatim}
+.backup ?DB? FILE
+.restore ?DB? FILE 
+\end{verbatim}
+
+\subsection{SQL脚本}
+执行SQL脚本
+\begin{verbatim}
+.read filename
+\end{verbatim}
+
+输出SQL脚本
+\begin{verbatim}
+.output filename 
+.dump
+\end{verbatim}
+
+\subsection{时间与日期}
+
+\begin{verbatim}
+select date('now')
+\end{verbatim}
+
+Python接口示例
+
+\begin{lstlisting}[language=Python]
+  def add_due_field(self):
+        conn = sqlite3.connect(self.dbname)
+        c = conn.cursor()
+        c.execute('''DROP TABLE Fix2''')
+        c.execute('''CREATE TABLE Fix2 
+        		(start_date text, duration integer, 
+        		end_date text, amount real, rate real, 
+        		end_amount real, bank text)''')
+        for record in self.items:
+            start_date = datetime.strptime(
+            		record[start_date_field], '%Y-%m-%d')
+            start_date = start_date.date()
+            duration_months = record[duration_field]
+            principal = record[amount_field]
+            rate = record[rate_field]
+            bank = record[bank_field]
+            end_date = TermDepositManager.__get_due_date__
+            		(start_date, duration_months)
+            due_value = TermDepositManager.__get_due_value__
+            		(principal, duration_months, rate/100.0) 
+            detail_record = (start_date, 
+            		duration_months, end_date, principal, rate, due_value, bank)
+            statement = "INSERT INTO Fix2 VALUES ('%s', %d, '%s', %f, %f, %.2f, '%s')" % detail_record; 
+            c.execute(statement)
+
+        conn.commit()
+        conn.close()
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+

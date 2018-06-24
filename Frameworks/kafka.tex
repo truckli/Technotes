@@ -1,0 +1,15 @@
+%!Mode:: "TeX:UTF-8"
+\section{Apache Kafka}
+
+\href{https://en.wikipedia.org/wiki/Apache_Kafka}{Apache Kafka} is an
+open-source message broker project developed by the Apache Software Foundation written in Scala.
+
+
+A simple kafka producer in Python using python-kafka package:
+\begin{verbatim}
+from kafka import KafkaProducer
+producer = KafkaProducer(bootstrap_servers='172.30.30.247:9092')
+for _ in range(10):
+    producer.send('topic_name', b'some_message_bytes') 
+\end{verbatim}
+

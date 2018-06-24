@@ -1,0 +1,43 @@
+%!Mode:: "TeX:UTF-8"
+\section{Gnuplot制图}
+在mac下安装
+\begin{lstlisting}
+brew install gnuplot --with-pdflib-lite --with-cairo --with-latex
+\end{lstlisting}
+Pdflib库实现了pdf“终端”(terminal)，cairo库提供了pdfcairo“终端”。
+
+输出成图片
+
+\begin{lstlisting}
+set term png
+set output ``outputfilename.png''
+\end{lstlisting}
+
+
+输出成tex文件
+\begin{lstlisting}
+set term png
+set output ``filename.png''
+\end{lstlisting}
+
+
+作图：
+\begin{lstlisting}
+    datafile = ``datafilename.txt''
+    plot datafile using 1:2 #对前两列制图
+\end{lstlisting}
+
+设置文字字体字号
+\begin{lstlisting}
+set label 'some variable' font 'Times-Roman, 12'
+\end{lstlisting}
+
+使用cairo终端
+\begin{lstlisting}
+set terminal pdfcairo monochrome font ',18'
+\end{lstlisting}
+
+设置点号
+\begin{lstlisting}
+set pointsize 1.5
+\end{lstlisting}

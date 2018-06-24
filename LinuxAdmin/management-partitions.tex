@@ -1,0 +1,36 @@
+%!Mode:: "TeX:UTF-8"
+\section{分区创建与挂载}
+
+\label{diskpartition}
+\subsection{启动自动挂载设置} 
+设置/etc/fstab,使得一些硬盘分区开机自动挂载。
+\begin{lstlisting}
+UUID=4C0E       /media/D \          
+ntfs-3g defaults,nosuid,nodev,locale=zh_CN.UTF-8        0       0   
+UUID=077  /media/E12    ext4    defaults        0       0   
+\end{lstlisting}
+
+然后执行
+
+\begin{lstlisting}
+mount -a
+\end{lstlisting}
+
+有个图形工具叫做pysdm；另外对于ntfs分区，可以使用ntfs-config工具。
+配置完/etc/fstab后，使用mount -a命令执行该文件。
+
+
+\subsection{分区查看与创建}
+分区创建可使用fdisk和cfdisk命令，fdisk的man页自称buggy,推荐使用cfdisk等。
+df可以查看分区使用率。
+
+\subsection{分区格式化}
+使用mkfs工具。
+
+\subsection{分区挂载}
+例如挂载优盘sdc,执行：
+\begin{verbatim}
+sudo mount -t msdos -o uid=li,gid=li /dev/sdc1 /mnt
+\end{verbatim}
+
+

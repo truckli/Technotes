@@ -1,0 +1,99 @@
+%!Mode:: "TeX:UTF-8"
+\section{DNS查询}
+\subsection{域名解析工具}
+dig取代了nslookup和host命令。
+
+dig可指定查询类型：
+\begin{verbatim}
+dig ustc.edu.cn +short
+dig ustc.edu.cn MX
+dig ustc.edu.cn MX
+dig bbs.veno2.com AAAA
+dig bt.neu6.edu.cn AAAA
+\end{verbatim}
+
+反向查询：
+\begin{verbatim}
+dig -x 202.108.22.220
+\end{verbatim}
+
+dig可以指定DNS服务器：
+\begin{verbatim}
+dig www.hrbnu.edu.cn @159.226.59.158
+dig www.hrbnu.edu.cn @202.96.199.133 
+\end{verbatim}
+
+在Python中，socket模块即可提供域名解析功能：
+\begin{verbatim}
+import socket; socket.gethostbyname('www.baidu.com')
+\end{verbatim}
+
+
+BIND（Berkeley Internet Name Daemon）是现今互联网上最常使用的DNS服务器软件，使用BIND作为服务器软件的DNS服务器约占所有DNS服务器的九成。BIND现在由互联网系统协会（Internet Systems Consortium）负责开发与维护。BIND又称\textbf{named}。
+
+\subsection{查询本机公网IP}
+
+Linux下查询本机的局域网IP是容易的，只需执行ifconfig命令查看即可。
+如果本地有多个IP地址，为了查找某个连接所对应的本机IP地址，可利用socket的getsockname接口。
+例如在Python下执行如下脚本可显示用于连接公网的本地IP地址：
+\begin{verbatim}
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('www.baidu.com', 80))
+print s.getsockname()
+s.close()
+\end{verbatim}
+
+而查询本机的公网IP，必须借助于外部的服务器。
+
+
+某些Web服务提供了返回客户端IP地址的功能。其中一些页面为纯文本，适合用文本工具提取，如：
+\begin{verbatim}
+curl -s checkip.dyndns.org
+wget http://ipinfo.io/ip -qO -
+curl -s http://ipecho.net/plain
+python -c 'from urllib2 import urlopen; print urlopen('http://ip.42.pl/raw').read()'
+\end{verbatim}
+
+其他一些服务提供的信息用Json等格式返回，可以用Python等脚本语言提取：
+\begin{verbatim}
+python -c "from json import load; from urllib2 import urlopen; 
+print load(urlopen('http://jsonip.com'))['ip']"
+
+python -c "from json import load; from urllib2 import urlopen; 
+print load(urlopen('http://httpbin.org/ip'))['origin']" 
+
+python -c "from json import load; from urllib2 import urlopen; 
+print load(urlopen('https://api.ipify.org/?format=json'))['ip']"
+\end{verbatim}
+
+
+而大多数这类服务器用HTML来返回结果，适合用浏览器查看：
+\begin{verbatim}
+http://whatismyipaddress.com/
+https://www.whatismyip.com/
+https://www.iplocation.net/
+http://www.whatsmyip.org/
+http://www.myipaddress.com/what-is-my-ip-address/
+\end{verbatim}
+
+类似的国内网站包括：
+\begin{verbatim}
+http://ip.chinaz.com/
+http://www.ip138.com/
+http://www.whatismyip.com.tw/
+\end{verbatim}
+
+
+一些机构提供了基于DNS端口的客户端IP查询功能，如opendns.com和谷歌：
+\begin{verbatim}
+dig +short myip.opendns.com @resolver1.opendns.com
+host myip.opendns.com resolver1.opendns.com
+dig TXT +short o-o.myaddr.l.google.com @ns1.google.com
+\end{verbatim}
+
+
+
+如果设置了正向代理，这些服务返回的可能是代理服务器的地址。
+
+

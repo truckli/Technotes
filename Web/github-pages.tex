@@ -1,0 +1,36 @@
+%!Mode:: "TeX:UTF-8"
+\section{GitHub Pages服务}
+
+\begin{verbatim}
+git push origin gitcafe-pages #GitCafe
+git push origin master #GitHub
+https://help.github.com/articles/using-jekyll-with-pages/
+\end{verbatim}
+
+
+安装jekyll的问题包括，官方源访问不稳定，mac自带的ruby太老。系统里有了两个版本的ruby后，各种不爽。
+
+
+阮一峰关于Jekyll的简单介绍：
+\url{http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html}
+
+安装rvm
+\begin{verbatim}
+curl -L get.rvm.io | bash -s stable
+\end{verbatim}
+
+其实，用jekyll只需一条命令就可以建站
+\begin{verbatim}
+jekyll new my-awesome-site
+\end{verbatim}
+
+Ruby Gem安装过程中会遇到问题，解决的诀窍，一是删除Gem.lock，二是bundle update，bundle install，三是更换到国内的淘宝源。
+
+bundle clean --force
+
+
+\url{http://taohui.org.cn/mywebbuild.html}
+
+
+怎么解决云主机只有内网IP的问题？
+将内网云主机的默认网关改到某台有外网的主机上。

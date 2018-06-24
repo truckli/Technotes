@@ -1,0 +1,65 @@
+%!Mode:: "TeX:UTF-8"
+\section{在Vim中编写tex文件}
+
+\subsection{latexsuite安装与配置}
+\begin{shellcmd}
+	sudo apt-get install vim-latexsuite
+	vim-addons install latex-suite
+\end{shellcmd}
+意欲在打开tex文件时自动开启latexsuite,需配置.vimrc
+详细参见help:latex-suite
+\begin{verbatim}
+    " REQUIRED. This makes vim invoke Latex-Suite when you open a tex file.
+    filetype plugin on
+    
+    " IMPORTANT: win32 users will need to have 'shellslash' set so that latex
+    " can be called correctly.
+    set shellslash
+    
+    " IMPORTANT: grep will sometimes skip displaying the file name if you
+    " search in a singe file. This will confuse Latex-Suite. Set your grep
+    " program to always generate a file-name.
+    set grepprg=grep\ -nH\ $*
+    
+    " OPTIONAL: This enables automatic indentation as you type.
+    filetype indent on
+    
+    " OPTIONAL: Starting with Vim 7, the filetype of empty .tex files defaults to
+    " 'plaintex' instead of 'tex', which results in vim-latex not being loaded.
+    " The following changes the default filetype back to 'tex':
+    let g:tex_flavor='latex'
+
+\end{verbatim}
+
+\subsection{配置文件}
+配置文件texrc的路径为：
+~/.vim/ftplugin/latex-suite
+\subsection{环境插入}
+F5用于输入环境。
+
+\subsection{分节}
+文档上给出了快捷键：
+\begin{verbatim}
+SPA for part
+SCH for chapter
+SSE for section
+SSS for subsection
+SS2 for subsubsection
+SPG for paragraph
+SSP for subparagraph
+\end{verbatim}
+
+
+\subsection{借助sort命令多域排序}
+如果以\&为分隔符(常见于latex表格)，第二列升序，第一列降序排序，则有：
+\verb+sort -k 2n -k 1r -t'&' FILENAME+
+
+\subsection{表格标记添加}
+如果表格是从word或网页上拷贝的，则需要添加\&和换行符号。在vim中依次执行一下命令:
+\begin{verbatim}
+:22,40s/\s\+$//  #去除行尾空格
+:22,40s/\(\s\+\)/\&\1/g #空格前添加&
+:22,40s/$/\\\\/g #行尾添加\\符号
+\end{verbatim}
+
+

@@ -1,0 +1,54 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Valgrind}
+
+Valgrind是运行在Linux上一套基于仿真技术的程序调试和分析工具，它包含一个内核──一个软件合成的CPU，和一系列的小工具，每个工具都可以完成一项任务──调试，分析，或测试等。Valgrind可以检测内存泄漏和内存违例，还可以分析cache的使用等，灵活轻巧而又强大，能直穿程序错误的心脏，真可谓是程序员的瑞士军刀。
+
+Valgrind包含如下工具：
+\begin{description}
+  \item[Memcheck]最常用的工具，用来检测程序中出现的内存问题：
+    \begin{enumerate}
+        \item 对未初始化内存的使用； 
+        \item 读/写释放后的内存块； 
+        \item 读/写超出malloc分配的内存块； 
+        \item 读/写不适当的栈中内存块； 
+        \item 内存泄漏，指向一块内存的指针永远丢失； 
+        \item 不正确的malloc/free或new/delete匹配； 
+        \item memcpy()相关函数中的dst和src指针重叠。
+     \end{enumerate} 
+    \item[Callgrind]和gprof类似的分析工具，但它对程序的运行观察更是入微。Callgrind收集程序运行时的一些数据，建立函数调用关系图，还可以有选择地进行cache模拟。
+    \item[Cachegrind]Cache分析器，它模拟CPU中的一级缓存I1，Dl和二级缓存，能够精确地指出程序中cache的丢失和命中。如果需要，它还能够为我们提供cache丢失次数，内存引用次数，以及每行代码，每个函数，每个模块，整个程序产生的指令数。这对优化程序有很大的帮助。
+    \item[Helgrind]仍处于实验阶段。它主要用来检查多线程程序中出现的竞争问题。Helgrind寻找内存中被多个线程访问，而又没有一贯加锁的区域，这些区域往往是线程之间失去同步的地方，而且会导致难以发掘的错误。
+    \item[Massif]堆栈分析器，它能测量程序在堆栈中使用了多少内存，告诉我们堆块，堆管理块和栈的大小。
+\end{description}
+
+Valgrind检测的程序需用-g选项编译。gcc的-g选项能够生成额外调试信息。
+
+Memcheck用法：
+\begin{verbatim}
+   valgrind --leak-check=full ./appname args...
+   或 valgrind --tool=memcheck ./appname args...
+\end{verbatim}
+
+
+Callgrind会输出很多，而且最后在当前目录下生成一个文件： callgrind.out.pid。用callgrind\_annotate来查看它：
+\begin{verbatim}
+   valgrind --tool=callgrind ./appname args...
+   callgrind_annotate callgrind.out.pid
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

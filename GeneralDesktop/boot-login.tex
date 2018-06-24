@@ -1,0 +1,81 @@
+%!Mode:: "TeX:UTF-8"
+\section{启动与登陆}
+\subsection{ISO镜像与光盘}
+在Ubuntu下将文件夹做成iso镜像的工具叫做genisoimage(原名mkisofs)。可引导光盘加载后对相应文件夹使用genisoimage工具，会失去引导性。如欲保留引导性，可以使用dd工具对裸设备进行操作。如:
+
+\verb+dd if=/dev/sr0 of=deepin.iso+
+
+如需将iso烧录入光盘，可以使用Brasero工具。这很可能是Ubuntu系统自带的。
+
+
+\subsection{USB启动盘}
+
+可以使用dd命令或使用一些图形工具。在维基百科上有一个制作LiveUSB的软件列表。包括：
+\begin{itemize}
+  \item Fedora Liveusb-creator,在Windows或Linux下制作Fedora的LiveUSB
+  \item Ubuntu Liveusb Creator(在命令为usb-creator-gtk或usb-creator-kde)
+  \item LinuxLive USB Creator,在Windows上制作Linux LiveUSB
+  \item Unetbootin，在Windows或Linux下制作UNIX LiveUSB，Ubuntu软件仓库有提供
+\end{itemize}
+我自己用优盘实际创建启动盘，在Ubuntu下使用Ubuntu Liveusb Creator制作失败了。用dd和Unetbootin制作成功。
+
+如果使用dd命令，先umount这个USB设备，其名称可能是sdb1。但dd命令要作用与sdb而不是sdb1上。
+\begin{verbatim}
+dd if=linux_image.iso of=/dev/sdb
+\end{verbatim}
+尝试使用dd命令将Windows安装镜像做成启动盘，未能成功，U盘在启动时未能引导，依然由硬盘进行了引导。
+
+制作完成后，需要更改BIOS设置，让USB-HDD(或其他USB设备类型)的设备启动优先级高于HDD。优盘可能被当作硬盘处理，如果是这种优盘，开机时需要在BIOS设置中更改的不是设备启动顺序，而是HDD启动优先级。在实验室电脑上DEL键进入BIOS设置。
+
+
+\subsection{修改Grub配置}
+配置/etc/default/grub文件，然后运行update-grub，会自动生成/boot/grub/grub.cfg文件
+\subsection{安装Grub}
+如果安装了多个Linux系统，最后一个安装的系统的GRUB会覆盖之前安装的GRUB。
+如果这不是所希望的，可以进入心目中的默认系统重新安装GRUB。如果最后安装的是Windows，
+则GRUB会被破坏，不会在开机时显示GRUB界面，也需要设法进入Linux后重新安装GRUB。
+进入所希望的Linux系统后，执行grub-install。
+ grub-install 将GRUB镜像复制到/boot/grub, 并调用grub-setup来将grub安装到boot扇区。
+ 如果是从LiveCD进入的系统，执行grub-install前先chroot。
+ \begin{verbatim}
+   sudo mount /dev/sdaX /mnt/root
+   sudo mount --rbind /dev /mnt/root/dev
+   sudo mount --rbind /proc /mnt/root/proc
+   sudo chroot /mnt/root grub-install /dev/sda
+ \end{verbatim}
+ 
+ 
+如果没有LiveCD，在进入系统前停留在了如下界面上：
+\begin{verbatim}
+GRUB loading
+error:unknow filesystem
+grub rescue>
+\end{verbatim}
+可以执行ls命令，找到Linux被安装在了哪个分区。如果确定了分区，比如，(hd0,5),则执行\verb+ls (hd0,5)+时会看到许多mod文件。
+安装normal.mod:
+\begin{verbatim}
+grub rescue>set root=(hd0,5)
+grub rescue>set prefix=(hd0,5)/boot/grub
+grub rescue>insmod /boot/grub/normal.mod
+\end{verbatim}
+执行normal命令，可以恢复Grub界面。进入Linux后重新安装GRUB即可。
+
+
+\subsection{登陆密码恢复}
+方法如下：
+
+1、重新启动，按ESC键进入Boot Menu，选择recovery mode（一般是第二个选项）。
+
+2、在\#号提示符下用cat /etc/shadow，看看用户名。
+
+3、输入passwd "用户名"（引号要有的哦）。
+
+4、输入新的密码.
+
+5、重新启动，用新密码登录。 
+
+
+
+
+
+

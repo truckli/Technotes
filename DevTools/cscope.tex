@@ -1,0 +1,81 @@
+%!Mode:: "TeX:UTF-8"
+\section{Cscope用法要略}
+
+生成数据库：cscope -Rbq 
+R表示递归，b表示build后不进入cscope自带的查询界面，q表示quick，加速日后的查询。
+
+在vim下使用时应添加数据库，cs show命令显示当前已经添加的数据库，执行cs add cscope.out添加当前目录下cscope.out文件作为数据库。可以通过修改.vimrc来自动添加当前目录和父目录下的数据库。
+
+\begin{verbatim}
+"for cscope
+if has("cscope")
+        set csprg=/usr/bin/cscope
+        set csto=0
+        set cst 
+        set nocsverb
+        " add any database in current directory
+        if filereadable("cscope.out")
+                cs add cscope.out
+        elseif filereadable("../cscope.out")
+                cs add ../cscope.out
+        elseif filereadable("../../cscope.out")
+                cs add ../../cscope.out
+                " else add database pointed to by environment
+        elseif $CSCOPE_DB != ""
+                cs add $CSCOPE_DB
+        endif
+        set csverb
+endif
+
+\end{verbatim}
+
+在vim下键入:cs可以查看相关操作提示。具体用法参考见:h cscope或cscope的man页。
+
+\begin{verbatim}
+ USAGE   :cs find {querytype} {name}
+
+            {querytype} corresponds to the actual cscope line
+            interface numbers as well as default nvi commands:
+
+                0 or s: Find this C symbol
+                1 or g: Find this definition
+                2 or d: Find functions called by this function
+                3 or c: Find functions calling this function
+                4 or t: Find this text string
+                6 or e: Find this egrep pattern
+                7 or f: Find this file
+                8 or i: Find files #including this file
+
+\end{verbatim}
+
+可以在vim中添加一些键映射:
+
+\begin{verbatim}
+ nmap <F2>s :cs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <F2>g :cs find g <C-R>=expand("<cword>")<CR><CR>
+nmap <F2>c :cs find c <C-R>=expand("<cword>")<CR><CR>
+nmap <F2>t :cs find t <C-R>=expand("<cword>")<CR><CR>
+nmap <F2>e :cs find e <C-R>=expand("<cword>")<CR><CR>
+nmap <F2>f :cs find f <C-R>=expand("<cfile>")<CR><CR>
+nmap <F2>i :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
+nmap <F2>d :cs find d <C-R>=expand("<cword>")<CR><CR>
+
+nmap <F3>s :scs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <F3>g :scs find g <C-R>=expand("<cword>")<CR><CR>
+nmap <F3>c :scs find c <C-R>=expand("<cword>")<CR><CR>
+nmap <F3>t :scs find t <C-R>=expand("<cword>")<CR><CR>
+nmap <F3>e :scs find e <C-R>=expand("<cword>")<CR><CR>
+nmap <F3>f :scs find f <C-R>=expand("<cfile>")<CR><CR>
+nmap <F3>i :scs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
+nmap <F3>d :scs find d <C-R>=expand("<cword>")<CR><CR>
+
+\end{verbatim}
+
+
+
+
+
+
+
+
+

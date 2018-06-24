@@ -1,0 +1,19 @@
+\section{Image Editing}
+
+Python Pillow package is used for image processing.
+
+\begin{verbatim}
+pip install pillow
+\end{verbatim}
+
+\begin{lstlisting}
+from PIL import Image
+
+# turning a colored picture grey-scale
+Image.open('color.png').convert('L').save('grey.png')
+
+# resizing a picture
+Image.open('big.png').resize((64,64)).save('small.png')
+\end{lstlisting}
+
+

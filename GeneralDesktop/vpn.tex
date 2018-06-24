@@ -1,0 +1,18 @@
+%!Mode:: "TeX:UTF-8"
+\section{VPN connections}
+\subsection{L2TP}
+VPN is implemented by L2TP or PPTP, the former of which is more secure.
+
+L2TP is the payload of UDP. L2TP is usually used to transport PPP sessions.
+L2TP uses IPSec to support anthentication and encryption.
+
+
+Some L2TP servers require no shared key. In that case, a client should create a
+configuration file /etc/ppp/options:
+\begin{verbatim}
+plugin L2TP.ppp
+l2tpnoipsec
+\end{verbatim}
+
+\subsection{OpenVPN}
+

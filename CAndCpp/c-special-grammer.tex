@@ -1,0 +1,192 @@
+%!Mode:: "TeX:UTF-8"
+
+
+%################################################################
+\section{C特殊语法}
+
+\subsection{malloc}
+free(NULL)与delete(0)是合法的，什么也不做。
+malloc(0)会分配成功吗？答案是会的，它会返回一块最小内存给你。
+
+\subsection{声明和定义}
+
+
+\cite{krc}:
+
+存储类分为两类:\textbf{自动存储类(auto,register)和静态存储类(static,extern)}。
+在一个程序块(包括提供函数代码的程序块)内,静态对象用关键字 static 声明。在所有程序块外部声明且与函数定义在
+同一级的对象总是静态的。可以通过 static 关键字将对象声明为某个特定翻译单元的局部对象,这种类型的对象将具有\textbf{内部连接}。
+当省略显式的存储类或通过关键字 extern 进行声明时,对象对整个程序来说是全局可访问的,并且具有\textbf{外部连接}。
+
+\textbf{外部声明}：在函数外部的声明。
+如果一个对象或函数的第一个\textbf{外部声明}包含 static说明符,则该标识符具有\textbf{内部连接},否则具有\textbf{外部连接}。
+
+声明与定义的关系：
+如果一个对象的外部声明带有初值,则该声明就是一个定义。
+如果一个外部对象声明不带有初值,并且不包含 extern 说明符,则它是一个\textbf{尝试性定义（tentative definition）}。
+如果对象的定义出现在翻译单元中,则所有尝试性定义都将仅仪被认为是多余的声明;如果该翻译单元中不存在该对象的定义,则该尝试性定义将转变为一个初值为0的定义。
+
+每个对象都必须有且仅有一个定义。对于具有内部连接的对象,该规则分别适用于每个翻译单元,这是因为,内部连接的对象对每个翻译单元是惟一的。
+对于具有外部连接的对象,该规则适用于整个程序。
+
+
+\subsection{运算顺序（赋值，逗号，参数）}
+C语言运算符的优先级和结合性有明确的规定,但是,除少数例外情况外,表达式的求值次序没有定义。
+
+赋值运算符有多个(=,-=,+=),它们都是从左到右结合。
+
+关系运算符遵循从左到右的结合性,但这个规则没有什么实用价值。a<b<c 在语法分析时将被解释为(a<b)<c,并且 a<b 的结果值只能为0或1。
+==的优先级低于<,因此a<b==c<d相当于(a<b)==(c<d)。
+
+运算符+、-、*、/和\%遵循从左到右的结合性。
+
+移位运算符<<和>>遵循从左到右的结合性。
+
+逗号运算符，顺序为从左到右，并返回最右表达式的结果。
+
+函数参数中各表达式的运算，顺序未定义，因此不建议重载逗号运算符，因为无法保证参数按照从左到右求值。
+
+此外，运算符两侧的两个表达式的计算顺序是未定义的，如\verb|func1()*func2()|, \verb|if (a[i++]<b[i])|等。
+
+C标准中未规定参数压栈顺序，但VC和gcc都规定从右往左压栈。如果参数中含有表达式，会从右到左计算完表达式的值，再从右到左压栈。
+对于形如a++的后自增参数，在计算表达式时创建副本，未来将副本压栈，也相当于在计算表达式之前就将表达式本身压栈了。
+而形如++a的前自增参数，是将a本身压栈，a的值为所有表达式都计算完成之后时刻的值。
+
+例如，\verb|a=12|，
+
+1.\verb|printf("%d, %d\n", ++a, ++a)|,
+
+2.\verb|printf("%d, %d\n", ++a, a++)|,
+
+3.\verb|printf("%d, %d\n", a++, ++a)|,
+
+4.\verb|printf("%d, %d\n", --a, a++)|,
+
+5.\verb|printf("%d, %d\n", a--, ++a)|的结果分别为：
+
+\verb|14,14;14,12;13,14;12,12;13,12|。
+
+++*p和*++p分别增加p的值和地址，++*++p则先增加地址再增加值。
+
+
+\subsection{名字隐藏（屏蔽）}
+\begin{lstlisting}[language=C++]
+int a = 2;
+int main() {
+  int a = a;//self initialization
+  int b = ::a;//global a
+}
+\end{lstlisting}
+
+上述main函数中a是自赋值初始化，结果不确定，而b则指明了全局作用域中的a，结果是2。
+
+名字隐藏也可发生在变量名和函数名之间。
+\begin{lstlisting}[language=C++]
+void init(); // the name init has global scope
+void fcn()
+{
+	int init = 0;
+	// init is local and hides global init
+	init();
+	// error: global init is hidden
+}
+\end{lstlisting}
+
+
+
+\subsection{声明语句的解析}
+声明语句分解的优先级规则为：
+\begin{itemize}
+    \item 从最左标识符开始读取
+    \item 优先级从高到低依次是：
+        \begin{itemize}
+            \item 将多个部分组在一起的括号
+            \item 表示函数的小括号(输出a function returning\dots)和表示数组的方括号(an array of \dots)，两者至多出现一个
+            \item 前缀的星号，输出pointer to \dots
+        \end{itemize}
+    \item const和volatile 如果在类型描述符之后(英文原文是next to，可能是相邻的意思，包括之前)则类型限定符被应用于(apply to)类型描述符，否则应用于恰在其左侧的星号。
+\end{itemize}
+
+\subsection{例子}
+\begin{enumerate}
+    \item \verb|char *const *(*next)();|表示``next is a pointer to a function returning a pointer to a const pointer-to-char''。
+    \item \verb|int (*a[10])(int);|表示a是一个数组，数组每个元素都是都是指向函数的指针
+    \item \verb|int a[5];|\&a为指向数组的指针，\&a+1指向数组最末元素之后的不可访问的位置。
+\end{enumerate}
+
+\subsection{restrict关键词}
+由C99提出，用于指针声明，表示所指对象不会被其他别名指针所指，以提示编译器进行更加大胆的优化。C++标准不支持该关键词，gcc和Visual C++提出了自己的非标准解决方案。
+
+\begin{lstlisting}[language=C]
+void updatePtrs(size_t *ptrA, size_t *ptrB, size_t *val)
+{
+  *ptrA += *val;
+  *ptrB += *val;
+}
+\end{lstlisting}
+
+由于不知道val所指对象是否与ptrA或ptrB重合，因此，需要对该变量执行load操作两次。如果三个参数都有restrict修饰，可只对val加载一次。
+
+\subsection{可变参数表}
+头文件<stdarg.h>提供了遍历未知数目和类型的函数参数表的功能。
+
+
+\begin{lstlisting}[language=C]
+//假定函数 f 带有可变数目的实际参数, lastarg 是它的最后一个命名的形式参数。 那么,
+//在函数 f 内声明一个类型为 va_list 的变量 ap,它将依次指向每个实际参数:
+va_list ap;
+//在访问任何未命名的参数前,必须用 va_start 宏初始化 ap 一次:
+va_start(va_list ap, lastarg);
+//此后,每次执行宏 va_arg 都将产生一个与下一个未命名的参数具有相同类型和数值的值,
+//它同时还修改 ap,以使得下一次执行 va_arg 时返回下一个参数:
+type va_arg(va_list ap, type);
+//在所有的参数处理完毕之后,且在退出函数 f 之前,必须调用宏 va_end 一次,如下所示:
+void va_end(va_list ap);
+\end{lstlisting}
+
+例如：
+\begin{lstlisting}[language=C]
+
+/* vprintf example */
+#include <stdio.h>
+#include <stdarg.h>
+
+void WriteFormatted ( const char * format, ... )
+{
+  va_list args;
+  va_start (args, format);
+  vprintf (format, args);
+  va_end (args);
+}
+
+int main ()
+{
+   WriteFormatted ("Call with %d variable argument.\n",1);
+   WriteFormatted ("Call with %d variable %s.\n",2,"arguments");
+
+   return 0;
+}
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,176 @@
+%!Mode:: "TeX:UTF-8"
+\section{调度}
+
+\subsection{作业调度}
+作业调度，也称批处理，简称 BP（batch processing），是指在计算机上无须人工干预而执行系列程序的作业。
+批处理任务无须人工交互，所有的输入数据预先设置于程序或命令行参数中。这是不同于需要用户输入数据的交互程序的概念。
+批处理的发展远胜当初的大型电脑上的应用，现在也常用于UNIX环境，用CRON和at机制来安排复杂的工作程序。微软的DOS和Windows系统也有类似的命令描述语言，称为批处理文件。
+批处理是相对于实时处理，在公共交通中，公共小巴时常都是用批处理的方法运输乘客的。
+办公室内的激光打印机，也是以批处理的方法，应付多于一个客端用户的打印指令，避免打印输出混乱。
+
+Shortest job next (SJN), 又称 Shortest Job First (SJF) 或 Shortest Process Next (SPN), 选择具有最短执行时间的作业来执行，为非抢占式调度算法，
+而 Shortest remaining time 为其抢占式变种。
+
+\textbf{Generalized processor sharing (GPS)} is a service policy for multiple classes of customers where service capacity is shared between customer classes according to some fixed weights. Service is shared between all non-empty classes in the same ratio as the weight factors (positive values for each service class). In processor scheduling, generalized processor sharing is "an idealized scheduling algorithm that achieves perfect fairness. All practical schedulers approximate GPS and use it as a reference to measure fairness."Generalized processor sharing assumes that traffic is fluid (infinitesimal packet sizes), and can be arbitrarily split. There are several service disciplines which track the performance of GPS quite closely such as weighted fair queuing (WFQ)[4] and known as packet-by-packet generalized processor sharing (PGPS).
+
+\textbf{Weighted round robin (WRR)} is a scheduling discipline. Each packet flow or connection has its own packet queue in a network interface card. It is the simplest approximation of generalized processor sharing (GPS). While GPS serves infinitesimal amounts of data from each nonempty queue, WRR serves a number of packets for each nonempty queue.
+
+速率单调（RM）算法是C. L. LIU（刘炯朗）和J. W. LAYLAND提出的单处理机实时周期性任务静态优先级调度算法。
+该算法的按照任务的速率分配优先级。速率越大，优先级越高；速率越小，优先级越低。
+These operating systems are generally preemptive and have deterministic guarantees with regard to response times. Rate monotonic analysis is used in conjunction with those systems to provide scheduling guarantees for a particular application.
+
+\textbf{Highest Response Ratio Next (HRRN)} scheduling is a non-preemptive discipline, similar to Shortest Job Next (SJN), in which the priority of each job is dependent on its estimated run time, and also the amount of time it has spent waiting. Jobs gain higher priority the longer they wait, which prevents indefinite postponement (process starvation). In fact, the jobs that have spent a long time waiting compete against those estimated to have short run times.
+\begin{equation}
+\mathrm{priority}=\frac{\mathrm{waitingTime}}{\mathrm{estimated Running Time}} + 1
+\end{equation}
+
+基于优先数调度算法(HPF)：每一个作业规定一个表示该作业优先级别的整数，当需要将新的作业由输入井调入内存处理时，优先选择优先数最高的作业。
+
+
+\subsection{I/O调度}
+Linux的I/O调度算法又称电梯算法，主要有：
+\begin{description}
+    \item[CFQ(完全公平排队)] 在最新的内核版本和发行版中,都选择CFQ做为默认的I/O调度器,对于通用的服务器也是最好的选择。	CFQ实现了一种QoS的IO调度算法。该算法为每一个进程分配一个时间窗口，在该时间窗口内，允许进程发出IO请求。通过时间窗口在不同进程间的移动，保证了对于所有进程而言都有公平的发出IO请求的机会。同时CFQ也实现了进程的优先级控制，可保证高优先级进程可以获得更长的时间窗口。
+	CFQ为每个进程/线程,单独创建一个队列来管理该进程所产生的请求,也就是说每个进程一个队列,各队列之间的调度使用时间片来调度。
+    \item[NOOP] NOOP调度器十分简单，其只拥有一个等待队列，每当来一个新的请求，仅仅是按先来先处理的思路将请求插入到等待队列的尾部。
+其应用环境主要有以下两种：一是物理设备中包含了自己的I/O调度程序，比如SCSI的TCQ；二是寻道时间可以忽略不计的设备，比如SSD等。
+    \item[Deadline(截止时间调度程序)] DEADLINE调度算法主要针对I/O请求的延时而设计，每个I/O请求都被附加一个最后执行期限。
+	该算法维护两类队列，一是按照扇区排序的读写请求队列；二是按照过期时间排序的读写请求队列。
+	如果当前没有I/O请求过期，则会按照扇区顺序执行I/O请求；
+	如果发现过期的I/O请求，则会处理按照过期时间排序的队列，直到所有过期请求都被发射为止。
+	在处理请求时，该算法会优先考虑读请求。
+	当系统中存在的I/O请求进程数量比较少时，与CFQ算法相比，DEADLINE算法可以提供较高的I/O吞吐率。
+\item[AS(预料I/O调度程序)]CFQ和DEADLINE考虑的焦点在于满足零散IO请求上。对于连续的IO请求，比如顺序读，并没有做优化。为了满足随机IO和顺序IO混合的场 景，Linux还支持ANTICIPATORY调度算法。ANTICIPATORY的在DEADLINE的基础上，为每个读IO都设置了6ms的等待时间 窗口。如果在这6ms内OS收到了相邻位置的读IO请求，就可以立即满足。
+\end{description}
+
+在传统的SAS盘上，CFQ、DEADLINE、ANTICIPATORY都是不错的选择；对于专属的数据库服务器，DEADLINE的吞吐量和响应时间都表现良好。
+然而在新兴的固态硬盘比如SSD、Fusion IO上，最简单的NOOP反而可能是最好的算法，因为其他三个算法的优化是基于缩短寻道时间的，而固态硬盘没有所谓的寻道时间且IO响应时间非常短。
+
+查看当前系统支持的IO调度算法
+\begin{verbatim}
+[root@localhost ~]# dmesg | grep -i scheduler
+io scheduler noop registered
+io scheduler anticipatory registered
+io scheduler deadline registered
+io scheduler cfq registered (default)
+\end{verbatim}
+
+
+查看当前系统的I/O调度方法:
+\begin{verbatim}
+cat /sys/block/sda/queue/scheduler
+noop anticipatory deadline [cfq]
+\end{verbatim}
+
+
+临地更改I/O调度方法:
+\begin{verbatim}
+echo noop > /sys/block/sda/queue/scheduler
+\end{verbatim}
+
+
+想永久的更改I/O调度方法,需修改内核引导参数,加入elevator=调度程序名
+\begin{verbatim}
+vi /boot/grub/menu.lst
+更改到如下内容:
+kernel /boot/vmlinuz-2.6.18-8.el5 ro root=LABEL=/ elevator=deadline rhgb quiet
+\end{verbatim}
+
+
+\subsection{进程调度}
+参考\url{http://blog.csdn.net/zhoudaxia/article/details/7375668}
+
+Ingo Molnar开发了O(1)调度器，在CFS和RSDL之前，这个调度器不仅被Linux2.6采用，还被backport到Linux2.4中，很多商业的发行版本都采用了这个调度器。
+每个CPU都有两个进程队列，采用优先级为基础的调度策略。
+内核为每个进程计算出一个反映其运行“资格”的权值，然后挑选权值最高的进程投入运行。在运行过程中，当前进程的资格随时间而递减，从而在下一次调度的时候原来资格较低的进程可能就有资格运行了。到所有进程的资格都为零时，就重新计算。
+调度程序运行时，要在所有可运行的进程中选择最值得运行的进程。
+
+选择进程的依据主要有task\_struct结构中有以下四项:
+调度策略（policy, 取值有SCHED\_OTHER、SCHED\_FIFO 和 SCHED\_RR）、
+静态优先级（priority）、
+动态优先级（counter,进程剩余的时间片，它的起始值就是priority的值）、以及实时优先级（rt\_priority,实时进程特有的）。
+在进程运行过程中，counter不断减少，而priority保持不变，以便在counter变为0的时候（该进程用完了所分配的时间片）对counter重新赋值。
+
+
+对于实时进程，Linux采用了两种调度策略，即SCHED\_FIFO(先来先服务调度)和SCHED\_RR（时间片轮转调度）。
+因为实时进程具有一定程度的紧迫性，所以衡量一个实时进程是否应该运行，Linux采用了一个比较固定的标准。
+实时进程的counter只是用来表示该进程的剩余时间片，并不作为衡量它是否值得运行的标准。
+SCHED\_FIFO进程会一直运行，直到I/O阻塞或者主动释放CPU，或者是CPU被另一个具有更高rt\_priority的实时进程抢先。
+SCHED\_OTHER为普通进程，采用动态优先调度策略。只要系统中有一个实时进程在运行，则任何SCHED\_OTHER进程都不能在任何CPU运行。
+ 
+从某种意义上讲，所有位于当前队列的任务都将被执行并且都将被移到“过期”队列之中（实时进程则例外，交互性强的进程也可能例外）。
+当这种事情发生时，情况就会有所变化，队列就会被进行切换，原来的“过期”队列成为当前队列，而空的当前队列也就变成了过期队列。
+
+schedule()函数是完成进程调度的主要函数，并完成进程切换的工作,
+它在/kernel/sched.c 中的定义如下：
+\begin{lstlisting}[language=C++]
+{
+  ...
+      int idx；
+      ...
+      preempt_disable()；//关闭内核抢占
+      ...
+      //快速定位优先级最高(值最小)的非空就绪进程链表，每个优先级对应位图上的一格
+      idx = sched_find_first_bit(array -> bitmap)；
+      queue = array -> queue + idx；//
+      next = list_entry(queue -> next, task_t, run_list)；//
+      ...
+      prev = context_switch(rq, prev, next)；//
+      ...
+}
+\end{lstlisting}
+Linux2.4 调度系统在所有就绪进程的时间片都耗完以后在调度器中一次性重新计算，其中重算是用for循环相当耗时。
+Linux2.6为每个CPU保留 active和expired两个优先级数组，active 数组中包含了有剩余时间片的任务，expired数组中包含了所有用完时间片的任务。当一个任务的时间片用完了就会重新计算其时间片，并插入到expired队列中，当 active队列中所有进程用完时间片时，只需交换指向active和expired队列的指针即可。此交换是实现O(1)算法的核心，由schedule()中以下程序来实现：
+\begin{lstlisting}[language=C++]
+      array = rq ->active；
+      if (unlikely(!array->nr_active)) {
+	  rq -> active = rq -> expired；
+	  rq -> expired = array；
+	  array = rq ->active；
+	  ...
+      }
+\end{lstlisting}
+
+
+
+Nice值为用户空间的优先级设置值，范围是-20到+19，映射到priority的100到139这段空间。
+而priority的0到99是给实时进程用的，这也意味着nice只能设置非实时进程的优先级。
+拥有Nice值越大的进程的实际优先级越小（即Nice值为+19的进程优先级最小，为-20的进程优先级最大），默认的Nice值是0。由于Nice值是静态优先级，所以一经设定，就不会再被内核修改，直到被重新设定。
+Nice值只起干预CPU时间分配的作用，实际中的细节，由动态优先级决定。
+可用nice命令设置程序的Nice值，也可用renice来修改该值。top的r键（renice）也可修改该值。
+“Nice值”这个名称来自英文单词nice，意思为友好。Nice值越高，这个进程越“友好”，就会让给其他进程越多的时间。
+
+通常状况下，一个系统中所有的进程被分配到的时间片长短并不是相等的，尽管初始时间片基本相等（在Linux系统中，初始时间片也不相等，而是各自父进程的一半），系统通过测量进程处于“睡眠”和“正在运行”状态的时间长短来计算每个进程的交互性，交互性(bonus值)和每个进程预设的静态优先级（Nice值）的叠加即是动态优先级，动态优先级按比例缩放就是要分配给那个进程时间片的长短。一般地，为了获得较快的响应速度，交互性强的进程（即趋向于IO消耗型，其bonus值较大）被分配到的时间片要长于交互性弱的（趋向于处理器消耗型）进程。
+\begin{verbatim}
+dynamic_prio = max (100, min (static_prio - bonus + 5, 139))
+\end{verbatim}
+
+  O(1)调度器区分交互式进程和批处理进程的算法与以前虽大有改进，但仍然在很多情况下会失效。
+  有一些著名的程序总能让该调度器性能下降，导致交互式进程反应缓慢。
+  例如fiftyp.c, thud.c, chew.c, ring-test.c, massive\_intr.c等。而且O(1)调度器对NUMA支持也不完善。
+  为了解决这些问题，大量难以维护和阅读的复杂代码被加入Linux2.6.0的调度器模块，虽然很多性能问题因此得到了解决，可是另外一个严重问题始终困扰着许多内核开发者，那就是代码的复杂度问题。
+  很多复杂的代码难以管理并且对于纯粹主义者而言未能体现算法的本质。
+    为了解决 O(1) 调度器面临的问题以及应对其他外部压力， 需要改变某些东西。这种改变来自Con Kolivas的内核补丁staircase scheduler（楼梯调度算法），以及改进的RSDL（Rotating Staircase Deadline Scheduler）。它为调度器设计提供了一个新的思路。Ingo Molnar在RSDL之后开发了CFS，并最终被2.6.23内核采用。
+	它从RSDL/SD中吸取了完全公平的思想，不再跟踪进程的睡眠时间，也不再企图区分交互式进程。
+	它将所有的进程都统一对待，这就是公平的含义。CFS的算法和实现都相当简单，众多的测试表明其性能也非常优越。
+	与之前的Linux调度器不同，CFS没有将任务维护在链表式的运行队列中，它抛弃了active/expire数组，而是对每个CPU维护一个以时间为顺序的红黑树。
+	
+
+\subsection{实时操作系统}
+
+实时操作系统与一般的操作系统相比，最大的特色就是其“实时性”，也就是说，如果有一个任务需要执行，实时操作系统会马上（在较短时间内）执行该任务，不会有较长的延时。这种特性保证了各个任务的及时执行。
+
+衡量一个实时操作系统坚固性的重要指标，是他从接收一个任务，到完成该任务所需的时间，其时间的变化称为抖动。硬实时操作系统比软实时操作系统有更少的抖动。设计实时操作系统的首要目标不是高的吞吐量，而是保证任务在特定时间内完成。硬实时操作系统必须使任务在确定的时间内完成，而软实时操作系统能让绝大多数任务在确定时间内完成。
+
+实时操作系统与一般的操作系统有着不同的调度算法。普通的操作系统的调度器对于线程优先级等方面的处理更加灵活；而实时操作系统追求最小的中断延迟和线程切换延迟。
+
+Linux是作为通用操作系统开发的，其内核在实时处理能力上先天不足，部分网络开发社区将其经过改造能在一定程度上成为实时操作系统。
+
+常用的RTOS包括：LynxOS，RTLinux，VxWorks，Windows CE，µC/OS等。
+
+
+
+
+
+
+

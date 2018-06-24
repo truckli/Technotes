@@ -1,0 +1,32 @@
+\section{KVM}
+
+Install KVM enviroment:
+\begin{verbatim}
+https://segmentfault.com/a/1190000000644069
+yum install qemu-kvm python-virtinst libvirt libvirt-python virt-manager libguestfs-tools
+\end{verbatim}
+
+Create a VM with virt-install:
+\begin{verbatim}
+virt-install --name=ubuntu1 --ram 1024 --vcpus=1 --disk path=/home/limz/basement/VmImages/cent.img,size=10 --accelerate --cdrom CentOS-7-x86_64-Minimal-1511.iso --graphics vnc,port=5920 --network bridge=virbr0
+
+virt-install \
+ -n myVM1 \
+ --description "Test VM with CENTOS" \
+ --os-type=Linux \
+ --os-variant=rhel7 \
+ --ram=2048 \
+ --vcpus=2 \
+ --disk path=/var/lib/libvirt/images/myVM1.img,bus=virtio,size=10 \
+ --graphics none \
+ --cdrom /tmp/CentOS-7-x86_64-DVD-1611.iso \
+ --network bridge:br0
+\end{verbatim}
+
+
+\begin{verbatim}
+virsh console monitor-01
+\end{verbatim}
+
+
+

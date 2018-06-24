@@ -1,0 +1,47 @@
+%!Mode:: "TeX:UTF-8"
+\section{Hadoop Operations}
+
+\subsection{HDFS}
+
+\href{https://hadoop.apache.org/docs/r1.0.4/cn/hdfs_shell.html}{Hadoop Shell
+command}
+
+\begin{verbatim}
+hdfs dfs -put /myfile.txt hdfs://host:port/path
+hdfs dfs -put /home/limz/data/20151014/ hdfs:///user/limz/
+hdfs dfs -put /home/limz/*.txt hdfs:///user/spark/limz
+hdfs dfs -ls /user/spark/limz
+hdfs dfs -mkdir /user/spark/lmz
+hdfs dfs -du -s -h  /user/hive/warehouse2/mdss.db/session_hour_partition/session_start_time=20170420
+\end{verbatim}hdfs dfs -ls  /user/hive/warehouse2/mdss.db/session_hour_partition/
+
+\subsubsection{A trick: copy remote files to HDFS}
+
+\begin{verbatim}
+cat test.txt | ssh username@masternode "hadoop dfs -put - hadoopFoldername/test"
+\end{verbatim}
+
+
+
+
+\subsection{Yarn}
+
+Task killing:
+\begin{verbatim}
+yarn application -kill application_1472090486549_1624
+yarn top
+yarn application -list
+yarn application -status application_1477531996567_11160
+yarn logs -applicationId application_1480910032093_33973
+\end{verbatim}
+
+
+\begin{verbatim}
+http://10.139.90.131:8088/cluster/apps/RUNNING
+\end{verbatim}
+
+
+
+
+
+

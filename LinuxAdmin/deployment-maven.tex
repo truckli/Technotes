@@ -1,0 +1,34 @@
+\section{Maven}
+
+\subsection{steps}
+Set up a maven project from scratch:
+\begin{verbatim}
+mvn archetype:generate -DgroupId=com.chanct.limingzhe -DartifactId=MavenStudy -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+mvn package
+mvn exec:java -Dexec.mainClass="com.chanct.limingzhe.App" -Dexec.args="arg0 arg1 --xx yy"
+java -cp "target/MavenStudy-1.0-SNAPSHOT.jar;commons-cli-1.3.1.jar" com.chanct.limingzhe.App
+\end{verbatim}
+
+\subsection{3rd-party mirrors}
+
+In settings.xml, we can add a favorite 3rd-party mirror, like
+
+\begin{verbatim}
+    
+<mirror>
+    <id>alimaven</id>
+    <name>aliyun maven</name>
+    <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+    <mirrorOf>central</mirrorOf>        
+</mirror>
+\end{verbatim}
+
+
+\section{tutorials}
+
+\href{http://huangnx.com/tags/maven/}{A short tutorial}
+
+\href{https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html}{Maven
+in 5 Minutes}
+
+

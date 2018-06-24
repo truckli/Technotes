@@ -1,0 +1,126 @@
+%!Mode:: "TeX:UTF-8"
+\section{用户与组}
+
+\subsection{用户增加与删除}
+useradd, adduser, userdel, deluser, usermod, delgroup
+
+使用ueradd时，如果后面不添加任何参数选项，例如:\verb+#sudo useradd test+创建出来的用户将是默认“三无”用户:一无Home Directory，二无密码，三无系统Shell。
+使用adduser时，创建用户的过程更像是一种人机对话，系统会提示你输入各种信息，然后会根据这些信息帮你创建新用户。
+\begin{verbatim}
+useradd -m -s /bin/bash user 
+-m表示创建家目录，默认不创建。
+注意-p选项以密文方式设置密码，似乎没什么用。
+userdel -r user
+删除用户及其家目录
+\end{verbatim}
+
+
+\subsection{设置用户的Bash工作环境}
+
+通常在\verb|.bash_profile|中调用\verb|.bashrc|:
+\begin{verbatim}
+if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
+\end{verbatim}
+
+
+\subsection{设置用户为sudoer}
+执行visudo命令，在打开的文件中添加一行
+\begin{verbatim}
+userA ALL=(ALL)  ALL
+userB ALL=(ALL)  NOPASSWD: ALL
+\end{verbatim}
+visudo相当于修改/etc/sudoers文件。userB执行sudo的时候不需要输入密码。
+
+可以在bashrc或profile中添加如下内容，修改PATH
+\begin{verbatim}
+PATH=/usr/sbin:/usr/local/sbin:/sbin:$PATH
+export PATH
+\end{verbatim}
+
+
+
+\subsection{用户所在组}
+
+\subsubsection{查看用户所在组}
+方法一:id命令和groups命令
+方法二:/etc/group,格式:
+\begin{verbatim}
+group_name:password('x'):GID:user_list(separated by commas)
+\end{verbatim}
+
+\subsubsection{将用户加入组}
+在Debian系上，采用命令
+\begin{verbatim}
+adduser username groupname 
+\end{verbatim}
+
+一般地，有
+\begin{verbatim}
+usermod -a -G <groupname> username
+\end{verbatim}
+
+
+
+\subsection{用户的shell}
+/etc/passwd包含了家目录，shell等用户信息
+查看系统安装的shell
+\begin{verbatim}
+cat /etc/shells
+\end{verbatim}
+
+查看当前shell
+\begin{verbatim}
+echo $SHELL
+\end{verbatim}
+
+更改某用户的shell
+\begin{verbatim}
+usermod -s /bin/zsh someuser
+\end{verbatim}
+
+
+\subsection{修改用户名和主机名}
+用户名在/etc/shadow中修改，Ubuntu主机名需要在/etc目录下hostname和hosts两个文件下修改，Centos6.4主机名通过/etc/sysconfig/network文件修改。
+
+
+
+\subsection{特殊文件权限}
+setuid,setgid和粘贴位为特殊文件权限。
+
+当一个可执行文件具有setuid这个权限时，文件的运行者将具有文件的所有者所拥有的权限。
+通常passwd程序具有setuid权限。
+\begin{verbatim}
+-r-sr-sr-x   3 root     sys       104580 Sep 16 12:02 /usr/bin/passwd
+\end{verbatim}
+
+如果root用户所拥有的程序具有特殊文件权限:w
+，则能够运行这个程序的用户将拥有root用户的uid，这将构成安全隐患。
+另外，普通用户可以让自己拥有的程序具有特殊文件权限，其他用户运行了这个程序，将拥有该用户的权限。
+
+若一个目录被设置setgid权限，在该目录下创建的文件以该目录的所有者为所有者，而非以创建者为所有者。
+\begin{verbatim}  
+-r-x--s--x   1 root     mail       63628 Sep 16 12:01 /usr/bin/mail
+\end{verbatim}
+
+  当粘贴位被设置于一个目录时，目录下的文件将被作防删除包含：只有文件的owner，目录的owner或root才可删除文件。
+  /tmp目录常被设置粘贴位。
+  
+\begin{verbatim}  
+drwxrwxrwt 7  root  sys   400 Sep  3 13:37 tmp
+\end{verbatim}
+  
+  
+ \subsection{ACL} 
+ \begin{verbatim}
+  setfacl -m d:u:myuser1:rx /srv/projecta
+ \end{verbatim}
+  
+  
+ \subsection{executing command as specified user} 
+
+ \begin{verbatim}
+ su USER  -c "CMD"
+ \end{verbatim}
+  
+  
+  

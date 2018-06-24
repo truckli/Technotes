@@ -1,0 +1,78 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Ctags关键用法}
+
+安装：
+\begin{verbatim}
+brew install ctags
+alias ctags="`brew --prefix`/bin/ctags"
+\end{verbatim}
+
+/etc/paths /usr/local/bin提到/usr/bin前面，为了使得ctags访问exuberant ctags而不是自带的ctags
+
+
+创建元数据：
+\begin{verbatim}
+  ctags -R
+\end{verbatim}
+  对于C++，结合omnicppcomplete插件，有：
+\begin{verbatim}
+   ctags -R --c++-kinds=+p --fields=+iaS --extra=+q
+\end{verbatim}
+ctags也支持Python语言:
+\begin{verbatim}
+ctags -R
+ctags -R --language-force=Python --Python-kinds=cfmvi --extra=+q
+\end{verbatim}
+
+为vim配置tags搜索路径:
+在.vimrc中添加设置。如使用绝对路径：
+\begin{verbatim}
+ set tags=/home/xxx/myproject/tags
+\end{verbatim}
+
+如果设置成自动搜索上级目录的tags:
+\begin{verbatim}
+set tags=./tags;
+\end{verbatim}
+注意第一行的分号表示递归向上搜索，点斜杠表示当前文件所在目录而非当前目录。
+
+\begin{verbatim}
+:set tags=./tags,./../tags,./*/tags
+\end{verbatim}
+使用当前目录下的tags文件, 上一级目录下
+的tags文件, 以及当前目录下所有层级的子目录下的tags文件.
+
+
+\begin{verbatim}
+:set tags=~/proj/**/tags
+\end{verbatim}
+一种深度搜索目录的形式
+
+查找:
+\begin{verbatim}
+vim -t tag名
+:ta tag名
+:tselect tag名 同名tag选择
+
+\end{verbatim}
+
+跳转:
+\begin{verbatim}
+Ctrl+]  跳转至函数定义
+ctrl+O 返回
+ctrl+I 前进
+Ctrl+T 返回(与ctrl+])对应
+:tp  同名tag，跳转到前一个
+:tn  同名tag，跳转到下一个
+:tfirst, :tlast
+\end{verbatim}
+
+
+裂屏显示:
+\begin{verbatim}
+Ctrl-W ] 裂屏跳转至函数定义
+[vertical] stag name 裂屏查找并跳转
+\end{verbatim}
+
+

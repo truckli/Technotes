@@ -1,0 +1,94 @@
+%!Mode:: "TeX:UTF-8"
+\section{程序性能分析}
+我们知道，程序运行时的90\%的时间是用在了10\%的代码上。
+如果希望能够有效地对程序进行优化，那么精确地了解时间在应用程序中是如何花费的，以及真实的输入数据，这一点非常重要。这种行为就称为代码剖析（code profiling）。
+time工具返回程序运行的用户时间和系统时间。top能显示程序的CPU使用率。
+系统一般自带\textbf{oprofile}工具，另外\textbf{Google perf tool}比较强大。Valgrind工具箱的callgrind工具也有类似作用。
+
+
+
+\subsection{gprof}
+\textbf{gprof}可以为 Linux平台上的程序精确分析性能瓶颈。gprof精确地给出函数被调用的时间和次数，给出函数调用关系。
+
+使用流程:在编译和链接时加上-pg选项, 执行后在程序运行目录下 生成 gmon.out 文件。用 gprof分析 gmon.out文件即可, 调用方式：
+\begin{verbatim}
+gprof appname
+\end{verbatim}
+
+
+gprof只能分析应用程序在运行过程中所消耗掉的用户时间，无法得到程序内核空间的运行时间。对于多线程程序，gprof只分析主线程。
+
+\subsection{oprofile}
+
+oprofile 是 Linux 平台上的一个功能强大的性能分析工具，支持从进程、函数、代码语句三个层面检测cpu使用情况的方法。
+
+当系统出现cpu使用率异常偏高情况时，oprofile不但可以帮助我们分析出是哪一个进程异常使用cpu，还可以揪出进程中占用cpu的函数、代码。在分析应用程序性能瓶颈、进行性能调优时，我们可以通过oprofile，得出程序代码的cpu使用情况，找到最消耗cpu的那部分代码进行分析与调优，做到有的放矢。另外，进行程序性能调优时，我们不应仅仅关注自己编写的上层代码，也应考虑底层库函数，甚至内核对应用程序性能的影响。我们还可以通过oprofile查看高速缓存的利用率、错误的转移预测等信息，"opcontrol --list-events"命令显示了oprofile可检测到的所有事件。
+
+oprofile 在Linux 上分两部分，一个是内核模块(oprofile.ko)，一个为用户空间的守护进程(oprofiled)。前者负责访问性能计数器或者注册基于时间采样的函数(使用register\_timer\_hook注册之，使时钟中断处理程序最后执行profile\_tick 时可以访问之)，并采样置于内核的缓冲区内。后者在后台运行，负责从内核空间收集数据，写入文件。
+
+\begin{verbatim}
+初始化
+opcontrol --no-vmlinux : 指示oprofile启动检测后，不记录内核模块、内核代码相关统计数据
+opcontrol --init : 加载oprofile模块、oprofile驱动程序
+
+检测控制
+opcontrol --start : 指示oprofile启动检测
+opcontrol --dump : 指示将oprofile检测到的数据写入文件
+opcontrol --reset : 清空之前检测的数据记录
+opcontrol -h : 关闭oprofile进程
+
+查看检测结果
+opreport : 以镜像(image)的角度显示检测结果，进程、动态库、内核模块属于镜像范畴
+opreport -l : 以函数的角度显示检测结果
+opreport -l test : 以函数的角度，针对test进程显示检测结果
+opannotate -s test : 以代码的角度，针对test进程显示检测结果
+opannotate -s /lib64/libc-2.4.so : 以代码的角度，针对libc-2.4.so库显示检测结果
+\end{verbatim}
+
+\subsection{测量程序运行时间}
+两种测试程序时间的方法，一种是通过间隔计数，另一种通过周期计数器。
+首先介绍这两种方法的含义，摘自《深入理解计算机系统》。
+
+间隔计数：操作系统维护者每个进程使用的用户时间量和系统时间量的计数值，当计时器中断发生时，操作系统会确定哪个进程是活动的，并且对那个进程的一个计数值增加计时器间隔时间。如果系统是在内核模式中执行的，那么就增加系统时间，否则增加用户时间。这种方法一般使用clock函数实现。
+
+周期计数器：处理器内部包含一个运行在时钟周期级的计数器，每个时钟周期它都会家1。可以利用特殊的机器指令来读这个计数器的值。如果要测试一段代码的时间，只需在代码段前后分别获取计数器的值，然后将这两个计数器的值相减，除以处理器频率，就可以得到这段代码的运行时间。
+
+\subsection{pstack和strace}
+显示正在运行的程序的执行堆栈，只支持32位Linux环境，只支持x86机器，只支持用GNU编译器编译的程序，该程序的符号表(symbols)不能被裁减掉。
+
+\begin{verbatim}
+pstack pid
+\end{verbatim}
+
+
+strace是Linux环境下的一款程序调试工具，用来监察一个应用程序所使用的系统调用及它所接收的系统信息。
+strace的工作依赖于kernel的ptrace功能。
+
+\begin{verbatim}
+strace -p pid
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

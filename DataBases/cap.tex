@@ -1,0 +1,116 @@
+%!Mode:: "TeX:UTF-8"
+\section{事务}
+
+\subsection{ACID}
+ACID，是指数据库管理系统（DBMS）在写入/异动资料的过程中，为保证交易（transaction）是正确可靠的，所必须具备的四个特性：原子性（atomicity，或称不可分割性）、一致性（consistency）、隔离性（isolation，又称独立性）、持久性（durability）。
+
+\begin{itemize}
+    \item    原子性：一个事务（transaction）中的所有操作，要么全部完成，要么全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被回滚（Rollback）到事务开始前的状态，就像这个事务从来没有执行过一样。
+    \item  一致性：在事务开始之前和事务结束以后，数据库的完整性没有被破坏。这表示写入的资料必须完全符合所有的默认规则，这包含资料的精确度、串联性以及后续数据库可以自发性地完成预定的工作。例如对于约束a+b=10，一个事务改变了a，就必须改变b。
+    \item   隔离性：两个事务的执行是互不干扰的，一个事务不可能看到其他事务运行时，中间某一时刻的数据。
+    \item   持久性：在事务完成以后，该事务对数据库所作的更改便持久地保存在数据库之中，，并不会被回滚。
+\end{itemize}
+由于一项操作通常会包含许多子操作，而这些子操作可能会因为硬件的损坏或其他因素产生问题，要正确实现ACID并不容易。ACID建议数据库将所有需要更新 以及修改的资料一次操作完毕，但实际上并不可行。
+
+目前主要有两类方式实现A和D特性：第一种是Write ahead logging(WAL,预写式日志)。第二种是Shadow paging(影子分页技术)。
+
+预写式日志 （WAL） 是一种实现事务日志的标准方法。有关它的详细描述可以在大多数（如果不是全部的话）有关事务处理的书中找到。 简而言之，WAL 的中心思想是对数据文件的修改（它们是表和索引的载体）必须是只能发生在这些修改已经记录了日志之后， 也就是说，在描述这些变化的日志记录冲刷到永久存储器之后。 如果我们遵循这个过程，那么我们就不需要在每次事务提交的时候都把数据页冲刷到磁盘，因为我们知道在出现崩溃的情况下， 我们可以用日志来恢复数据库：任何尚未附加到数据页的记录都将先从日志记录中重做（这叫向前滚动恢复，也叫做 REDO）。使用 WAL 的第一个主要的好处就是显著地减少了磁盘写的次数。 因为在日志提交的时候只有日志文件需要冲刷到磁盘；而不是事务修改的所有数据文件。 在多用户环境里，许多事务的提交可以用日志文件的一次 fsync() 来完成。而且，日志文件是顺序写的， 因此同步日志的开销要远比同步数据页的开销要小。 这一点对于许多小事务修改数据存储的许多不同的位置更是如此。另外一个好处就是数据页的完整性。实际情况是，在 WAL 之前，PostgreSQL 从来不能保证在崩溃的情况下数据页的完整性。
+ARIES是WAL家族中的一个流行的算法。
+
+相对于WAL技术，shadow paging技术实现起来比较简单，消除了写日志记录的开销恢复的速度也快(不需要redo和undo)。shadow paging的缺点就是事务提交时要输出多个块，这使得提交的开销很大，而且以块为单位，很难应用到允许多个事务并发执行的情况——这是它致命的缺点。
+Shadow paging is a copy-on-write technique for avoiding in-place updates of pages. Instead, when a page is to be modified, a shadow page is allocated. Since the shadow page has no references (from other pages on disk), it can be modified liberally, without concern for consistency constraints, etc. When the page is ready to become durable, all pages that referred to the original are updated to refer to the new replacement page instead. Because the page is "activated" only when it is ready, it is atomic.
+
+Many databases rely upon locking to provide ACID capabilities. Locking means that the transaction marks the data that it accesses so that the DBMS knows not to allow other transactions to modify it until the first transaction succeeds or fails. The lock must always be acquired before processing data, including data that is read but not modified. Non-trivial transactions typically require a large number of locks, resulting in substantial overhead as well as blocking other transactions. For example, if user A is running a transaction that has to read a row of data that user B wants to modify, user B must wait until user A's transaction completes. Two phase locking is often applied to guarantee full isolation.
+
+An alternative to locking is multiversion concurrency control, in which the database provides each reading transaction the prior, unmodified version of data that is being modified by another active transaction. This allows readers to operate without acquiring locks, i.e. writing transactions do not block reading transactions, and readers do not block writers. Going back to the example, when user A's transaction requests data that user B is modifying, the database provides A with the version of that data that existed when user B started his transaction. User A gets a consistent view of the database even if other users are changing data. One implementation, namely snapshot isolation, relaxes the isolation property.
+
+Guaranteeing ACID properties in a distributed transaction across a distributed database where no single node is responsible for all data affecting a transaction presents additional complications. Network connections might fail, or one node might successfully complete its part of the transaction and then be required to roll back its changes, because of a failure on another node. The two-phase commit protocol (not to be confused with two-phase locking) provides atomicity for distributed transactions to ensure that each participant in the transaction agrees on whether the transaction should be committed or not. Briefly, in the first phase, one node (the coordinator) interrogates the other nodes (the participants) and only when all reply that they are prepared does the coordinator, in the second phase, formalize the transaction.
+
+\subsection{ARIES恢复算法}
+
+ARIES(Algorithms for Recovery and Isolation Exploiting Semantics) is a recovery algorithm designed to work with a no-force, steal database approach; it is used by IBM DB2, Microsoft SQL Server and many other database systems.
+
+ARIES三大原则:
+\begin{itemize}
+\item   Write ahead logging: Any change to an object is first recorded in the log, and the log must be written to stable storage before changes to the object are written to disk.
+\item   Repeating history during Redo: On restart after a crash, ARIES retraces the actions of a database before the crash and brings the system back to the exact state that it was in before the crash. Then it undoes the transactions still active at crash time.
+\item   Logging changes during Undo: Changes made to the database while undoing transactions are logged to ensure such an action isn't repeated in the event of repeated restarts.
+\end{itemize}
+
+
+\begin{quotation}
+no-force 策略是指，事务提交时不需要原地(in-place)修改。For frequently changed objects, a no-force policy allows updates to be merged and so reduce the number of write operations to the actual database object. A no-force policy also reduces the seek time required for a commit by having mostly sequential write operations to the transaction log, rather than requiring the disk to seek to many distinct database objects during a commit.
+\end{quotation}
+
+\subsection{CAP原理}
+关系数据库的ACID模型拥有高一致性和可靠性，丧失可用性。
+
+ACID，即原子性(Atomicity)、一致性(Consistency)、隔离性(Isolation)、持久性(Durability)。其中的一致性强调当程序员定义的事务完成时，数据库处于一致的状态。如对于转帐来说，事务完成时必须是A少了多少钱B就多了多少钱。
+ 
+对于很多互联网应用来说，对于一致性要求可以降低，而可用性(Availability)的要求则更为明显。从而产生了弱一致性的理论BASE。 BASE模型反ACID模型，完全不同ACID模型，牺牲高一致性，获得可用性或可靠性。BASE，即Basically Availble（基本可用）、Soft-state （软状态）、Eventual Consistency （最终一致性）。
+
+比如，你在网上书店买书，任何一个人买书这个过程都会锁住数据库直到买书行为彻底完成（否则书本库存数可能不一致），买书完成的那一瞬间，世界上所有的人都可以看到熟的库存减少了一本（这也意味着两个人不能同时买书）。这在小的网上书城也许可以运行的很好，可是对Amazon这种网上书城却并不是很好。
+而对于Amazon这种系统，他也许会用cache系统，剩余的库存数也许是之前几秒甚至几个小时前的快照，而不是实时的库存数，这就舍弃了一致性。并且，Amazon可能也舍弃了独立性，当只剩下最后一本书时，也许它会允许两个人同时下单，宁愿最后给那个下单成功却没货的人道歉，而不是整个系统性能的下降。
+
+BASE思想的主要实现有:1.按功能划分数据库;2.sharding碎片。
+BASE思想主要强调基本的可用性，如果你需要高可用性，也就是纯粹的高性能，那么就要以一致性或容错性为牺牲，BASE思想的方案在性能上还是有潜力可挖的。
+
+现在NoSQL运动丰富了拓展了BASE思想，可按照具体情况定制特别方案，比如忽视一致性，获得高可用性等等，NOSQL应该有下面两个流派：
+1. Key-Value存储，如Amaze Dynamo等，可根据CAP三原则灵活选择不同倾向的数据库产品。
+2. 领域模型 + 分布式缓存 + 存储 （Qi4j和NoSQL运动），可根据CAP三原则结合自己项目定制灵活的分布式方案，难度高。
+这两者共同点：都是关系数据库SQL以外的可选方案，逻辑随着数据分布，任何模型都可以自己持久化，将数据处理和数据存储分离，将读和写分离，存储可以是异步或同步，取决于对一致性的要求程度。
+不同点：NOSQL之类的Key-Value存储产品是和关系数据库头碰头的产品BOX，可以适合非Java如PHP RUBY等领域，是一种可以拿来就用的产品，而领域模型 + 分布式缓存 + 存储是一种复杂的架构解决方案，不是产品，但这种方式更灵活，更应该是架构师必须掌握的。
+
+
+在分布式数据系统中，也有一个CAP原理，包含三个要素：
+\begin{description}
+\item [一致性(Consistency)]在分布式系统中的所有数据备份，在同一时刻是否同样的值。
+\item [可用性(Availability)]在集群中一部分节点故障后，集群整体是否还能响应客户端的读写请求。(a guarantee that every request receives a response about whether it was successful or failed)
+\item [分区容忍性(Partition tolerance)]集群中的某些节点在无法联系后，集群整体是否还能继续进行服务。(the system continues to operate despite arbitrary message loss or failure of part of the system)。所谓网络分区是指网络中出现故障导致网络被分割成几个部分。
+\end{description}
+
+一致性就是数据保持一致，在分布式系统中，可以理解为多个节点中数据的值是一致的。
+而一致性又可以分为\textbf{强一致性}与\textbf{弱一致性}。
+强一致性可以理解为在任意时刻，所有节点中的数据是一样的。同一时间点，你在节点A中获取到key1的值与在节点B中获取到key1的值应该都是一样的。
+弱一致性包含很多种不同的实现，目前分布式系统中广泛实现的是最终一致性。最终一致性是弱一致性的一种特例。
+所谓最终一致性，就是不保证在任意时刻任意节点上的同一份数据都是相同的，但是随着时间的迁移，不同节点上的同一份数据总是在向趋同的方向变化。也可以简单的理解为在一段时间后，节点间的数据会最终达到一致状态。
+对于最终一致性最好的例子就是DNS系统，由于DNS多级缓存的实现，所以修改DNS记录后不会在全球所有DNS服务节点生效，需要等待DNS服务器缓存过期后向源服务器更新新的记录才能实现。
+类似的，还有一些其它的弱一致性实现。
+
+CAP原理指的是，这三个要素最多只能同时实现两点，不可能三者兼顾。因此在进行分布式架构设计时，必须做出取舍。而对于分布式数据系统，分区容忍性是基本要求，否则就失去了价值。因此设计分布式数据系统，就是在一致性和可用性之间取一个平衡。对于大多数web应用，其实并不需要强一致性，因此牺牲一致性而换取高可用性，是目前多数分布式数据库产品的方向。
+
+对于一致性，可以分为从客户端和服务端两个不同的视角。从客户端来看，一致性主要指的是多并发访问时更新过的数据如何获取的问题。从服务端来看，则是更新如何复制分布到整个系统，以保证数据最终一致。一致性是因为有并发读写才有的问题，因此在理解一致性的问题时，一定要注意结合考虑并发读写的场景。
+
+从客户端角度，多进程并发访问时，更新过的数据在不同进程如何获取的不同策略，决定了不同的一致性。对于关系型数据库，要求更新过的数据能被后续的访问都能看到，这是强一致性。如果能容忍后续的部分或者全部访问不到，则是弱一致性。如果经过一段时间后要求能访问到更新后的数据，则是最终一致性。
+
+最终一致性根据更新数据后各进程访问到数据的时间和方式的不同，又可以区分为：
+\begin{description}
+\item[因果一致性]如果进程A通知进程B它已更新了一个数据项，那么进程B的后续访问将返回更新后的值，且一次写入将保证取代前一次写入。与进程A无因果关系的进程C的访问遵守一般的最终一致性规则
+\item[read-your-writes一致性]当进程A自己更新一个数据项之后，它总是访问到更新过的值，绝不会看到旧值。这是因果一致性模型的一个特例。 
+\item[会话（Session）一致性]这是上一个模型的实用版本，它把访问存储系统的进程放到会话的上下文中。只要会话还存在，系统就保证“读己之所写”一致性。如果由于某些失败情形令会话终止，就要建立新的会话，而且系统的保证不会延续到新的会话。 
+\item[单调（Monotonic）读一致性]如果进程已经看到过数据对象的某个值，那么任何后续访问都不会返回在那个值之前的值。
+\item[单调写一致性]系统保证来自同一个进程的写操作顺序执行。要是系统不能保证这种程度的一致性，就非常难以编程了。
+\end{description}
+
+上述最终一致性的不同方式可以进行组合，例如单调读一致性和读己之所写一致性就可以组合实现。并且从实践的角度来看，这两者的组合，读取自己更新的数据，和一旦读取到最新的版本不会再读取旧版本，对于此架构上的程序开发来说，会少很多额外的烦恼。
+
+从服务端角度，如何尽快将更新后的数据分布到整个系统，降低达到最终一致性的时间窗口，是提高系统的可用度和用户体验非常重要的方面。对于分布式数据系统：
+\begin{description}
+\item [N] 数据复制的份数 
+\item [W] 更新数据是需要保证写完成的节点数 
+\item [R] 读取数据的时候需要读取的节点数
+\end{description}
+
+如果W+R>N，写的节点和读的节点重叠，则是强一致性。例如对于典型的一主一备同步复制的关系型数据库，N=2,W=2,R=1，则不管读的是主库还是备库的数据，都是一致的。
+
+如果W+R<=N，则是弱一致性。例如对于一主一备异步复制的关系型数据库，N=2,W=1,R=1，则如果读的是备库，就可能无法读取主库已经更新过的数据，所以是弱一致性。
+
+对于分布式系统，为了保证高可用性，一般设置N>=3。不同的N,W,R组合，是在可用性和一致性之间取一个平衡，以适应不同的应用场景。
+
+如果N=W,R=1，任何一个写节点失效，都会导致写失败，因此可用性会降低，但是由于数据分布的N个节点是同步写入的，因此可以保证强一致性。 
+如果N=R,W=1，只需要一个节点写入成功即可，写性能和可用性都比较高。但是读取其他节点的进程可能不能获取更新后的数据，因此是弱一致性。
+这种情况下，如果W<(N+1)/2，并且写入的节点不重叠的话，则会存在写冲突。
+
+
+
+

@@ -1,0 +1,43 @@
+%!Mode:: "TeX:UTF-8"
+\section{Varnish}
+Varnish是一款高性能的开源HTTP加速器，挪威最大的在线报纸 Verdens Gang 使用3台Varnish代替了原来的12台Squid，性能比以前更好。
+Varnish 的作者Poul-Henning Kamp是FreeBSD的内核开发者之一，他认为现在的计算机比起1975年已经复杂许多。在1975年时，储存媒介只有两种：内存与硬盘。但现在计算机系统的内存除了主存外，还包括了CPU内的L1、L2，甚至有L3快取。硬盘上也有自己的快取装置，因此Squid Cache自行处理物件替换的架构不可能得知这些情况而做到最佳化，但操作系统可以得知这些情况，所以这部份的工作应该交给操作系统处理，这就是 Varnish cache设计架构。
+
+Varnish is an HTTP accelerator designed for content-heavy dynamic web sites. In contrast to other web accelerators, such as Squid, which began life as a client-side cache, or Apache and nginx, which are primarily origin servers, Varnish was designed as an HTTP accelerator. Varnish is focused exclusively on HTTP, unlike other proxy servers that often support FTP, SMTP and other network protocols.
+
+Varnish stores data in virtual memory and leaves the task of deciding what is stored in memory and what gets paged out to disk to the operating system. This helps avoid the situation where the operating system starts caching data while it is moved to disk by the application.
+
+Furthermore, Varnish is heavily threaded, with each client connection being handled by a separate worker thread. When the configured limit on the number of active worker threads is reached, incoming connections are placed in an overflow queue; when this queue reaches its configured limit incoming connections will be rejected.
+
+The principal configuration mechanism is Varnish Configuration Language (VCL), a domain-specific language (DSL) used to write hooks that are called at critical points in the handling of each request. Most policy decisions are left to VCL code, making Varnish more configurable and adaptable than most other HTTP accelerators. When a VCL script is loaded, it is translated to C, compiled to a shared object by the system compiler, and loaded directly into the accelerator.
+
+A number of run-time parameters control things such as the maximum and minimum number of worker threads, various timeouts, etc. A command-line management interface allows these parameters to be modified, and new VCL scripts to be compiled, loaded and activated, without restarting the accelerator.
+
+In order to reduce the number of system calls in the fast path to a minimum, log data is stored in shared memory, and the task of filtering, formatting and writing log data to disk is delegated to a separate application.
+
+
+Varnish是一个轻量级的Cache和反向代理软件，先进的设计理念和成熟的设计框架是Varnish的主要特点，现在的Varnish总共代码量不大，功能上虽然在不断改进，但是还需要继续丰富和加强。
+下面总结了Varnish的一些特点：\\
+ （1）是基于内存缓存，重启后数据将消失。\\
+ （2）利用虚拟内存方式，io性能好。\\
+ （3）支持设置0~60秒内的精确缓存时间。\\
+ （4）VCL配置管理比较灵活。\\
+ （5）32位机器上缓存文件大小为最大2G。\\
+ （6）具有强大的管理功能，例如top，stat，admin，list等。\\
+ （7）状态机设计巧妙，结构清晰。\\
+ （8）利用二叉堆管理缓存文件，达到积极删除目的。\\
+ 
+
+Squid是一个高性能的代理缓存服务器，它和varnish之间有诸多的异同点，这里分析如下：
+ 下面是他们之间的相同点：（1）都是一个反向代理服务器， （2）都是开源软件。
+ 
+ 下面是它们的不同点，也是Varnish的优点：\\
+ （1）Varnish的稳定性很高，两者在完成相同负荷的工作时，Squid服务器发生故障的几率要高于Varnish，因为使用Squid要经常重启。\\
+ （2）Varnish访问速度更快，Varnish采用了“Visual Page Cache”技术，所有缓存数据都直接从内存读取，而squid是从硬盘读取，因而Varnish在访问速度方面会更快。\\
+ （3）Varnish可以支持更多的并发连接，因为Varnish的TCP连接释放要比Squid快。因而在高并发连接情况下可以支持更多TCP连接。\\
+ （4）Varnish可以通过管理端口，使用正则表达式批量的清除部分缓存，而Squid是做不到的。\\
+ 当然，与传统的Squid相比，Varnish也是有缺点的，列举如下：\\
+ （1）varnish在高并发状态下CPU、IO、内存等资源开销都高于Squid。\\
+ （2）varnish进程一旦Hang、Crash或者重启，缓存数据都会从内存中完全释放，此时所有请求都会发送到后端服务器，在高并发情况下，会给后端服务器造成很大压力。\\
+
+

@@ -1,0 +1,483 @@
+%!Mode:: "TeX:UTF-8"
+\section{对象大小与对齐}
+
+\subsection{C++常见类型的大小}
+\begin{itemize}
+    \item string:4 (注：类的大小依具体实现而异)
+    \item istream:144
+    \item vector:13
+    \item 空类：1 (注：空类作为派生类的基类部分时可以大小为零)
+    \item 多重继承空类：1
+    \item 虚继承空类：4. 因为涉及虚表(\cite{pibible}P59)
+\end{itemize}
+
+\subsection{sizeof(字符串)}
+字符数组长度(使用sizeof()求取)等于字符串长度加1, 因为末尾的零也占一位。
+而指向字符串的char*变量的长度则为指针长度(比如4)。
+这是字符串与字符数组的区别之一。二者都可以用静态字符串变量初始化。
+静态字符串也可用sizeof()求取长度。
+
+
+\begin{lstlisting}[language=C++]
+
+#include <iostream>
+using namespace std;
+
+size_t string_len(const char str[])
+{
+    return sizeof(str);
+}
+
+size_t string8_len(const char str[8])
+{
+    return sizeof(str);
+}
+
+int main(int argc, char* argv[])
+{
+#define STATIC_STRING "123456789"
+    const char sc[] = STATIC_STRING;
+    const char *dc = STATIC_STRING;
+
+    cout << sizeof(STATIC_STRING) << endl; //10
+    cout << sizeof(sc) << endl; //10
+    cout << sizeof(dc) << endl; //4
+    cout << string_len(sc) << endl; //4
+    cout << string8_len(sc) << endl; //4
+
+    return 0;
+}                                           
+
+\end{lstlisting}
+
+
+\subsection{sizeof(C二维数组)}
+\begin{lstlisting}[language=C++]
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+
+int a[3][5] = {
+    1, 2, 3, 4, 5, 
+    6, 7, 8, 9, 10, 
+    11, 12, 13, 14, 15
+};
+
+int main(int argc, char* argv[])
+{
+    printf("sizeof(a) = %d\n", sizeof(a));
+    printf("sizeof(*a) = %d\n", sizeof(*a));
+    printf("sizeof(**a) = %d\n", sizeof(**a));
+    printf("**(a+1) = %d\n", **(a+1));
+    printf("**(a+2) = %d\n", **(a+2));
+    printf("**(a+3) = %d\n", **(a+3));
+    printf("**(a+4) = %d\n", **(a+4));
+    return 0;
+}
+
+/*
+输出结果：
+sizeof(a) = 60
+sizeof(*a) = 20
+sizeof(**a) = 4
+**(a+1) = 6
+**(a+2) = 11
+**(a+3) = 0
+**(a+4) = 0
+*/                        
+\end{lstlisting}
+
+a的类型是什么？
+如果\verb$int daytab[2][13]$作为函数参数，那么函数声明应形如
+\begin{lstlisting}[language=C++]
+void f(int daytab[2][13]) { ... }
+vod f(int daytab[][13]) { ... }
+void f(int (*daytab)[13]) { ... }          
+\end{lstlisting}
+第三种声明解释了a+1实际的地址偏移并非sizeof(a), 而是20。
+
+\subsection{成员地址偏移}
+stddef.h提供以下宏可用于求取类型为t的对象的成员变量m相对于对象起始字节的地址偏移\cite{pibible}：
+\begin{lstlisting}[language=C++]
+ #define offsetof(t,m) ((size_t)&((t *)0)->m)
+\end{lstlisting}
+将地址零强制转换为所关心的类型，则各字段的地址等于其相对于0的偏移。只要不引用各字段，就不会发生段错误。
+
+
+类似地，内核代码linux/kernel.h中提供的container\_of宏定义将type类型的成员变量member的指针ptr转为结构体地址。
+\begin{lstlisting}[language=C++]
+  #define container_of(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+\end{lstlisting}
+其中，typeof是gcc的C语言扩展保留字,用于声明变量类型。
+
+
+
+
+
+\subsection{C变量对齐规则}
+内存中的数据对齐准则，指数据所在内存地址必须是数据长度的整数倍(\cite{pibible}P50)。当在栈上分配变量空间时，这一点由编译器保证，且不同的编译器会输出不同的结果。当在堆上分配大片空间，由程序员故意在非变量长度整数倍的地址上存放一变量，这一点可能无法保证。
+
+对于成员变量对齐规则,有
+参\cite{pibible}P49。
+\begin{enumerate}
+    \item 如果成员均小于处理器位数，以最长成员为对齐单位
+    \item 如果存在成员达到或超过处理器位数，则以处理器位数为对齐单位
+    \item 类型相同的连续元素位于连续的空间内，如同数组(只要第一个元素满足内存中的数据对齐规则，其后元素必然满足对齐规则)。
+    \item 对象的大小为对齐单位的整数倍
+\end{enumerate}
+
+VC++中加上\#pragma pack(n)的设定能改变默认的数据对齐长度，n需为2的幂，如果没有参数n，相当于取消上一次设定。
+
+使用g++测试，总结出如下规律:
+    成员变量如果是结构体，则分解开考虑，相当于所有成员的长度只能是1,2,4,8。如果32位机上出现了4字节或8字节的变量，则结构长度为4字节的倍数，而每个成员均须保证自身是对齐的(假设结构体起始于4字节倍数地址)。如果最长的成员长2字节，则结构长度为2字节的倍数。如果是由单字节变量聚合成，则无需考虑对齐。
+
+还有一种总结：
+\begin{enumerate}
+\item 原则1、普通数据成员对齐规则：第一个数据成员放在offset为0的地方，以后每个数据成员存储的起始位置要从该成员大小的整数倍开始，或对齐单位整数倍，取较小者
+\item 原则2、结构体成员对齐规则：如果一个结构里有某些结构体成员，则该结构体成员要从其内部最大元素大小的整数倍地址开始存储。（struct a里存有struct b，b里有char，int，double等元素，那b应该从8的整数倍开始存储。）
+\item 原则3、结构体大小对齐规则：结构体大小也就是sizeof的结果，必须是其内部成员中最大的对齐参数的整数倍
+\end{enumerate}
+
+另外，在栈上分配结构体空间，是如何确定起始地址的？可以猜想，如果确保结构体起始于4字节倍数的地址，则可以保证每个成员都是对齐的。但实际分配原则应比此宽松。
+
+以下为一些测试例：
+\begin{lstlisting}[language=C++]
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+
+/*#pragma pack(2)*/
+struct char_only{
+    char f1;
+};
+
+struct char3{
+    char f1:3;
+};
+
+struct int3{
+    int f1:3;
+};
+
+
+struct int3_int2{
+    int f1:3;
+    int f2:2;
+};
+
+struct int3_int2_char{
+    int f1:3;
+    int f2:2;
+    char f3;
+};
+
+struct int3_char {
+    int f1:3;
+    char f2;
+};
+
+struct int24_char {
+    int f1:24;
+    char f2;
+};
+
+struct int25_char {
+    int f1:25;
+    char f2;
+};
+
+struct int_char {
+    int f1;
+    char f2;
+};
+
+struct char_int{
+    char f1;
+    int f2;
+};
+
+struct char_short_int{
+    char f1;
+    short f2;
+    int f3;
+};
+
+struct char_int_short{
+    char f1;
+    int f3;
+    short f2;
+};
+
+struct int_double_float{
+    int f1;
+    double f3;
+    float f2;
+};
+
+
+struct float_struct_int_double_float{
+    float f1;
+    struct int_double_float f2;
+};
+
+struct int_double_char{
+    int f1;
+    double f3;
+    char f2;
+};
+
+
+
+struct char_short_int_double{
+    char f1;
+    short f2;
+    int f3;
+    double f4;
+};
+
+struct char_short_char_double{
+    char f1;//2
+    short f2;//2
+    char f3;//4
+    double f4;//8
+};
+
+struct char_char_double{
+    char f1;//1
+    char f3;//3
+    double f4;//8
+};
+
+#define PRINT(x) printf("%s = %d\n", #x, x)
+
+int main(int argc, char* argv[])
+{
+    PRINT(sizeof(int));
+    PRINT(sizeof(double));
+    PRINT(sizeof(struct char_only));
+    PRINT(sizeof(struct char3));
+    PRINT(sizeof(struct int3));
+    PRINT(sizeof(struct int3_int2));
+    PRINT(sizeof(struct int3_int2_char));
+    PRINT(sizeof(struct int3_char));
+    PRINT(sizeof(struct int24_char));
+    PRINT(sizeof(struct int25_char));
+    PRINT(sizeof(struct int_char));
+    PRINT(sizeof(struct int_double_float));
+    PRINT(sizeof(struct float_struct_int_double_float));
+    PRINT(sizeof(struct int_double_char));
+    PRINT(sizeof(struct char_int));
+    PRINT(sizeof(struct char_short_int));
+    PRINT(sizeof(struct char_int_short));
+    PRINT(sizeof(struct char_short_int_double));
+    PRINT(sizeof(struct char_short_char_double));
+    PRINT(sizeof(struct char_char_double));
+    return 0;
+}
+\end{lstlisting}
+
+输出结果：
+\begin{verbatim}
+sizeof(int) = 4
+sizeof(double) = 8
+sizeof(struct char_only) = 1
+sizeof(struct char3) = 1
+sizeof(struct int3) = 4
+sizeof(struct int3_int2) = 4
+sizeof(struct int3_int2_char) = 4
+sizeof(struct int3_char) = 4
+sizeof(struct int24_char) = 4
+sizeof(struct int25_char) = 8
+sizeof(struct int_char) = 8
+sizeof(struct int_double_float) = 16
+sizeof(struct float_struct_int_double_float) = 20
+sizeof(struct int_double_char) = 16
+sizeof(struct char_int) = 8
+sizeof(struct char_short_int) = 8
+sizeof(struct char_int_short) = 12
+sizeof(struct char_short_int_double) = 16
+sizeof(struct char_short_char_double) = 16
+sizeof(struct char_char_double) = 12
+\end{verbatim}
+如果使用了\#pragma pack(2), 则输出结果：
+\begin{verbatim}
+sizeof(int) = 4
+sizeof(double) = 8
+sizeof(struct char_only) = 1
+sizeof(struct char3) = 1
+sizeof(struct int3) = 2
+sizeof(struct int3_int2) = 2
+sizeof(struct int3_int2_char) = 2
+sizeof(struct int3_char) = 2
+sizeof(struct int24_char) = 4
+sizeof(struct int25_char) = 6
+sizeof(struct int_char) = 6
+sizeof(struct int_double_float) = 16
+sizeof(struct float_struct_int_double_float) = 20
+sizeof(struct int_double_char) = 14
+sizeof(struct char_int) = 6
+sizeof(struct char_short_int) = 8
+sizeof(struct char_int_short) = 8
+sizeof(struct char_short_int_double) = 16
+sizeof(struct char_short_char_double) = 14
+sizeof(struct char_char_double) = 10
+
+\end{verbatim}
+
+
+使用位域的主要目的是压缩存储，其大致规则为：  \\
+ 1) 如果相邻位域字段的类型相同，且其位宽之和小于类型的sizeof大小，则后面的字段将紧邻前一个字段存储，直到不能容纳为止；  \\
+ 2) 如果相邻位域字段的类型相同，但其位宽之和大于类型的sizeof大小，则后面的字段将从新的存储单元开始，其偏移量为其类型大小的整数倍；  \\
+ 3) 如果相邻的位域字段的类型不同，则各编译器的具体实现有差异，VC6采取不压缩方式，Dev-C++采取压缩方式；  \\
+ 4) 如果位域字段之间穿插着非位域字段，则不进行压缩；  \\
+ 5) 整个结构体的总大小为最宽基本类型成员大小的整数倍。\\
+
+结构，联合，或者类的数据成员，第一个放在偏移为0的地方，以后每个数据成员的对齐，按照\#pragma pack指定的数值和这个数据成员自身长度中，比较小的那个进行。
+ 也就是说，当\#pragma pack的值等于或超过所有数据成员长度的时候，这个值的大小将不产生任何效果。
+ 而结构整体的对齐，则按照结构体中最大的数据成员 和 \#pragma pack指定值 之间，较小的那个进行。
+
+\#pragma pack(1)表示完全没有对齐考虑，紧凑布局。
+
+当数据定义中出现\__declspec(align())时，指定类型的对齐长度还要用自身长度和这里指定的数值比较，然后取其中较大的。
+最终类/结构的对齐长度也需要和这个数值比较，然后取其中较大的。
+可以这样理解，\__declspec(align()) 和 \#pragma pack是一对兄弟，前者规定了对齐的最小值，后者规定了对齐的最大值，两者同时出现时，前者拥有更高的优先级。
+
+
+\begin{lstlisting}[language=C++]
+struct test{
+    int f1;
+    double f2;
+    int f3[0];
+};
+\end{lstlisting}
+上述f3是不占内存的，但可作指针用，只是一个指向结尾的指针。
+
+\begin{lstlisting}[language=C++]
+struct char1{
+    char f3[1];
+};
+\end{lstlisting}
+该结构体占用的空间为1，即f3占用1字节内存，但可作指针用。
+
+
+\subsection{C++多继承下的内存布局}
+
+\begin{lstlisting}[language=C++]
+#include <cassert>
+#include <cstdlib>
+#include <climits>
+#include <cstring>
+#include <stack>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <iterator>  
+using namespace std;
+
+#define COUT(x) cout << #x << " = " << x << endl
+
+struct Base1{
+    int b1; 
+    virtual void f() {}
+};
+
+struct Base2{
+    int b2; 
+    virtual void g() {}
+};
+
+struct Derived: public Base1, public Base2{
+    int d1; 
+    int d2; 
+    virtual void h() {}
+    virtual void f() {}
+};
+
+
+int main(void) {
+    Derived d;
+    Base1 *bp1 = &d; 
+    Base2 *bp2 = &d; 
+    COUT(bp1);
+    COUT(bp2);
+    COUT(&d);
+    COUT(&d.d2);
+    return 0;
+}
+
+/*
+输出结果：
+bp1 = 0xbfc4b038
+bp2 = 0xbfc4b040
+&d = 0xbfc4b038
+&d.d2 = 0xbfc4b04c
+*/      
+\end{lstlisting}
+
+
+\subsection{Structure Packing}
+
+\href{http://www.catb.org/esr/structure-packing/}{The Lost Art of C Structure Packing}
+
+\href{https://github.com/ludx/The-Lost-Art-of-C-Structure-Packing/blob/master/README.md}{The Lost Art of C Structure Packing(Chinese Version)}
+
+
+
+\begin{lstlisting}[language=C++]
+#pragma pack(push) //save state
+#pragma pack(4)//4-byte alignment
+struct test
+{
+char m1;
+double m4;
+int m3;
+};
+#pragma pack(pop)//restore state
+
+\end{lstlisting}
+
+Another example:
+\begin{lstlisting}[language=C++]
+#pragma pack(push, 1) // exact fit - no padding
+struct MyStruct
+{
+  char b; 
+  int a; 
+  int array[2];
+};
+#pragma pack(pop) //back to whatever the previous packing mode was
+
+\end{lstlisting}
+Without the pragma directive, the size of the structure is 16 bytes - with the packing of 1 - the size is 13 bytes
+
+Gcc's attribute \textbf{aligned} specifies a minimum alignment for the variable
+or structure field, measured in bytes. For example, the declaration: 
+\begin{lstlisting}[language=C++]
+int x __attribute__ ((aligned (16))) = 0;
+\end{lstlisting}
+causes the compiler to allocate the global variable x on a 16-byte boundary.
+
+This attribute also specifies a minimum alignment (in bytes) for variables of
+the specified type(structure or union type). For example, the declarations:
+\begin{lstlisting}[language=C++]
+struct S { short f[3]; } __attribute__ ((aligned (8)));
+typedef int more_aligned_int __attribute__ ((aligned (8)));
+\end{lstlisting}
+force the compiler to insure (as far as it can) that each variable whose type is struct S or \verb|more_aligned_int| will be allocated and aligned at least on a 8-byte boundary.
+
+The \textbf{packed} attribute specifies that a variable or structure field
+should have the smallest possible alignment—one byte for a variable, and one bit for a field, unless you specify a larger value with the aligned attribute.
+Here is a structure in which the field x is packed, so that it immediately follows a:
+
+\begin{lstlisting}[language=C++]
+struct foo {
+    char a;
+    int x[2] __attribute__ ((packed));
+};
+\end{lstlisting}
+
+
+
+

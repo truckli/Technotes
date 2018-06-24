@@ -1,0 +1,97 @@
+%!Mode:: "TeX:UTF-8"
+\section{const,static与volatile}
+
+\subsection{const用途}
+\begin{itemize}
+    \item 定义const常量
+    \item 修饰函数参数和返回值
+    \item 修饰函数体(C++ only)，定义恒态函数，不改动成员变量，除非成员变量使用了mutable修饰符
+\end{itemize}
+
+logical constness举例：
+\begin{lstlisting}[language=C++]
+class CTextBlock {
+public:
+  ...
+  std::size_t length() const;
+private:
+  char *pText;
+  mutable std::size_t textLength;         // these data members may
+  mutable bool lengthIsValid;             // always be modified, even in
+};                                        // const member functions
+
+std::size_t CTextBlock::length() const
+{
+  if (!lengthIsValid) {
+    textLength = std::strlen(pText);      // now fine
+    lengthIsValid = true;                 // also fine
+  }
+
+  return textLength;
+}
+\end{lstlisting}
+
+
+\subsection{const在C与C++的区别}
+\begin{itemize}
+    \item C默认const是外部连接的，而C++则默认是内部连接的。C++不允许\verb|const int a;|这种写法，而C中相当于声明语句\verb|extern const int a;|
+    \item C中const量总是占用内存，且全局可见，不能当作编译期间的常量(如定义数组长度)。因此C中const用途非常有限。
+\end{itemize}
+
+一般而言，定义引用(reference)须用相同类型的变量作初始化，但const引用则可以用一般右值进行初始化。
+\begin{lstlisting}[language=C++]
+    int i = 3;
+    int &t = i;
+    const int &r = i + 6;
+\end{lstlisting}
+这是因为一般的引用可看做一个地址，而const引用则可以创建一个占用内存的对象。
+
+\subsection{用const构造类成员数组}
+在类中可以用constexpr声明数组。用const代替constexpr也可以。
+\begin{lstlisting}[language=C++]
+static constexpr int period = 30;// period is a constant expression
+double daily_tbl[period];
+\end{lstlisting}
+
+\subsection{static用途}
+\begin{itemize}
+    \item 静态全局变量/函数
+    \item 静态局部变量
+    \item 类成员变量/函数
+\end{itemize}
+
+
+static关键词只用于声明，不用于定义；static成员(变量或函数)用通过类名和对象均可访问，在派生类中亦可访问(public, protected)。
+non-const static成员变量不能在类体中初始化，必须在外部定义时初始化；const static成员变量可在类体中初始化，当常量表达式使用，但仍需在外部定义。
+static成员变量的类型可以是所属类的类型。
+
+\subsection{volatile修饰符}
+ volatile 关键字是一种类型修饰符，用它声明的类型变量表示可以被某些编译器未知的因素更改，比如：操作系统、硬件或者其它线程等。
+ 遇到这个关键字声明的变量，编译器应该对访问该变量的代码就不再进行优化，从而可以提供对特殊地址的稳定访问。
+ 当两个线程都要用到某一个变量且该变量的值会被改变时，应该用volatile声明。
+ 然而volatile在C/C++中的语义其实很模糊，有的编译器未必会理会这一提示。参考\ref{subsec:MemBarrier}。
+
+\begin{lstlisting}[language=C++]
+class MyThread : public Thread {
+	public:
+		virtual void run() {
+			while (!_stopped) {
+			  //do something
+			}
+	    }
+		void stop() {
+			 _stopped = true;
+		}
+	private:
+		bool volatile _stopped;
+ };
+
+MyThread thread;
+thread.run();
+\end{lstlisting}
+
+\url{https://www.kernel.org/doc/Documentation/volatile-considered-harmful.txt}认为volatile应该被栅栏操作替代。
+volatile没有实际意义，只有降低性能的危害。如果有人认为volatile非用不可，很有可能意味着其代码有bug。
+
+
+

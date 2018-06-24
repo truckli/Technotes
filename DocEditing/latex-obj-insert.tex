@@ -1,0 +1,107 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Object Insertion in LaTeX}
+
+\subsection{insertion of images}
+graphicx package is meant here:
+\begin{lstlisting}[language={[LaTex]Tex}]
+\begin{figure}[htpb]
+    \begin{center}
+        \includegraphics[keepaspectratio,width=0.8\paperwidth]{a.png}
+    \end{center}
+    \caption{SQL language elements}
+    \label{fig:SQL lan elem}
+\end{figure}
+\end{lstlisting}
+
+\subsection{insertion of tables}
+
+A pitfall is that the label must appear after the caption. 
+I discovered this while on PHD dissertation.
+\begin{lstlisting}[language={[LaTex]Tex}]
+\begin{table}[tbp]
+ \centering 
+ \begin{tabular}{lcc}  
+ \hline
+A & B & HiliMG \\ 
+ \hline  
+C  & 32 & 0 \\         
+D & 3.61Mbps & 3.75Mbps \\        
+ \hline
+ \end{tabular}
+ \caption{HiliMG
+ \label{tab:hilimgAndOpenloop}
+ \end{table}
+\end{lstlisting}
+
+
+\subsection{insertion of special characters}
+\verb+\textbackslash+
+
+
+\subsection{insertion of code}
+\begin{verbatim}
+\usepackage{listings} 
+
+\begin{lstlisting}[language=C]
+int rank()
+{ 
+    return 0;
+}
+\end{lstlisting}
+\end{verbatim}
+
+
+\subsection{insertion of pesudo-code}
+
+We can combinely use 
+algorithm and algorithmic environments.
+The required packages are:
+
+\begin{verbatim}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\end{verbatim}
+
+For Debian's texlive system, texlive-science package is needed here.
+\begin{verbatim}
+\begin{algorithm}
+\caption{xxxxxxxx}\label{euclid}
+\begin{algorithmic}[1]
+\Procedure{StaticChunkedParse}{$msg$}\Comment{msg is the chunked message}
+\State $ep\gets 0$
+\While{\texttt{True}}
+\State $chunkSize \gets msg[ep:ep+64]$
+\State $chunkLen \gets hex2int(chunkSize)$
+\If{$chunkLen = 0$}
+\State \textbf{break}
+\EndIf
+\State $ep \gets ep + len(chunkSize)$
+\State $output \gets output + msg[ep:ep+chunkLen]$
+\State $ep \gets ep + chunkLen$
+\EndWhile\label{euclidendwhile}
+\State \textbf{return} $output$\Comment{output is the decoded content}
+\EndProcedure
+\end{algorithmic}
+\label{alg:static}
+\end{algorithm}
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

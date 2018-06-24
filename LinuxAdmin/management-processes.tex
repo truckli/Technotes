@@ -1,0 +1,75 @@
+%!Mode:: "TeX:UTF-8"
+\section{进程查看}
+显示所有进程：
+\begin{verbatim}
+pstree -p #-p选项会打印出PID的值，否则只打印名字
+ps -ef
+\end{verbatim}
+
+
+\section{进程控制}
+
+按照NOHUP方式执行进程:
+\begin{verbatim}
+nohup ./cdn > /dev/null 2>&1 &
+\end{verbatim}
+noup:run a command immune to hangups, with output to a non-tty
+
+
+杀进程:
+\begin{verbatim}
+kill [信号] pid
+pkill [信号] pattern
+fuser -km 文件名
+\end{verbatim}
+
+xkill杀死单一窗口
+如需重启，可按住Alt SysRq,再依次按REISUB
+
+
+\subsection{进程查找}
+
+返回程序program的pid：
+\begin{verbatim}
+pidof program 
+pgrep program 
+ps -ef|grep program|awk '{print $2}'
+\end{verbatim}
+pgrep的-f参数使得查找的pattern不仅局限于程序名，而是整个命令行。 -u参数可以限制所属的user。
+
+通过pid查看进程的命令行参数:
+\begin{verbatim}
+cat /proc/2884/cmdline
+ps 3236|grep -v PID|awk '{print $5}'
+\end{verbatim}
+
+通过pid查看进程的打开的fd:
+\begin{verbatim}
+ls /proc/2884/fd
+\end{verbatim}
+
+通过pid查看进程的打开的文件:
+\begin{verbatim}
+lsof -p 2884
+\end{verbatim}
+通过程序名查看进程program的打开的文件:
+\begin{verbatim}
+lsof -c program 
+\end{verbatim}
+
+通过文件名查看打开该文件的进程
+\begin{verbatim}
+lsof ProberRun.log
+fuser -m ProberRun.log
+\end{verbatim}
+
+显示打开了某个端口的进程
+\begin{verbatim}
+lsof -i:8082 #只包括本用户的进程, root用户除外
+lsof -i |grep 8082
+netstat -nlpt |grep 8082
+\end{verbatim}
+
+
+
+

@@ -1,0 +1,224 @@
+%!Mode:: "TeX:UTF-8"
+\section{Text Processing}
+
+%!Mode:: "TeX:UTF-8"
+\subsection{sed工具}
+sed（意为流编辑器，源自英语“stream editor”的缩写）是Unix常见的命令行程序。sed用来把文档或字符串里面的文字经过一系列编辑命令转换为另一种格式输出。sed通常用来匹配一个或多个正则表达式的文本进行处理。
+
+用法: sed [选项]\ldots {脚本(如果没有其他脚本)} [输入文件]\ldots
+
+\begin{verbatim}
+-n, --quiet, --silent
+    取消自动打印模式空间
+-e 表示在e后面的文字是正则表达式。
+	有的版本不需要加注e选项也同样可以在命令中使用正则表达式。
+-f 脚本文件, --file=脚本文件
+    添加“脚本文件”到程序的运行列表
+-i[扩展名], --in-place[=扩展名]
+   直接修改文件(如果指定扩展名就备份文件)。例如，-i .bk 会导致生成以.bk为后缀的备份文件，如果不想备份，就指定 -i(Mac OS X)，在有的系统上指定 -i ' '(CentOS)
+\end{verbatim}
+
+下面主要谈论sed脚本语言。
+
+
+sed命令主要有：
+\begin{description}
+    \item[s/match/replace]替换
+    \item[i\textbackslash\ TEXT]前插(insert)行
+    \item[a\textbackslash\ TEXT]后插(append)行
+    \item[r filename]后插文件
+    \item[d]删除行
+    \item[p]打印行
+    \item[c]替换匹配到的行
+\end{description}
+
+sed命令之前需要有0～2个量，被称作''地址''。addr1,addr2形式为地址范围，闭区间。addr1,addr2!后面的叹号表示取反。addr1,+N形式为addr及其后N行。addr1~N为自addr1起以N为步长的所有行。由 /regexp/表示regexp匹配到的行。
+
+替换命令 举例：
+\begin{verbatim}
+echo 123456|sed -e s/123/wolf/g > haha4
+more haha3|sed -e s/123/wolf/g > haha4
+sed -e 's/<[^>]*>//g' haha.xml     (删除haha.xml中所有的xml标记)
+sed -i s/slb_ip/slb_api/g /usr/local/hpc/conf/vhost/default.conf; /usr/local/hpc/sbin/nginx -s reload （在蓝汛某线上节点上修改nginx location配置）
+\end{verbatim}
+
+
+
+删除行命令举例:
+\begin{verbatim}
+sed -e /^$/d haha >> haha2  //删除文件haha中的空行
+sed -e /33/d haha > haha2  //删除haha中包含33的行
+sed -e 2d haha > haha2  //删除第2行
+sed -e 2,4d haha > haha2  //删除第2~4行
+\end{verbatim}
+
+提取行命令:
+\begin{verbatim}
+sed -n '3,10p' myfile > newfile //提取从第3行到第10行
+\end{verbatim}
+
+提取不定行：
+\begin{verbatim}
+i=2
+sed -n ${i}p myfile
+\end{verbatim}
+
+陈皓博客用的例子：
+\begin{verbatim}
+$ cat pets.txt
+This is my cat
+  my cat's name is betty
+This is my dog
+  my dog's name is frank
+This is my fish
+  my fish's name is george
+This is my goat
+  my goat's name is adam
+\end{verbatim}
+
+分号（;）可以用作分隔命令的指示符:
+\begin{verbatim}
+$ sed '1,3s/my/your/g; 3,$s/This/That/g' my.txt
+This is your cat, your cat's name is betty
+This is your dog, your dog's name is frank
+That is your fish, your fish's name is george
+That is my goat, my goat's name is adam
+\end{verbatim}
+
+a命令就是append， i命令就是insert，它们是用来添加行的:
+\begin{verbatim}
+# 其中的1i表明，其要在第1行前插入一行（insert）
+$ sed "1 i This is my monkey, my monkey's name is wukong" my.txt
+This is my monkey, my monkey's name is wukong
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+This is my goat, my goat's name is adam
+ 
+# 其中的$a表明，其要在最后一行后追加一行（append）
+$ sed "$ a This is my monkey, my monkey's name is wukong" my.txt
+This is my cat, my cat's name is betty
+This is my monkey, my monkey's name is wukong
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+This is my goat, my goat's name is adam
+
+# 注意其中的/fish/a，这意思是匹配到/fish/后就追加一行
+$ sed "/fish/a This is my monkey, my monkey's name is wukong" my.txt
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+This is my monkey, my monkey's name is wukong
+This is my goat, my goat's name is adam
+\end{verbatim}
+
+c 命令是替换匹配行:
+\begin{verbatim}
+$ sed "2 c This is my monkey, my monkey's name is wukong" my.txt
+This is my cat, my cat's name is betty
+This is my monkey, my monkey's name is wukong
+This is my fish, my fish's name is george
+This is my goat, my goat's name is adam
+ 
+$ sed "/fish/c This is my monkey, my monkey's name is wukong" my.txt
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my monkey, my monkey's name is wukong
+This is my goat, my goat's name is adam
+\end{verbatim}
+
+
+d命令删除匹配行:
+\begin{verbatim}
+$ sed '/fish/d' my.txt
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my goat, my goat's name is adam
+ 
+$ sed '2d' my.txt
+This is my cat, my cat's name is betty
+This is my fish, my fish's name is george
+This is my goat, my goat's name is adam
+ 
+$ sed '2,$d' my.txt
+This is my cat, my cat's name is betty
+\end{verbatim}
+
+
+p命令为打印命令，你可以把这个命令当成grep式的命令：
+\begin{verbatim}
+# 匹配fish并输出，可以看到fish的那一行被打了两遍，
+# 这是因为sed处理时会把处理的信息输出
+$ sed '/fish/p' my.txt
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+This is my fish, my fish's name is george
+This is my goat, my goat's name is adam
+ 
+# 使用n参数就好了
+$ sed -n '/fish/p' my.txt
+This is my fish, my fish's name is george
+ 
+# 从一个模式到另一个模式
+$ sed -n '/dog/,/fish/p' my.txt
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+ 
+#从第一行打印到匹配fish成功的那一行
+$ sed -n '1,/fish/p' my.txt
+This is my cat, my cat's name is betty
+This is my dog, my dog's name is frank
+This is my fish, my fish's name is george
+\end{verbatim}
+
+
+
+\subsection{sort用法笔记}
+比较重要的选项包括:
+
+\begin{itemize}
+    \item o 指定输出文件
+    \item r 逆序
+    \item k=pos 指定关键词在第几列，默认为第一列
+    \item n 按照数值大小排序；默认为按字典序
+    \item u 删除重复行
+    \item t 指定field分隔符；默认为空格
+    \item f 忽略大小写 
+\end{itemize}
+
+
+举例：
+\begin{verbatim}
+sort -n -t ‘ ‘ -k 3r -k 2 facebook.txt
+sort -t ‘ ‘ -k 1 facebook.txt
+\end{verbatim}
+
+sort命令选项众多，十分强大。
+\subsection{uniq命令用法笔记}
+
+uniq命令用来检查或忽略文件中重复的行。重要选项有：
+
+\begin{itemize}
+    \item -u 只显示不重复的行
+    \item -d 只显示重复的行
+    \item -c 显示重复次数
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

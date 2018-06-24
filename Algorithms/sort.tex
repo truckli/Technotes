@@ -1,0 +1,463 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{快速排序}
+\label{codes:quicksort}
+就地不稳定排序，最差时间$O(N^2)$，平价时间$O(Nlog(N))$，空间复杂度$O(logN)$（递归造成的空间开销）。
+
+
+有许多版本，包括就地非稳定版本和稳定非就地版本。
+网上有一些非权威程序员给出了非递归版本，自行实现栈结构以模拟递归调用行为。
+
+\cite{pp}和\cite{sedgewick}提出了以下几种划分方案:
+\begin{itemize}
+    \item 
+	Lomuto划分, x[l]存放t，[l+1,m]小于t,(m,i)大于等于t，[i,u]未知。
+    \item 
+	双向划分， x[l]存放t，[l+1,m]小于等于t, (m,i)未知，[i,u]大于等于t。
+    \item 
+	三路划分(\cite{pp}11.5.11称为宽支点划分)。[l, lt)部分小于t，[lt,i)等于t，[i,gt]未知，(gt,u]大于t。
+\end{itemize}
+
+
+对快速排序pivot的选择，早期常使用最左元素，导致对有序数组性能很差。R.Sedgewick提出\cite{wikipedia}选择pivot的方案:
+\begin{itemize}
+    \item 随机元素
+    \item 中间元素
+    \item 最左、最右和中间元素的均值
+\end{itemize}
+
+他同时提出了两种优化:
+\begin{itemize}
+    \item 先递归较短的那半数组，以保证最多使用$O(logN)$空间。较长的那半数组使用尾部递归或遍历，可能不额外增加堆栈空间。
+    \item 数组段较短时不再排序，最终使用插入排序扫一遍，插入排序对于近似排好的数组很高效。
+\end{itemize}
+
+代码示例参考\ref{codes:quicksort}。
+
+
+
+
+《算法导论》给出的分割算法没有判断输入条件，是因为边界条件已经在QUICKSORT代码中判断过了，
+但这样的话\textbf{如果要求单独写分割算法可能引起误解}，同时必须解释本节伪代码\textbf{数组下标从1开始}。
+
+\begin{lstlisting}[language=C++]
+PARTITION(A,l,u) 
+ assert l < u
+ exchange A[rand(l,u)] <-> A[u]
+ m <- l - 1 
+ for i <- l to u-1 do
+    if A[i] <= A[u] then exchange A[++m] <-> A[i] 
+ exchange A[++m] <-> A[u] 
+ return m
+\end{lstlisting}
+模拟了尾递归的快速排序：
+\begin{lstlisting}[language=C++]
+TAIL-RECURSIVE-QUICKSORT(A,l,u)
+  while l < u do
+    m <- PARTITION(A,l,u)
+    if m < (l+u)/2 do
+      TAIL-RECURSIVE-QUICKSORT(A,l,m-1)
+      l <- m+1
+    else
+      TAIL-RECURSIVE-QUICKSORT(A,m+1,u)
+      u <- m-1
+\end{lstlisting}
+
+
+
+其他代码有：
+
+\begin{lstlisting}[language=C++]
+/* Sedgewick's version of Lomuto, with sentinel */
+void qsort2(int l, int u)
+{	int i, m;
+	if (l >= u)
+		return;
+	m = i = u+1;
+	do {
+		do i--; while (x[i] < x[l]);
+		swap(--m, i);
+	} while (i > l);
+	qsort2(l, m-1);
+	qsort2(m+1, u);
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=C++]
+/* Two-way partitioning */
+void qsort3(int l, int u)
+{	int i, j;
+	DType t;
+	if (l >= u)
+		return;
+	t = x[l];
+	i = l;
+	j = u+1;
+	for (;;) {
+		do i++; while (i <= u && x[i] < t);
+		do j--; while (x[j] > t);
+		if (i > j)
+			break;
+		swap(i, j);
+	}
+	swap(l, j);
+	qsort3(l, j-1);
+	qsort3(j+1, u);
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=C++]
+/* qsort3 + randomization + isort small subarrays + swap inline */
+int cutoff = 50;
+void qsort4(int l, int u)
+{	int i, j;
+	DType t, temp;
+	if (u - l < cutoff) return;
+	swap(l, randint(l, u));
+	t = x[l];
+	i = l;
+	j = u+1;
+	for (;;) {
+		do i++; while (i <= u && x[i] < t);
+		do j--; while (x[j] > t);
+		if (i > j)
+			break;
+		temp = x[i]; x[i] = x[j]; x[j] = temp;
+	}
+	swap(l, j);
+	qsort4(l, j-1);
+	qsort4(j+1, u);
+}
+
+\end{lstlisting}
+
+\cite{sedgewick}提出了三路分割，用于应对有大量keys重复的情形，并证明三路分割的快速排序具有熵最优性。该算法使用了$(2lg2)NH$次比较，H为香农熵，$H=-\sum{p_{k}lnp_k}$。
+
+
+\begin{lstlisting}[language=Java]
+
+public class Quick3way
+{
+    private static void sort(Comparable[] a, int lo, int hi)
+    { // See page 289 for public sort() that calls this method.
+	if (hi <= lo) return;
+	int lt = lo, i = lo+1, gt = hi;
+	Comparable v = a[lo];
+	while (i <= gt)
+	{
+	    int cmp = a[i].compareTo(v);
+	    if (cmp < 0) exch(a, lt++, i++);
+	    else if (cmp > 0) exch(a, i, gt--);
+	    else
+	    i++;
+	} // Now a[lo..lt-1] < v = a[lt..gt] < a[gt+1..hi].
+	sort(a, lo, lt - 1);
+	sort(a, gt + 1, hi);
+    }
+}
+\end{lstlisting}
+
+\section{归并、插入、冒泡排序}
+
+\textbf{归并排序}为\textbf{非就地、稳定}排序。
+时间复杂度为$\Theta(N \log N)$(最好、最坏)，空间复杂度为$O(N)$。对于链表，适合使用归并排序，此时不需要额外存储空间。
+快速排序用于链表时性能很差，堆排序几乎不可行。
+数组也可实现就地稳定的归并排序,但时间复杂度退化到Quasilinear($O(N \log^2 N)$)。
+
+归并排序可实现为自顶向下式(递归式，《算法导论》风格)和自底向上式。
+自然归并排序(Natural merge sort)是自底向上式的变种，利用了既已有序的子序列。
+
+
+
+\begin{lstlisting}[language=bash]
+MERGE_SORT(A,l,u)
+  if l < u
+    m <- (l+u)/2
+    MERGE_SORT(A,l,m)
+    MERGE_SORT(A,m+1,u)
+    n1 <- m - l + 1, n2 <- u - m
+    create B1[1..n1+1] <- [A[l,m],INFINITY]
+    create B2[1..n2+1] <- [A[m+1,u],INFINITY]
+    i <- j <- 1
+    for k <- l to u do
+      if B1[i] < B2[j] then
+        A[k] <- B2[i++]
+      else
+        A[k] <- B1[j++]   
+\end{lstlisting}
+
+\textbf{插入排序}的优点：稳定，就地，on-line，对小数据集效率高，对近似排序的数据性能优异。在所有二次复杂度排序算法中是最快的。
+最好(如，已排序)、平均、最坏(降序数组)情形下的时间复杂度分别为线性、二次方、二次方。
+\begin{lstlisting}[language=bash]
+INSERTION-SORT(A,n)
+  for i <- 2 to n do
+    key <- A[i]
+    j <- i - 1
+    while j > 0 and A[j] > key do
+      A[j+1] <- A[j]
+      j <- j-1
+    A[j+1] <- key
+\end{lstlisting}
+
+\textbf{冒泡排序}优点是简单(适合教学)有趣，但很多科学家还是提倡连教学都不要用它。
+
+\begin{lstlisting}[language=bash]
+BUBBLE-SORT(A)
+    last <- length[A] + 1
+    repeat
+       newn <- 1
+       for i <- 2 to last - 1 do
+          if A[i-1] > A[i] then
+             exchange A[i-1] <-> A[i]
+             newn <- i
+       last <- newn
+    until last = 1
+\end{lstlisting}
+上述代码中，不变式为：last为上次排好的元素，last及其以上元素已不需要排序，本次至少能排好A[last-1]。
+冒泡排序就地、稳定，在最好的情形下为线性运行时间，如同插入排序，但比后者慢。
+
+
+
+
+\section{堆排序}
+堆排序（Heapsort）是指利用堆数据结构所设计的一种排序算法，隶属于基于选择的排序算法。堆是一个近似完全二叉树的结构。
+其时间复杂度在最好、最差情形均为$O(Nlog(N))$。堆排序是就地不稳定排序，一般比快速排序算法慢，但是最差复杂度要更好。
+
+
+基于\cite{pp}14.2给出的两个关键函数siftup和siftdown，仅用几行程序就可实现堆排序。
+\begin{lstlisting}[language=Python]
+    #make heap
+    for i in range(2, len(x)):
+	siftup(x, i) #必须是大顶堆
+    
+    #sort heap
+    for i in range(len(x)-1, 1, -1):
+	tmp = x[1]; x[1] = x[i]; x[i] = tmp
+	siftdown(x, i-1)
+\end{lstlisting}
+对\cite{pp}14.2节siftup的优化包括x[0]置哨兵，放置一个大数；x[i]上浮时，不交换i,p两个位置，即将swap展开，只置i，不置p。siftdown很难使用哨兵，但也可以通过展开swap来进行优化。
+
+《算法导论》给出的MAX-HEAPIFY方法相当于siftdown, 其构造堆的操作使用的是siftdown而非siftup：
+\begin{lstlisting}[language=bash]
+MAX-HEAPIFY(A,i)
+  l <- 2i,r <- 2i+1,largest <- i
+  if l <= heap-size[A] and A[l] > A[i] then
+    largest <- l
+  if r <= heap-size[A] and A[r] > A[largest] then
+    largest <- r
+  if largest != i then
+    exchange A[largest] <-> a[i]
+    MAX-HEAPIFY(A,largest)
+\end{lstlisting}
+
+BUILD-MAX-HEAP(A)操作的运行时间仅为\textbf{线性}：
+$\sum \limits_{h=0} ^{\lfloor \lg n \rfloor} \lceil \frac{n}{2^{h+1}} \rceil O(h) = O(n \sum \limits_{h=0} ^{\lfloor \lg n \rfloor} \frac{h}{2^h}) = O(n \sum \limits_{h=0} ^{\infty} \frac{h}{2^h}) = O(n)$。
+\begin{lstlisting}[language=bash]
+BUILD-MAX-HEAP(A)
+  heap-size[A] <- length[A]
+  for i <- round(heap-size[A]/2)  downto 1 do
+    MAX-HEAPIFY(A,i)
+
+HEAP-SORT(A)
+  BUILD-MAX-HEAP(A)
+  for i <- length[A] downto 2 do
+    exchange A[1] <-> A[i]
+    heap-size[A] <- heap-size[A] - 1
+    MAX-HEAPIFY(A,1)
+\end{lstlisting}
+
+C++标准库提供来堆操作，包括make\_heap, push\_heap, pop\_heap,sort\_heap等。可以用两行代码实现堆排序:
+\begin{lstlisting}[language=Python]
+    make_heap(a, a+n)
+    sort_heap(a, a+n)
+\end{lstlisting}
+
+C++标准库也提供了对优先级队列priority\_queue的支持。
+
+\section{排序算法实现}
+\textbf{STL的sort实现了内省排序}。内省排序(intro sort)集成了快速排序和堆排序。这个排序算法首先从快速排序开始，当递归深度超过一定深度（深度为排序元素数量的对数值）后转为堆排序。采用这个方法，内省排序既能在常规数据集上实现快速排序的高性能，又能在最坏情况下仍保持$O(n\lg n)$的时间复杂度。
+
+SGI STL的list容器的sort方法使用了自底向上归并排序，由于链表不方便使用2-2-2-2-4-4-8式均匀向上归并，这里临时分配64个临时list，分别管理长度为1、2、4、8\dots 的中间链表，原链表的元素逐一插入中间链表，中间链表如同二进制数值一般满则进位，最终归并所有中间链表即可。
+
+C语言中，stdlib.h则提供了\textbf{qsort库函数}：
+\begin{lstlisting}[language=C]
+void qsort(void *base, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *));
+\end{lstlisting}
+
+uClibc库使用了希尔排序。\textbf{希尔排序}又称缩减增量排序。其优点是运行较快(平均时间为亚二次复杂度$o(N^2)$)，代码短且省内存(适合嵌入式系统)。
+其时间复杂度取决于增量序列，且极难分析。Shell序列($\lfloor N/2^{k}\rfloor $)性能比较差，最差复杂度为$\Theta(N^2)$。
+Sedgewick给出了一些最差复杂度$O(N^{4/3})$的序列。许多序列有$O(N^{3/2})$最差复杂度。
+Pratt给出了最差复杂度$O(N \log^{2} N)$的序列为目前的最佳序列。
+
+\textbf{Timsort}集成了归并排序和插入排序。Timsort于2002年由Tim Peters为Python设计，现已用于Java 7， Android和GNU Octave排列非内置类型。
+Timsort分析既已有序(非降序和严格降序)的子数组，称为run。如果run短于某阈值则按进行插入排序使其达到阈值。严格降序的run被翻转成严格升序run。
+
+
+
+\section{线性时间排序}
+\textbf{计数排序}假定元素值介于0到k之间的整数，运行时间为$\Theta(n+k)$。
+当$k=O(n)$时，运行时间为$\Theta(n)$。
+计数排序是\textbf{稳定}的，需要$O(k)$临时存储，亦无法做到就地排序。
+\begin{lstlisting}[language=bash]
+COUNTING-SORT(A,B,k)
+  create C[0..k] <- 0
+  
+  for i <- 1 to length[A] do
+    C[A[i]] <-  C[A[i]] + 1
+    
+  for j <- 1 to k do
+    C[j] <- C[j] + C[j-1]
+    
+  j <- 1
+  while C[j] = 0 do
+    j <- j + 1
+    
+  for i <- length[A] downto 1 do
+    B[C[A[i]]] <- A[i]
+     C[A[i]] <-  C[A[i]] - 1
+\end{lstlisting}
+之所以要在最后一个循环中从后向前遍历A[i]，是为了保证稳定性：对于相同取值的元素，名次逐渐减小。
+
+\textbf{基数排序}(Radix Sort)是\textbf{稳定排序}，依赖于另一种针对整数的稳定排序，从低位到高位依次对每一位数排序。
+给定n个k进制d位数，如果所用的整数排序算法需要$\Theta(n+k)$时间，则基数排序需要$\Theta(d(n+k))$时间。当k不太大时，可选择计数排序作为其辅助排序算法。
+
+\textbf{桶排序}算法，如果输入数据满足一个特性：\textbf{各桶尺寸的平方和与总元素数呈线性关系}，则桶排序算法以期望线性时间运行。
+此时，桶内排序算法可使用\textbf{插入排序}：桶内元素不会太多，且桶多以链表方式实现，用插入排序可保证稳定性。
+
+
+
+\section{排序算法总结}
+\subsection{排序算法分类}
+\label{subsec:sortAthmClass}
+
+根据\cite{acp},排序算法包括内部排序和外部排序(不完全放入RAM)。内部排序分类：插入，交换，选择，合并，分布。
+根据\cite{ita},排序算法包括基于比较的排序和非基于比较的排序(可以达到线性时间复杂度)。
+\cite{weijipedia}给出了丰富的讲解材料。
+\begin{verbatim}
+http://en.wikipedia.org/wiki/Sorting_algorithm
+\end{verbatim}
+
+\begin{description}
+    \item[基于插入的排序] 
+        \hfill \\
+	\begin{description}
+	    \item[直接插入]就地稳定。$O(N^2)$。参\cite{ita}2.2。适用于近似有序数组。快速排序和插入排序可以联合使用，性能极佳。
+	    \item[希尔(Shell)排序]就地，不稳定。\cite{acp}5.2.1D。也称递减增量排序算法，不需要大量的辅助空间，不稳定，复杂度取决于降序序列的选取，可能是$O(Nlg^{2}(N))$,$O(NlogN)$, $N^{\frac{6}{5}}$。
+	    \item[图书馆排序]有n个元素待排序，这些元素被插入到拥有(1+e)n个元素的数组中。
+	    \item[(二叉)树排序]稳定。线性空间复杂度。先构造二叉查找树，再in-order遍历之。从文件中读数时比较方便。平均时间$O(NlogN)$,二叉树不平衡时最差$O(N^2)$。
+	    \item[其他]二路插入(使用二分法查找合适度位置，但未能减小移动数据度开销)，表插入(以链表实现，减小数据复制开销)，地址计算插入等。
+	\end{description}
+    \item[基于交换的排序] 
+        \hfill \\
+	\begin{description}
+	    \item[冒泡]稳定就地排序。$O(N^2)$。数据交换过多，\cite{acp}认为不值得推荐。
+	    \item[鸡尾酒排序]稳定就地排序。冒泡排序的变种。别名：双向冒泡排序, 鸡尾酒搅拌排序, 搅拌排序，涟漪排序, 来回排序。
+	    \item[快速排序]就地不稳定。最差时间$O(N^2)$，平价时间$O(Nlog(N))$，空间$O(logN)$。\cite{sedgewick}认为快速排序是最快的。
+	    \item[奇偶排序]奇偶换位排序，或砖排序。最初发明用于有本地互连的并行计算。
+	    \item[Gnome Sort]又称stupid sort。类似插入排序，但通过同前面元素交换实现插入。
+	    \item[梳子排序]冒泡排序的变种。不稳定。如同快速排序和合并排序，梳排序的效率在开始时最佳，接近结束时，即进入泡沫排序时最差。如果间距变得太小时(例如小于10)，改用诸如插入排序或鸡尾酒排序等算法，则可提升整体效能。
+	    \item[其他]合并交换(在可并行比较计算时有用)，基数交换，地址计算插入等。
+	\end{description}
+    \item[基于选择的排序]
+        \hfill \\
+	\begin{description}
+	    \item[直接选择]就地不稳定。$O(N^2)$。
+	    \item[堆排序]就地不稳定。时间$O(Nlog(N))$，空间$O(1)$。\cite{ita}认为堆排序不如快速排序，但有其他用途，如实现优先级队列。	
+	    \item[锦标赛排序]基于堆，待排数据初存于叶子节点，决出胜者，将胜者从其上升路径中删除，在存放胜者的叶子节点放置一个大数。时间$O(Nlog(N))$，需要额外空间作为堆。主要用于外排序的多路合并步骤。
+
+	\end{description}
+    \item[基于合并的排序] 
+        \hfill \\
+	\textbf{归并排序}，非就地，稳定。\cite{ita}2.3节Merge例程先将待合并数组的两个有序子数组拷贝到外部，再拷回原数组使有序。
+	比较操作的次数介于$(nlogn)/2$和$nlogn-n+1$，赋值操作的次数是$2nlogn$，空间复杂度为：Θ (n)\cite{weijipedia}。
+	\cite{acp}提出了如下两个非递归的归并排序算法，额外分配了与原数组等长的缓冲区。
+	\begin{description}
+	    \item[自然的两路合并]\cite{acp}5.2.4算法N。
+	    \item[直接两路合并]\cite{acp}5.2.4算法S。
+	\end{description}
+	另外，还有就地不稳定版本的合并排序(\cite{acp}Vol3 习题5.2.5，$O(NlgN)$时间,流程复杂)。也有就地稳定版本(\cite{acp}Vol3习题)的合并排序，流程简单，时间复杂度有所增加,失去了意义。对于就地不稳定版本，分为分块、预排序、两两归并、扫尾四部。分为m+2块，除最后一块外，其他快大小都是$sqrt(n)$。块内排序。块排序，依据块的首元素，如首元素相同则依据末尾元素。然后执行多次AUX排序。\url{http://blog.ibread.net/345/in-place-merge-sort/}.
+    \item[基于分布的排序] \hfill \\
+
+	\begin{description}
+	    \item[桶排序]\cite{ita}8.4。稳定？，最差时间$O(n+k)$，平均时间$O(n+k)$，需要额外空间存放桶。It is a distribution sort, and is a cousin of radix sort in the most to least significant digit flavour. Bucket sort is a generalization of pigeonhole sort. 
+	    \item[鸽巢排序]鸽巢排序(Pigeonhole sort), 也被称作基数分类\cite{weijipedia}(count sort\cite{wikipedia}), 时空复杂度均$O(n+k)$，适用于$k=O(n)$情形，否则不如桶排序。计数排序中元素移动一次，鸽巢排序则移动两次(入、出鸽巢)\cite{wikipedia}.
+	    \item[比较计数]\cite{acp}5.2算法C，统计比该记录小的记录的个数。时间$O(N^2)$，空间$O(N)$。无大用。
+	    \item[分布计数]\cite{acp}5.2算法D。\cite{ita}8.2。稳定排序。时间$O(n+k)a$，空间$O(k+n)$，k为分布空间大小，需要额外空间存放辅助表和排序结果。若$k=O(n)$,则时空均为$O(n)$。涉及的操作包括prefix sum(cumulative sum).
+	    \item[基数排序]\cite{ita}8.3。若每个基数位使用计数排序，则时间$O(d(n+k))$，d为位数，k为基数。
+	\end{description}
+\end{description}
+
+另外，bogosort（猴子排序）通过随机洗牌来排序，时间复杂度无上限，仅供了解。一个笑话说：量子计算机能够以 O(n) 的复杂度更有效地实现Bogo排序。
+
+
+\subsection{空间复杂度}
+总之，如果不是就地排序，则至少需要$O(N)$的额外空间，如归并排序。快速排序为就地排序，但需要$O(logN)$的空间。
+归并排序的主要缺点就是额外空间问题。
+
+\subsection{稳定性}
+\cite{weijipedia}
+1.稳定的排序
+\begin{enumerate}
+	\item 冒泡排序, 鸡尾酒排序
+	\item 插入排序
+	\item 归并排序
+	\item 二叉树排序
+	\item 鸽巢排序
+	\item 桶排序
+	\item 计数排序
+	\item 基数排序
+	\item Gnome sort
+	\item 图书馆排序
+	\end{enumerate}
+
+	2.不稳定的排序
+
+	\begin{enumerate}
+	\item 选择排序
+	\item 希尔排序
+	\item Comb sort
+	\item 组合排序
+	\item 堆排序
+	\item Smoothsort
+	\item 快速排序
+	\item Introsort
+	\item Patience sort
+    \end{enumerate}
+
+\cite{sedgewick}习题2.5.18提出了强制稳定性概念，比如用额外的字段记录每个数据的位置，在不稳定排序操作之后用此字段恢复原来的相对次序。
+原地分区版本的快速排序算法是不稳定的。其他变种是可以通过牺牲性能和空间来维护稳定性的\cite{weijipedia}。
+
+综上，基本上可以认为，如果排序算法涉及到非相邻元素间的互换（冒泡算法是相邻互换），那么就是不稳定的。
+
+
+\subsection{外部排序}
+主要算法\cite{wikipedia}:
+\begin{itemize}
+    \item 
+        \textbf{外部合并排序}\cite{wikipedia}.涉及的数量概念是pass(取决于算法设计，不宜过多)和way(取决与数据量与RAM空间比值)。pass是步骤数，pass1将子文件排序并存放于way路临时文件，pass2进行多路合并。如果way过多，pass2会因磁盘寻道频繁而效率低下。此时可增加pass数，pass2合并way路为更少的路数，pass3将现有路数合并成1路。
+    \item 
+	\textbf{外部桶排序}，基于分布的排序。桶排序和合并排序具有数学上的对偶性\cite{weijipedia}。k趟算法可以在kn的时间开销和\verb|n/k|空间开销内完成对最多n个小于n的无重复正整数的排序(选自\cite{pp}1.5答案，每趟使用位图法进行排序)。
+\end{itemize}
+\cite{pp}1.3的归并排序、多趟排序分别指这里的外部合并排序和外部桶排序。
+
+此外，还有一些不需要临时文件的原地算法。 Merge sort is used in external sorting; heapsort is not. Locality of reference is the issue.
+
+
+
+\subsection{对整数排序}
+\cite{wikipedia}
+题目中研究的对象如果是整数，可以在其值域做文章。计算机中的整数取值空间有限且可数。
+主要算法:
+\begin{itemize}
+    \item 
+van Emde Boas tree,\cite{ita}第3版第20章，\cite{wikipedia}。
+    \item 
+non-conservative "packed sorting" algorithm
+    \item 
+	位图排序，要求key可表示为整数且互异。bit在bit序列中的位置代表整数的值，而bit的值代表存在性。如果整数出现多次\cite{pp}1.6.6，或者需要统计其他属性(而不仅仅是存在性)，可以考虑用多个bit位表示每个整数，bit值代表该属性。如\cite{pp}1.6.8，美国免费电话号(800.887.888)存储问题，可以用3个bit分别表示以800,887,888前缀的特定7位号码是否已经存在\cite{self}。
+    \item 
+Bucket sort, counting sort, radix sort
+\end{itemize}

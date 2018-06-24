@@ -1,0 +1,119 @@
+%!Mode:: "TeX:UTF-8"
+\section{实用计算、查询与搜索}
+
+\subsection{算数}
+Linux下一些CGI工具可以用作计算器，如Python，calc，bc等。
+
+Python计算默认为整数计算，如需浮点数运算结果，可以在运算数后加.0;也可以在运行Python时使用命令行开关-Qnew
+
+calc工具来自于apcalc软件包，可以实现任意精度的计算。calc默认就是浮点数计算，比较方便；而bc默认为整数计算。
+
+bc其实是一种复杂的编程语言；如计算5/6, 设置精度为3位，则有:
+\begin{verbatim}
+	scale=3;5/6
+\end{verbatim}
+
+\subsection{进制转换}
+可以用Python完成进制转换运算。
+
+十进制转换为二进制、八进制、十六进制，可以分别使用函数bin,oct,hex。 
+二进制，8进制，16进制转十进制容易，直接在互动界面上键入0xa3,0b101,0o33即可。
+
+\subsection{ASCII码表}
+可以查找man页:\verb+man ascii+
+在Python下，十进制转ASCII可以用chr函数，反之使用ord。
+
+\subsection{时间计算} 
+Python的datetime包提供了日期与时间相关的操作。 参考\ref{sec:pythonTimeCalc}。
+
+
+
+\subsection{日历查询}
+cal工具能够打印某年或某月的日历，默认为本月。
+\begin{verbatim}
+cal #本月
+cal 2012 #某年
+cal -y 2012 #某年
+cal -m 8 #今年某月
+cal 8 2012 #某年某月
+\end{verbatim}
+
+date命令用各种格式显示指定时间:
+\begin{verbatim}
+date +%s  #当前epoch秒数
+date +%A #今天星期几
+date -r NUMBER #显示NUMBER表示的epoch秒数对应的时间
+\end{verbatim}
+
+
+calendar模块提供了查询平闰年和星期的功能，也能产生日历字符串。参考\ref{sec:pythonTimeCalc}。
+
+\subsection{IP address search}
+\begin{verbatim}
+whois 202.38.95.110
+\end{verbatim}
+
+\subsection{IP address conversion to/from integer}
+
+With Microsoft Excel:
+\begin{verbatim}
+=CONCATENATE(MOD(BITRSHIFT(D7,24),256),".",
+MOD(BITRSHIFT(D7,16),256),".",
+MOD(BITRSHIFT(D7,8),256),".",MOD(D7,256))
+\end{verbatim}
+
+With MySQL:
+
+\begin{verbatim}
+inet_ntoa
+\end{verbatim}
+
+\subsection{Google汇率查询}
+汇率查询，比如欲查询人民币和韩币汇率，Google：
+\begin{verbatim}
+cny in won
+rmb in won
+china in korea currency
+\end{verbatim}
+
+\subsection{Google单位换算}
+\begin{verbatim}
+mile to km
+\end{verbatim}
+
+\subsection{Google技巧}
+\url{http://www.googleguide.com}.
+布尔运算：与(空格默认为AND)、或(大写OR，|(vertical bar))、非(-)。\verb+()+可调整运算优先级。
+
+域搜索:site, inurl, filetype。
+
+精确搜索:双引号
+
+前缀：allintitle,link
+
+同时，Google提供了高级搜索的UI界面。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

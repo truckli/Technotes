@@ -1,0 +1,33 @@
+%!Mode:: "TeX:UTF-8"
+\section{Nginx}
+Nginx（发音同engine x）是一款由俄罗斯程序员Igor Sysoev所开发轻量级的网页服务器、反向代理服务器以及电子邮件（IMAP/POP3）代理服务器。起初是供俄国大型的门户网站及搜索引擎Rambler使用。此软件BSD-like协议下发行，可以在UNIX、GNU/Linux、BSD、Mac OS X、Solaris，以及Microsoft Windows等操作系统中运行。
+
+Nginx是一款面向性能设计的HTTP服务器，相较于Apache、lighttpd具有占有内存少，稳定性高等优势。与旧版本（<=2.2）的Apache不同，nginx不采用每客户机一线程的设计模型，而是充分使用异步逻辑，削减了上下文调度开销，所以并发服务能力更强。整体采用模块化设计，有丰富的模块库和第三方模块库，配置灵活。 在Linux操作系统下，nginx使用epoll事件模型，得益于此，nginx在Linux操作系统下效率相当高。同时Nginx在OpenBSD或FreeBSD操作系统上采用类似于epoll的高效事件模型kqueue。
+
+\subsection{阶段}
+Nginx将HTTP处理分为11个阶段（Phase）：
+\begin{description}
+\item[PostRead]接收完请求头之后的第一个阶段，它位于uri重写之前，实际上很少有模块会注册在该阶段，默认的情况下，该阶段被跳过
+\item[ServerRewrite]server级别的uri重写阶段，也就是该阶段执行处于server块内，location块外的重写指令
+\item[FingConfig]重写URL后找到匹配的location块，其原理是从location组成的静态二叉树中快速检索。处理方法由官方提供不可更改。
+\item[Rewrite]location级别的uri重写阶段，该阶段执行location基本的重写指令，也可能会被执行多次。同ServerRewrite完全相同，其checker函数也是\verb$ngx_http_core_rewrite_phase$。
+\item[PostRewrite]location级别重写的后一阶段，用来检查上阶段是否有uri重写，并根据结果跳转到合适的阶段，并限制重写URL次数，防止死循环。处理方法由官方提供不可更改。
+\item[PreAccess]访问权限控制的前一阶段，该阶段在权限控制阶段之前，一般也用于访问控制，比如限制访问频率，链接数等
+\item[Access]访问权限控制阶段，比如基于ip黑白名单的权限控制，基于用户名密码的权限控制等
+\item[PostAccess]访问权限控制的后一阶段，该阶段根据权限控制阶段的执行结果进行相应处理
+\item[TryFiles]\verb$try_files$指令的处理阶段，如果没有配置\verb$try_files$指令，则该阶段被跳过。\verb$try_files$作用类似于rewrite，用于配置所请求内容的路径选择规则
+\item[Content]内容生成阶段，该阶段产生响应，并发送到客户端
+\item[Log]日志记录阶段，该阶段记录访问日志
+\end{description}
+
+在\verb$ngx_lua$中，有init, rewrite, access, set, content, log等阶段。
+
+一般而言handler返回：
+\begin{description}
+\item [NGX\_OK]表示该阶段已经处理完成，需要转入下一个阶段
+\item [NG\_DECLINED]表示需要转入本阶段的下一个handler继续处理
+\item [NGX\_AGAIN, NGX\_DONE]表示需要等待某个事件发生才能继续处理（比如等待网络IO），此时Nginx为了不阻塞其他请求的处理，必须中断当前请求的执行链，等待事件发生之后继续执行该handler
+\item [NGX\_ERROR]表示发生了错误，需要结束该请求
+\end{description}
+
+

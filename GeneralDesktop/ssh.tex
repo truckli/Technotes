@@ -1,0 +1,102 @@
+%!Mode:: "TeX:UTF-8"
+\section{SSH}
+
+\subsection{login and execute commands}
+\begin{lstlisting}[language=bash]
+   ssh HOSTNAME -t ``cd /somedir; bash'' 
+\end{lstlisting}
+
+\subsection{login without passwords}
+
+First, generate a pair of RSA keys and store them on ~/.ssh.
+\begin{verbatim}
+ssh-keygen -t rsa
+\end{verbatim}
+
+Second, copy the public key file to a target host.
+\begin{verbatim}
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@172.30.30.101
+\end{verbatim}
+
+
+\subsection{ssh tunneling}
+
+Port forwarding:
+\begin{verbatim}
+ ssh -p 22 -L 8443:10.139.90.144:8443 -L 8080:10.139.90.148:8080 -L
+13306:10.139.90.148:3306 -N -lroot 10.9.0.5
+\end{verbatim}
+
+\href{http://ju.outofmemory.cn/entry/123978}{svn使用socks代理}
+
+\begin{verbatim}
+http-proxy-host = 127.0.0.1
+http-proxy-port = 12007
+http-compression = yes
+\end{verbatim}
+
+\subsection{screen}
+
+screen is used to manage shell sessions.
+
+Enter a new or existing session:
+
+\begin{verbatim}
+ screen -dR screen_name
+\end{verbatim}
+
+Show existing sessions:
+
+\begin{verbatim}
+ screen -ls
+\end{verbatim}
+ 
+
+Enter an existing session:
+
+\begin{verbatim}
+ screen -r screen_name
+\end{verbatim}
+ 
+ 
+Session quit(detach):
+\begin{verbatim}
+ screen -d screen_name
+ screen -d 
+\end{verbatim}
+
+To terminate, i.e., delete the current session, type \textbf{Ctrl + D}, or use:
+\begin{verbatim}
+screen -X -S screen_name quit 
+\end{verbatim}
+
+
+
+To activate a screen command, type \textbf{Ctrl+A}, following a command key:
+
+\begin{description}
+\item[D] quit a session
+\end{description}
+
+
+screen cli options descriptions:
+
+\begin{description}
+\item[-d] Detach the elsewhere running screen
+\item[-R] Reattach if possible, otherwise start a new session
+\item[-r session] Reattach to a detached screen process
+\item[-X] Execute <cmd> as a screen command in the specified session
+\item[-S sockname]   Name this session <pid>.sockname instead of <pid>.<tty>.<host>.
+\end{description}
+
+
+
+
+
+
+
+
+
+
+
+

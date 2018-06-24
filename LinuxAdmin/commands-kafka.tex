@@ -1,0 +1,39 @@
+%!Mode:: "TeX:UTF-8"
+\section{Apache Kafka Operations}
+
+Restart kafka:
+\begin{verbatim}
+/opt/kafka/bin/kafka-server-stop.sh
+/opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/server.properties
+\end{verbatim}
+
+List all topics:
+\begin{verbatim}
+/opt/kafka/bin/kafka-topics.sh --list --zookeeper chanct04:2181
+/opt/kafka/bin/kafka-topics.sh --create --zookeeper chanct04:2181 --replication-factor 1 --partitions 1 --topic limz1
+/opt/kafka/bin/kafka-topics.sh --describe --zookeeper chanct04:2181 --topic limz1
+/opt/kafka/bin/kafka-topics.sh --delete --zookeeper chanct04:2181  --topic limz1
+kafka-topics --zookeeper mdss4:2181/kafka --list
+\end{verbatim}
+
+\begin{verbatim}
+/opt/kafka/bin/kafka-console-producer.sh --broker-list chanct04:9092 --topic limz1
+/opt/kafka/bin/kafka-console-consumer.sh --zookeeper chanct04:2181 --topic limz1 
+kafka-console-consumer --zookeeper mdss4:2181/kafka --topic hive-cddos-rawflowrecords 
+kafka-console-producer --broker-list 172.30.11.22:9092 --topic hive-cddos-rawflowrecords
+\end{verbatim}
+
+Kafka can feed a text file into a producer:
+\begin{verbatim}
+kafka-console-produce.sh --broker-list chanct04:9092 --topic my_topic --new-producer < my_file.txt
+/opt/kafka/bin/kafka-console-producer.sh --broker-list 172.30.11.22:9092 --topic hive-cddos-rawflowrecords < unify.txt
+kafka-console-producer --broker-list 172.30.11.22:9092 --topic hive-cddos-rawflowrecords < unify.txt
+\end{verbatim}
+
+
+
+
+
+
+
+

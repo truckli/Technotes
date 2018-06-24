@@ -1,0 +1,108 @@
+%!Mode:: "TeX:UTF-8"
+\section{系统总线} 
+
+\subsection{PCI}
+外设互联标准（或称个人电脑接口，Personal Computer Interface），实际应用中简称为PCI（Peripheral Component Interconnect），是一种连接电子计算机主板和外部设备的总线标准。一般PCI设备可分为以下两种形式：
+直接布放在主板上的集成电路，在 PCI 规范中称作“平面设备”（planar device）；或者
+安装在插槽上的扩展卡。
+PCI bus常见于现代的个人计算机中，并已取代了ISA和VESA 局部总线，成为了标准扩展总线。PCI 总线亦常见于其他电子计算机类型中。PCI总线最终将被PCI Express和其他更先进的技术取代，这些技术现在已经被用于最新款的电子计算机中。
+PCI 规范规定了该总线的物理尺寸（包括线宽）、电气特性、总线时序和协议。该规范可从美国PCI-SIG协会购得。
+常见的PCI卡包括网卡、声卡、调制解调器、电视卡和磁盘控制器，还有USB和串口等端口。原本显卡通常也是PCI设备，但很快其带宽已不足以支持显卡的性能。PCI显卡现在仅用在需要额外的外接显示器或主板上没有AGP和PCI Express槽的情况。
+
+\subsection{PCI-E}
+PCI Express，简称PCI-E，是电脑总线PCI的一种，它沿用了现有的PCI编程概念及通讯标准，但建基于更快的串行通信系统。英特尔是该接口的主要支援者。PCIe仅应用于内部互连。由于PCIe是基于现有的PCI系统，只需修改物理层而无须修改软件就可将现有PCI系统转换为PCIe。PCIe拥有更快的速率，以取代几乎全部现有的内部总线（包括AGP和PCI）。英特尔希望将来能用一个PCIe控制器和所有外部设备交流，取代现有的南桥／北桥方案。
+
+除了这些，PCIe设备能够支援热拔插以及热交换特性，支援的三种电压分别为+3.3V、3.3Vaux以及+12V。考虑到现在显卡功耗的日益增加，PCIe而后在规范中改善了直接从插槽中取电的功率限制，16x的最大提供功率达到了75W[1]，比AGP 8X接口有了很大的提升。基本可以满足当时(2004年)中高阶显卡的需求。这一点可以从AGP、PCIe两个不同版本的6600GT显卡上就能明显地看到，后者并不需要外接电源。PCIe只是南桥的扩展总线，它与操作系统无关，所以也保证了它与原有PCI的兼容性，也就是说在很长一段时间内在主板上PCIe接口将和PCI接口共存，这也给用户的升级带来了方便。由此可见，PCIe最大的意义在于它的通用性，不仅可以让它用于南桥和其他设备的连接，也可以延伸到芯片组间的连接，甚至也可以用于连接图形芯片，这样，整个I/O系统重新统一起来，将更进一步简化计算机系统，增加计算机的可移植性和模块化。
+
+
+\subsection{AGP}
+AGP，全称为加速图像处理端口（Accelerated Graphics Port），是电脑主板上的一种高速点对点传输通道，供显卡使用，主要应用在三维电脑图形的加速上。AGP是在1997年由Intel提出，是从PCI标准上创建起来，是一种显卡专用接口。推出原因是为了消除PCI在处理3D图形时的瓶颈。AGP通常会被视为电脑总线的一种，但这样的分法严格来说是错误的；因为一组总线可容许多个设备共用，而AGP却不是。AGP不能多个插槽共用一组总线。一些主板设有多条独立的AGP插槽，现时AGP已基本被PCI Express所取代。
+
+
+\subsection{LPC}
+LPC总线，原名叫Low pin count Bus，是在IBM PC兼容机中用于把低带宽设备和“老旧”连接到CPU上。那些常见低速设备有：BIOS，串口，并口，PS/2的键盘和鼠标，软盘控制器，比较新的设备有可信平台模块。LPC总线通常和主板上的南桥物理相连，南桥在IBM PC AT平台上通常连接了一系列的“老旧”设备，例如两个可编程中断控制器， 可编程计时器和两个 ISA DMA 控制器。 LPC总线是Intel在1998时作为工业标准架构体系（ISA）的替代品引入，它与ISA在软件层面是类似的，尽管在物理层面是有着巨大不同的，ISA是16比特宽，8.33 MHz的总线，而它是4比特宽，有着四倍频率（33.3 MHz）的总线。 LPC总线最大的优点是只需要7个信号，在拥挤的现代主板上是很容易布局的。
+
+
+\subsection{SPI}
+SPI是很多术语的缩写。包括:
+\subsubsection{serial peripheral interface}
+序列周边接口（Serial Peripheral Interface Bus，SPI），类似I²C，是一种4线同步序列资料协定，适用于可携式装置平台系统，但使用率较I²C少。序列周边接口一般是4线，有时亦可为3线，有别于I²C的2线，以及1-Wire。
+
+The Serial Peripheral Interface Bus or SPI (pronounced as either ess-pee-eye, spy or simply S.P.I) bus is a synchronous serial data link standard, named by Motorola, that operates in full duplex mode. Devices communicate in master/slave mode where the master device initiates the data frame. Multiple slave devices are allowed with individual slave select (chip select) lines. Sometimes SPI is called a four-wire serial bus, contrasting with three-, two-, and one-wire serial buses.
+\subsubsection{System Packet Interface}
+The System Packet Interface family of Interoperability Agreements from the Optical Internetworking Forum specify chip-to-chip, channelized, packet interfaces commonly used in synchronous optical networking and ethernet applications. A typical application of such a packet level interface is between a framer (for optical network) or a MAC (for IP network) and a network processor. Another application of this interface might be between a packet processor ASIC and a traffic manager device.
+
+SPI-4.2 is a version of the System Packet Interface published by the Optical Internetworking Forum. It was designed to be used in systems that support OC-192 SONET interfaces and is sometimes used in 10 Gigabit Ethernet based systems.
+SPI-4 is an interface for packet and cell transfer between a physical layer (PHY) device and a link layer device, for aggregate bandwidths of OC-192 Asynchronous Transfer Mode(ATM) and Packet over SONET/SDH (POS), as well as 10 Gigabit Ethernet applications.
+A typical application of SPI-4.2 is to connect a framer device to a network processor. It has been widely adopted by the high speed networking marketplace.
+The clocking is Source-synchronous and operates around 700 MHz. Implementations of SPI-4.2 have been produced which allow somewhat higher clock rates. This is important when overhead bytes are added to incoming packets.
+
+
+
+
+\subsection{I2C}
+I²C（Inter-Integrated Circuit）是内部整合电路的称呼，是一种串行通讯总线，使用多主从架构，由飞利浦公司在1980年代为了让主板、嵌入式系统或手机用以连接低速周边装置而发展。I²C的正确读法为``I-squared-C'' ，而``I-two-C''则是另一种错误但被广泛使用的读法，在中国则多以``I方C''称之。截至2006年11月1日为止，使用I²C协定不需要为其专利付费，但制造商仍然需要付费以获得I²C从属装置位址。
+
+
+原始的I²C系统是在1980年代所建立的一种简单的内部总线系统，当时主要的用途在于控制由飞利浦所生产的芯片。
+1992年完成了最初的标准版本释出，新增了传输速率为400 kbit/s的快速模式及长度为10位元的寻址模式可容纳最多1008个节点。1998年释出了2.0版，新增了传输速率为3.4Mbit/s的高速模式并为了节省能源而减少了电压及电流的需求。2.1版则在2001年完成，这是一个对2.0版做一些小修正，version 3.0, 2007年同时也是目前的最新版本。
+
+在Linux中，I²C已经列入了核心模组的支援了，更进一步的说明可以参考核心相关的文件及位于/usr/include/linux/i2c.h 的这个标头档。OpenBSD则在最近的更新中加入了I²C的架构（framework）以支援一些常见的主控端控制器及感应器。
+
+\subsection{UEXT}
+Universal EXTension (UEXT) is a connector layout which includes power and three serials buses: Asynchronous, I2C, SPI. The connector layout was specified by Olimex Ltd and declared an open-project that is royalty-free.
+
+\subsection{MII}
+MII(Media Independent Interface,媒体独立接口)，是与100Mbps的Ethernet PHY chip沟通时所使用的接口。
+
+Being media independent means that different types of PHY devices for connecting to different media (i.e. Twisted pair copper, fiber optic, etc.) can be used without redesigning or replacing the MAC hardware. Thus any MAC may be used with any PHY, independent of the network signal transmission media.The MII can be used to connect a MAC to an external PHY using a pluggable connector, or direct to a PHY chip which is on the same printed circuit board.On a PC the CNR connector Type B carries MII bus interface signals.The MDIO Serial Management Interface (SMI) (see MDIO) is used to transfer management information between MAC and PHY.
+
+Reduced Media Independent Interface (RMII) is a standard that addresses the connection of Ethernet physical layer transceivers (PHY) to Ethernet switches or the MAC portion of an end-device's Ethernet interface. It reduces the number of signals/pins required for connecting to the PHY from 16 (for an MII-compliant interface) to between 6 and 10. RMII is capable of supporting 10 and 100 Mbit/s; even 1 Gbit/s is possible, higher gigabit interfaces need a wider interface.
+
+An Ethernet interface normally consists of 4 major parts: The MAC (Media Access Controller), the PHY (PHYsical Interface or transceiver), the magnetics, and the connector.
+
+RMII is one of the possible interfaces between the MAC and PHY; others include MII and SNI, with additional wider interfaces (including XAUI, GBIC, SFP, SFF, XFP, and XFI) for gigabit and faster Ethernet links.
+
+Gigabit Media Independent Interface (GMII) is an interface between the Media Access Control (MAC) device and the physical layer (PHY). The interface defines speeds up to 1000 Mbit/s.
+
+RGMII uses half the number of data pins as used in the GMII interface. This reduction is achieved by clocking data on both the rising and falling edges of the clock in 1000 Mbit/s operation, and by eliminating non-essential signals.
+
+The Serial Gigabit Media Independent Interface (SGMII) is a variant of MII, a standard interface used to connect an Ethernet MAC-block to a PHY. It is used for Gigabit Ethernet but can also carry 10/100 MBit Ethernet.
+
+10 Gigabit Media Independent Interface (XGMII) is a standard defined in IEEE 802.3 for connecting full duplex 10 Gigabit Ethernet (10GbE) ports to each other and to other electronic devices on a printed circuit board.
+
+XAUI是一个介于MAC到PHY之间电脑总线XGMII(10.0 Gbit/s)的延伸标准，XAUI发音``zowie''，与意味十倍的罗马数字 X 关联，是“附件单位接口”的起始。
+XAUI是XGMII的延伸，XAUI位于MAC末端的XGXS、和PHY末端的XGXS之间。XAUI延伸了XGMII的操作长度并减少了信号接口的数目。应用范围包括延伸MAC和PHY模组之间的实体分隔以10.0 Gbit/s 以太系统分散横跨电路板。
+
+The XGMII Extender, which is composed of an XGXS(The 10 Gigabit Ethernet Extended Sublayer) at the MAC end, an XGXS at the PHY end and a XAUI between them, is to extend the operational distance of the XGMII and to reduce the number of interface signals. Applications include extending the physical separation possible between MAC and PHY components in a 10 Gigabit Ethernet system distributed across a circuit board.
+
+
+在10Mbps 以太网上，对应的是AUI， Attachment Unit Interface。
+
+The MII design has been extended to support reduced signals and increases speeds. Current variants are Reduced Media Independent Interface, Gigabit Media Independent Interface, Reduced Gigabit Media Independent Interface, Serial Gigabit Media Independent Interface and 10 Gigabit Media Independent Interface.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

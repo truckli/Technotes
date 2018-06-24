@@ -1,0 +1,17 @@
+%!Mode:: "TeX:UTF-8"
+\section{Zeromq}
+
+\href{https://en.wikipedia.org/wiki/ZeroMQ}{ZeroMQ} (also known as zmq) looks
+like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fan-out, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. 
+Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. 
+ It provides a message queue, but unlike
+ \href{https://en.wikipedia.org/wiki/Message-oriented_middleware}{message-oriented
+ middleware}, a ZeroMQ system can run without a dedicated message broker. The
+ library's API is designed to resemble that of Berkeley sockets.
+
+ A basic
+ \href{http://zguide.zeromq.org/py:hwclient}{client}
+ and \href{http://zguide.zeromq.org/py:hwserver}{server} 
+ program in Python can be found in the official site.
+
+ 

@@ -1,0 +1,378 @@
+%!Mode:: "TeX:UTF-8"
+\section{常用操作命令}
+
+\subsection{ls}
+解释几个比较实用的选项。当不使用任何选项时，输出按照名字排序。S，t选项能更改排序的依据。r指示反序。
+
+\textbf{l选项}产生类似如下输出:
+\begin{verbatim}
+srw-rw-rw-   1 root root             0 11月  3 15:45 log=
+crw-------   1 root root       10, 237 11月  3 15:45 loop-control
+-rwsr-xr-x   1 root root         45420  7月 27 01:07 /usr/bin/passwd*
+\end{verbatim}
+其中第1个字符表示文件类型。s表示socket，p表示FIFO(命名管道)，b表示块设备，c表示字符设备，l表示符号链接，-表示普通文件，？表示未知类型。
+
+在文件权限中，s表示设置用户(组)id位为1，且文件可执行。t表示粘住位为1，且文件可执行。相应的S和T表示文件不可执行。
+
+第2个位段表示硬链接数。第3、4位分别表示用户和组，-n选项让二者用数字而非名字表示。
+
+第5位单位为字节。对于设备文件(b和c)，显示为主从设备号。
+
+第6位表示时间戳。文件的三个时间属性为修改时间(mtime),访问时间(atime)和i节点状态改变时间(ctime)。-l选项的默认时间戳为mtime。使用u选项使得时间戳使用atime，使用-c选项表示时间戳为ctime。
+
+最后一位为文件名。
+
+常用选项：
+\begin{description}
+	\item[R]递归输出。相当于\verb|`--recursive'|
+	\item[F]文件名后面加上一个符号，表示文件类型。如/表示目录，@表示符号链接，|表示FIFO，=表示socket。普通文件后面什么也没有。相当于\verb|`--classify'|
+	\item[d]表示显示的为目录本身的信息，而非其子目录或包含文件的信息。相当于\verb|`--directory'|
+	\item[t]表示按照时间戳排序。相当于\verb|`--sort=time'|
+	\item[S]表示按照size排序。相当于\verb|`--sort=size'|
+	\item[r]将排序结果反转。相当于\verb|`--reverse'|
+	\item[c]使用ctime表示时间。如果同-t选项一同使用，则按照ctime排序。相当于\verb$`--time=ctime'$或\verb$`--time=status'$.
+	\item[u]使用atime表示时间。如果同-t选项一同使用，则按照atime排序。相当于\verb$`--time=atime'$或\verb$`--time=access'$或\verb$`--time=use'$
+	\item[i]显示inode号。
+\end{description}
+
+如何打印当前路径下的文件夹：
+\begin{verbatim}
+ls -d */
+find */ -type d -prune
+ls -l|grep ^d|awk '{print $9}'
+\end{verbatim}
+
+如何打印当前路径下的纯文件：
+\begin{verbatim}
+find . -maxdepth 1 -type f
+ls -l|grep ^-|awk '{print $9}'
+\end{verbatim}
+
+\subsection{grep}
+
+Linux系统中grep命令是一种强大的文本搜索工具，它能使用正则表达式搜索文本，并把匹配的行打印出来。
+grep全称是Global Regular Expression Print，表示全局正则表达式版本，它的使用权限是所有用户。
+
+grep的选项：
+\begin{description}
+	\item[-c]只输出匹配行的计数
+	\item[-i]不区分大小写（用于单字符）
+	\item[-n]显示匹配的行号
+	\item[-v]不显示不包含匹配文本的所以有行
+	\item[-s]不显示错误信息
+	\item[-E] 使用扩展正则表达式
+\end{description}
+
+举例：
+\begin{verbatim}
+grep 'ipp|ssn' netstat.txt -E
+\end{verbatim}
+
+
+\subsection{find}
+\begin{verbatim}
+find [-H] [-L] [-P] [-D debugopts] [-Olevel] [path...] [expression]
+\end{verbatim}
+H,L,P选项控制是否进入符号链接。D,O选项也不太常用。
+expression包含选项、测试、行动三部分,因此find命令的使用方式通常为如下形式：
+
+\verb+find 起始目录 寻找条件 操作+
+
+寻找条件可以用and,or,not连接起来，分别写作:
+
+\verb+ -a -o 和 !+
+
+如
+
+\verb+ find ! -name 'tmp'+
+
+\verb+-prune选项相当与-maxdetph 0+,表示只对path参数包含的路径进行操作，不进行递归。
+
+需要说明的是：当使用很多的逻辑选项时，可以用括号把这些选项括起来。为了避免Shell本身对括号引起误解，在话号前需要加转义字符来去除括号的意义。例：
+
+\verb+find \(–name ’tmp’ -a type c -user ’inin’ \)+
+
+
+只显示当前目录下的文件夹：
+
+\verb+ls -l | grep ^d+
+
+\verb+find * -type d -prune+
+
+\verb+find . -maxdepth 1 -mindepth 1 -type d+
+
+只显示当前目录下的非文件夹：
+
+\verb+ls -l | grep -v ^d+
+
+
+
+
+\subsection{xargs}
+执行一条命令，其参数从标准输入获取。
+
+其用途之一是用于将参数分成多行输入，类似于行末添加了反斜杠。例如输入xargs file，分多行输入file命令的参数，用CtrlD终止输入。
+
+用途之二是构造管道，第一个命令的输入并不连接到第二个命令的输入，而是其命令行参数。如
+
+\begin{verbatim}
+ls | xargs file
+find /tmp -name core -type f -print0 | xargs -0 /bin/rm -f
+\end{verbatim}
+
+find,xargs和wc命令配合使用可以统计目录下源代码行数：
+\begin{verbatim}
+find . -name "*.c" -o -name "*.h"|xargs wc -l
+\end{verbatim}
+这条命令统计了.h和.c文件中包含的行数。
+
+
+\subsection{rsync}
+Rsync（remote synchronize）是一个远程数据同步工具，可通过LAN/WAN快速同步多台主机间的文件。Rsync使用所谓的“Rsync算法”来使本地和远程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。
+
+Rsync本来是用于替代rcp的一个工具，目前由rsync.samba.org维护，所以rsync.conf文件的格式类似于samba的主配置文件。Rsync可以通过rsh或ssh使用，也能以daemon模式去运行，在以daemon方式运行时Rsync server会打开一个873端口，等待客户端去连接。连接时，Rsync server会检查口令是否相符，若通过口令查核，则可以开始进行文件传输。第一次连通完成时，会把整份文件传输一次，以后则就只需进行增量备份。
+
+Rsync用于单向同步，有一款双向\textbf{同步工具Unison}。
+
+Rsync的基本特点如下：
+\begin{enumerate}
+\item 可以镜像保存整个目录树和文件系统
+\item 可以很容易做到保持原来文件的权限、时间、软硬链接等
+\item 无须特殊权限即可安装
+\item 优化的流程，文件传输效率高
+\item 可以使用rsh、ssh等方式来传输文件，当然也可以通过直接的socket连接
+\item 支持匿名传输
+\end{enumerate}
+
+举例：
+\begin{verbatim}
+rsync -av `pwd` /media/D/Yunio/Projects
+rsync -av `pwd` limz@192.168.10.10:~/Projects
+\end{verbatim}
+
+\subsection{sz and rz}
+
+The \textbf{sz} and \textbf{rz} tools also come in handy. 
+They are provided by \textbf{lrzsz} yum package.
+
+\subsection{port scanning}
+To check whether port 53 is open on a host,
+\begin{verbatim}
+nmap -Pn -p 53 202.100.4.15
+\end{verbatim}
+
+
+\subsection{compression and decompression:rar, zip, tar}
+
+\href{https://en.wikipedia.org/wiki/RAR_(file_format)}{RAR} is a proprietary
+archive file format that supports data compression, error recovery and file spanning.
+Decompression source code is available, but it's not free software due to the
+restriction that it must not be used to reverse engineer the RAR compression algorithm
+
+\begin{verbatim}
+rar a jpg.rar *.jpg 
+rar a lua.rar -r lua
+rar x file.rar 
+\end{verbatim}
+
+Linux zip command usage：
+\begin{verbatim}
+ zip options archive inpath inpath ...
+\end{verbatim}
+
+Examples:
+
+\begin{verbatim}
+zip jpg.zip *.jpg 
+zip -r foo.zip foo
+zip -r foo foo
+unzip file.zip 
+\end{verbatim}
+
+We can also zip and unzip with Python's standard
+\href{https://docs.python.org/2/library/zipfile.html}{zipfile} module:
+
+
+\begin{verbatim}
+$ python -m zipfile
+Usage:
+    zipfile.py -l zipfile.zip        # Show listing of a zipfile
+    zipfile.py -t zipfile.zip        # Test if a zipfile is valid
+    zipfile.py -e zipfile.zip target # Extract zipfile into target dir
+    zipfile.py -c zipfile.zip src ... # Create zipfile from sources
+\end{verbatim}
+
+
+The \textbf{tar} tool has file sub-commands:
+\begin{itemize}
+  \item -c archive creation 
+  \item -x archive decompression
+  \item -t archive content listing
+  \item -r archive append
+  \item -u archive update
+\end{itemize}
+
+Optional parameters:
+\begin{itemize}
+    \item -z：gzip
+    \item -j：bz2
+    \item -Z：compress
+    \item -v：show processing verbosely
+\end{itemize}
+
+Arhive name follows \textbf{-f} argument.
+
+\begin{verbatim}
+tar –cvf jpg.tar *.jpg 
+tar –czf jpg.tar.gz *.jpg   
+tar –cjf jpg.tar.bz2 *.jpg 
+tar –cZf jpg.tar.Z *.jpg 
+tar -xzvf file.tar.gz 
+tar -xjvf file.tar.bz2 
+\end{verbatim}
+
+
+
+\subsection{date命令}
+\begin{verbatim}
+date  //显示本地时间
+date -R //按照RFC-2822格式显示本地时间
+date -u  //显示UTC时间
+data -s $timestr //设置当前时间
+date -s 20151021 //设置日期，日内时间置为零时
+date -s 12:23:23 //设置具体时间，不会对日期做更改
+date -s “12:12:23 2006-10-10″ //这样可以设置全部时间
+date +"Day : %d Month : %m Year : %Y" // +号用于定制时间显示格式
+date +%s //显示UNIX时间戳
+date -d tomorrow //-d 或 --date选项，显示指定的时间而非当前时间
+date -d '@1445396904' //显示UNIX时间戳指定的时间
+date -d '2015-11-26'
+date -d '2015-11-26 19:00:00'
+date -d '3 hours'
+date -d '1 month ago'
+date -d 'last year' 
+date -d 'next wed' #下周三
+\end{verbatim}
+
+
+显示格式定义：
+\begin{verbatim}
+%Y: 年(如2015)
+%m: 月(01..12)
+%d: 日(01..31)
+%H: 小时(01..24)
+%M: 分钟(00..59)
+%S: 秒数(00..59)
+%s: 秒数(UNIX时间)
+%w: 星期几(0..6, 0表示星期日)
+%b: 月份(Oct, 10月)
+%B: 月份全称(October, 十月)
+
+\end{verbatim}
+
+\subsection{netstat}
+
+netstat用法：
+\begin{verbatim}
+netstat [类型] [选项]
+\end{verbatim}
+默认类型为打印所有Open socket信息，类型-r表示路由表信息，-i表示网络接口信息，-g表示多播组信息，-s表示各协议统计信息。-c选项控制打印间隔。
+
+对于Open socket信息，重要选项为：
+\begin{description}
+    \item  [a] 显示所有的socket，而不仅仅是监听套接字(默认为l)
+    \item  [t] TCP only
+    \item  [u] UDP only
+    \item  [n] 不将数字解析成名字，使用该选项能加速程序输出
+    \item  [p] 显示相关进程的PID和名字
+    \item  [4] tcp4 and udp4 only
+    \item  [6] tcp6 and udp6 only
+\end{description}
+
+在Mac OS X下，netstat不能提供进程名称信息，可采用lsof -i 命令来获取该信息。
+
+
+\subsection{Generating Terminal Output}
+\textbf{wall} and \textbf{write} can do that.
+
+\subsection{tcpdump and Wireshark}
+
+\begin{verbatim}
+tcpdump -i eth0 -w file.pcap host 192.168.130.10 'tcp' 
+tcpdump -r file.pcap >> file.txt
+\end{verbatim}
+注意，待写入的文件必须以pcap为后缀，否则tcpdump不能运行，报权限错误。pcap文件也可以用wireshark打开。
+
+一些常用选项为：
+\begin{itemize}
+    \item 
+        c选项指定抓包数量
+    \item 
+        s选项指定抓包长度(从二层开始)
+\end{itemize}
+
+注意如果s选项指定的长度超过帧长，则只抓帧长。所谓帧长，如果是在Linux下运行pcap程序，是不包括L2 FCS的（以太网尾部CRC），这和Smartbit等测试仪表不一样。sar也将FCS加入到计数器中，虽然Linux下的pcap抓不到FCS。
+
+抓某个地址的ping包：
+\begin{verbatim}
+ tcpdump -i em2 host 172.28.11.131 and icmp
+\end{verbatim}
+
+抓HTTP包：
+\begin{verbatim}
+tcpdump -i eth0 tcp and port 80
+\end{verbatim}
+
+抓SYN，FIN，RST包(Unix网络编程29.2节BPF的例子)，tcp头第13个字节为标志位字节。
+\begin{verbatim}
+tcpdump -i any 'tcp and port 80 and tcp[13:1] & 0x7 != 0'
+\end{verbatim}
+
+
+只接收SYN标志位置位且目标端口是22或23的数据包（tcp首部开始的第13个字节）
+\begin{verbatim}
+tcpdump 'tcp[13] == 0x02 and (dst port 22 or dst port 23) '
+tcpdump tcp[13] == 0x02 and \(dst port 22 or dst port 23\)
+\end{verbatim}
+
+只接收icmp的ping请求和ping响应的数据包
+\begin{verbatim}
+tcpdump 'icmp[icmptype] == icmp-echoreply or icmp[icmptype] == icmp-echo'
+tcpdump 'tcp[tcpflags] & (tcp-syn|tcp-fin) != 0 and not src and dst net localnet'
+\end{verbatim}
+
+The following commands allow any user to manipulate tcpdump without root privilege:
+\begin{verbatim}
+groupadd pcap
+usermod -a -G pcap user
+chgrp pcap /usr/sbin/tcpdump
+chmod 750 /usr/sbin/tcpdump
+setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+\end{verbatim}
+
+
+Wireshark会判断操作系统是否能抓到FCS，但声称判断未必准确，可以手工告诉Wireshark一定有FCS。
+有个很实用的功能是对一个包右键选择follow tcp connection，能够筛选出该包所属连接的所有包。
+
+ 参考文章：
+ * \href{http://www.rationallyparanoid.com/articles/tcpdump.html}{Tcpdump usage examples}
+ * \href{https://danielmiessler.com/study/tcpdump/}{A tcpdump Primer with  Examples}
+
+Traffic can be filtered in Wireshark, like
+\begin{verbatim}
+ip.src == 172.28.3.95 and icmp
+\end{verbatim}
+
+\subsection{crontab}
+
+\begin{verbatim}
+MINUTE HOUR DAY MONTH DAY-OF-WEEK CMD
+\end{verbatim}
+
+\url{https://crontab.guru/} provides an online-editor for crontab entries.
+
+\clearpage
+
+
+
+

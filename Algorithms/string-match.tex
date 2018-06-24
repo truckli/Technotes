@@ -1,0 +1,179 @@
+%!Mode:: "TeX:UTF-8"
+\section{字符串匹配算法}
+
+维基百科条目：\url{https://en.wikipedia.org/wiki/String_searching_algorithm}
+
+关于各种算法的比较，见：
+
+\url{http://programmers.stackexchange.com/questions/183725/which-string-search-algorithm-is-actually-the-fastest}
+\url{http://stackoverflow.com/questions/5106586/what-are-the-available-string-matching-algorithms-besides-knuth-morris-pratt-ra}
+
+
+\subsection{KMP(Knuth–Morris–Pratt)算法}
+\begin{lstlisting}[language=C++]
+CREATE_PREFIX_FUNCTION(P)
+  k <- 0
+  create p[1..length[P]]
+  p[1] <- 0
+  for i <- 2 to length[P] do
+    while k > 0 and P[i] != P[k+1] do
+      k <- p[k]
+    if P[i] = P[k+1] then
+      p[i] <- p[k] + 1
+      k <- k + 1
+    p[i] <- k
+
+  return p
+
+KMP-MATCHER(T,P)
+  k <- 0
+  for i <- 1 to length[T] do
+    while T[i] != P[k+1] and k > 0 do
+      k <- p[k]
+    if T[i] = P[k+1] then
+       k <- k + 1
+       if k = length[P] then
+         on_match(T, i)
+         k <- p[k]
+
+\end{lstlisting}
+
+用KMP算法实现的strstr算法，通过了LeetCode验证：
+\begin{lstlisting}[language=C++]
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int n = haystack.size(), m = needle.size();
+        if (m == 0) return 0;
+        if (n < m) return -1;
+
+        vector<int> transition(m);
+        transition[0] = -1;
+        int j = -1;
+        for (int i = 1; i < m; ) {
+            if (needle[i] == needle[j+1]) {
+                transition[i++] = j + 1;
+                j++;
+            } else {
+                if (j >= 0) {
+                    j = transition[j];
+                } else {
+                    transition[i++] = -1;
+                }
+            }
+        }
+
+        j = -1;
+        for (int i = 0; i < n; ) {
+            if (haystack[i] == needle[j+1]) {
+                j++;
+                i++;
+                if (j == m - 1) return (i - m);
+            } else {
+                if (j >= 0) {
+                    j = transition[j];
+                } else {
+                    i++;
+                }
+            }
+        }
+        return -1;
+    }
+};
+
+
+\end{lstlisting}
+
+\url{http://www-igm.univ-mlv.fr/~lecroq/string/node8.html}给出的C语言实现：
+\begin{lstlisting}[language=C++]
+
+void preKmp(char *x, int m, int kmpNext[]) {
+   int i, j;
+
+   i = 0;
+   j = kmpNext[0] = -1;
+   while (i < m) {
+      while (j > -1 && x[i] != x[j])
+         j = kmpNext[j];
+      i++;
+      j++;
+      if (x[i] == x[j])
+         kmpNext[i] = kmpNext[j];
+      else
+         kmpNext[i] = j;
+   }
+}
+
+
+void KMP(char *x, int m, char *y, int n) {
+   int i, j, kmpNext[XSIZE];
+
+   /* Preprocessing */
+   preKmp(x, m, kmpNext);
+
+   /* Searching */
+   i = j = 0;
+   while (j < n) {
+      while (i > -1 && x[i] != y[j])
+         i = kmpNext[i];
+      i++;
+      j++;
+      if (i >= m) {
+         OUTPUT(j - i);
+         i = kmpNext[i];
+      }
+   }
+}
+\end{lstlisting}
+
+
+\subsection{Boyer–Moore算法}
+BM算法由 Robert S. Boyer 和J Strother Moore 于1977年发表。
+
+BM算法的特色是从模式尾部开始匹配，并可以跳过多个字符。它首先计算坏字符规则和好前缀规则。
+
+坏字符表是个二维表，一维是字母表，第二维是模式P中的位置。
+
+\url{http://en.wikipedia.org/wiki/Boyer–Moore_string_search_algorithm}
+
+Horspool算法，又称\href{https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore%E2%80%93Horspool_algorithm}{Boyer–Moore–Horspool}算法，是对BM算法的简化。只使用了坏字符表，且只针对pattern的最后一个字符进行移动。
+
+
+\subsection{AC算法}
+\url{http://en.wikipedia.org/wiki/Aho-Corasick_string_matching_algorithm}
+
+多模匹配算法。
+
+\subsection{后缀树}
+后缀树（Suffix tree）是一种数据结构，能快速解决很多关于字符串的问题。后缀树的概念最早由Weiner 于1973年提出，既而由McCreight 在1976年和Ukkonen在1992年和1995年加以改进完善。
+
+一个string S 的后缀树是一个边(edge)被标记为字符串的树.因此每一个S的后缀都唯一对应一条从根节点到叶节点的路径.这样就形成了一个S的后缀的基数树(radix tree). 后缀树是前缀树(trie)里的一个特殊类型.
+
+在计算机科学中，trie，又称前缀树或字典树，是一种有序树，用于保存关联数组，其中的键通常是字符串。与二叉查找树不同，键不是直接保存在节点中，而是由节点在树中的位置决定。一个节点的所有子孙都有相同的前缀，也就是这个节点对应的字符串，而根节点对应空字符串。一般情况下，不是所有的节点都有对应的值，只有叶子节点和部分内部节点所对应的键才有相关的值。
+
+
+
+
+\subsection{Rabin-Karp}
+
+The Rabin–Karp algorithm is inferior for single pattern searching to Knuth–Morris–Pratt algorithm, Boyer–Moore string search algorithm and other faster single pattern string searching algorithms because of its slow worst case behavior. However, it is an algorithm of choice for multiple pattern search.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

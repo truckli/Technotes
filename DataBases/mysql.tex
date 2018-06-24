@@ -1,0 +1,120 @@
+%!Mode:: "TeX:UTF-8"
+\section{MySQL}
+
+
+\subsection{Deploying MySQL}
+
+Starting MySQL in Mac OS X:
+\begin{lstlisting}
+mysql.server start
+\end{lstlisting}
+If that fails, just type \verb|mysqld|.
+
+To Create a database in MySQL,
+\begin{lstlisting}
+create database samp_db character set gbk;
+CREATE DATABASE IF NOT EXISTS mdss DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+\end{lstlisting}
+
+
+To create a table, the official site of MySQL gives an example:
+\begin{lstlisting}
+ CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+\end{lstlisting}
+
+Read meta data:
+\begin{lstlisting}
+desc haah;
+describe haah;
+show columns from haah;
+SHOW CREATE TABLE tablename;
+show full columns from haah;
+\end{lstlisting}
+
+Schema can be specified when login,
+\begin{lstlisting}
+mysql -D dbname -h hostname -u username -p
+\end{lstlisting}
+
+SQL statements or a script can also be specified during the login command,
+\begin{lstlisting}
+mysql -D samp_db -u root  < h.sql
+mysql -D samp_db -u root  -e 'select * from haah;'
+\end{lstlisting}
+
+
+\subsection{Configuration}
+
+Check timeout settings,
+\begin{verbatim}
+show variables where variable_name like '%timeout';
+\end{verbatim}
+
+
+You change default value in MySQL configuration file
+
+\begin{verbatim}
+[mysqld]
+connect_timeout=100
+\end{verbatim}
+
+Or set this in statements like
+\begin{verbatim}
+con.query('SET GLOBAL connect_timeout=28800')
+con.query('SET GLOBAL wait_timeout=28800')
+con.query('SET GLOBAL interactive_timeout=28800')
+\end{verbatim}
+
+
+\subsection{MySQL with Python}
+
+Installation on Windows:
+\begin{verbatim}
+install using wheel
+pip install wheel
+download from http://www.lfd.uci.edu/~gohlke/pythonlibs/#mysql-python
+pip install mysqlclient-1.3.8-cp36-cp36m-win_amd64.whl
+\end{verbatim}
+
+
+\subsection{Data Export and Import with CSV files}
+
+\begin{verbatim}
+
+mysql -uroot -p123456 -hmdss18 -Dmdss -e "SELECT * FROM i_ddos_current_events
+INTO OUTFILE '/tmp/i_ddos_current_events.csv'
+FIELDS TERMINATED BY ','
+ENCLOSED BY '\"'
+LINES TERMINATED BY '\n';"
+
+scp root@mdss18:/tmp/*_ddos_*.csv root@mdss27:/tmp
+
+mysql -uroot -p123456 -hmdss27 -Dmdss -e "
+TRUNCATE i_ddos_current_events;
+LOAD DATA INFILE '/tmp/i_ddos_current_events.csv' REPLACE
+INTO TABLE i_ddos_current_events
+FIELDS TERMINATED BY ','
+ENCLOSED BY '\"'
+LINES TERMINATED BY '\n';
+
+\end{verbatim}
+
+
+\subsection{Data Migration via SQL Scripts}
+
+\begin{verbatim}
+mysqldump -uroot -p123456 -hmdss18 mdss i_ddos_flood_events --where 'id in
+(select id from i_ddos_current_events)'
+ --lock-tables=false --no-create-info --insert-ignore 
+ > /tmp/i_ddos_flood_events.sql
+ 
+ mysql -uroot -p123456 -hmdss27 -Dmdss --force < /tmp/i_ddos_flood_events.sql
+\end{verbatim}
+
+\subsection{MySQL Ping}
+\begin{verbatim}
+/* ping */ select 1
+\end{verbatim}
+
+
+

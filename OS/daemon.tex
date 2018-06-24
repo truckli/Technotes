@@ -1,0 +1,133 @@
+%!Mode:: "TeX:UTF-8"
+\section{守护进程}
+
+\textbf{守护进程是脱离于终端并且在后台运行的进程}。
+守护进程脱离于终端是为了避免进程在执行过程中的信息在任何终端上显示并且进程也不会被任何终端所产生的终端信息所打断。
+
+守护进程，也就是通常说的Daemon进程，是Linux中的后台服务进程。它是一个生存期较长的进程，通常独立于控制终端并且周期性地执行某种任务或等待处理某些发生的事件。守护进程常常在系统引导装入时启动，在系统关闭时终止。Linux系统有很多守护进程，大多数服务都是通过守护进程实现的，同时，守护进程还能完成许多系统任务，例如，作业规划进程crond、打印进程lqd等（这里的结尾字母d就是Daemon的意思）。
+
+Linux守护进程包括：init(系统守护进程，启动各运行层次的系统服务)，keventd(为在内核中运行scheduled function提供进程上下文)，kapmd(高级电源管理)，kswapd（页面交换守护进程），pdflush(内存达到下限时冲洗脏缓冲区)，kupdated(定期冲洗脏缓冲区)等。
+
+常见的服务Deamon包括：
+\begin{description}
+\item[atd and crond]: Task scheduler daemons
+\item[bootparmd and dhcpd]: Dynamic Host Configuration Protocol and Internet Bootstrap Protocol servers
+\item[fingerd]: Finger server。Finger是UNIX系统中用于查询用户情况的实用程序(dos系统也包含此命令)。UNIX系统保存了每个用户的详细资料，包括E-mail地址、帐号，在现实生活中的真实姓名、登录时间、有没有未阅读的信件，最后一次阅读E-mail的时间以及外出时的留言等资料。当你用Finger命令查询时，系统会将上述资料一一显示在你有终端或计算机上。
+\item[ftpd]: File Transfer Protocol (FTP) server
+\item[httpd]: Hypertext Transfer Protocol (HTTP) daemon (web server)
+\item[identd]: Provides the identity of a user of a particular TCP connection
+\item[inetd and xinetd]: Internet Superserver daemon
+\item[named]: A Domain Name System (DNS) server daemon
+\item[nfsd]: Network File System (NFS) daemon
+\item[ntpd]: Network Time Protocol (NTP) service daemon
+\item[portmap, rpcbind]: SunRPC port mapper，将RPC程序号映射为网络端口号。
+\item[mysqld, postgresql]: Database server daemons
+\item[routed, gated]: Manages routing tables
+\item[nfsd, mountd, statd]: Part of typical Network File System implementation。mount协议是NFS协议的一部分。
+\item[rwhod]: Maintains the database used by the rwho and ruptime tools
+\item[sendmail, postfix]: mail transfer agent daemons
+\item[snmpd]: Simple Network Management Protocol Daemon
+\item[syslogd]: 为各程序提供系统日志功能。
+\item[telnetd and sshd]: Telnet and Secure Shell server daemons
+\item[ypbind]: A bind server for Network Information Service ("Yellow Pages")
+\item[cupsd]: 打印假脱机进程，处理系统提出的所有打印请求。
+
+\end{description}
+
+
+
+守护进程创建过程：
+\begin{enumerate}
+  \item 创建子进程，父进程退出。在Linux中父进程先于子进程退出会造成子进程成为孤儿进程，而每当系统发现一个孤儿进程时，就会自动由1号进程（init）收养它，这样，原先的子进程就会变成init进程的子进程。
+  \item 脱离控制终端、登录会话和进程组。由于在调用了fork函数时，子进程全盘拷贝了父进程的会话期、进程组、控制终端等，虽然父进程退出了，但会话期、进程组、控制终端等并没有改变，因此，这还不是真正意义上的独立开来，而setsid函数能够使进程完全独立出来，从而摆脱其他进程的控制。为禁止子进程重新打开控制终端，可以再次调用fork使进程不再成为会话组长：\verb$if(pid=fork()) exit(0);$。
+  \item 改变工作目录。一般需要将工作目录改变到根目录(\verb$chdir("/")$) 。
+    对于需要转储核心，写运行日志的进程将工作目录改变到特定目录如/tmp。
+  \item 重设文件权限掩码。进程从创建它的父进程那里继承了文件创建掩模。它可能修改守护进程所创建的文件的存取位。为防止这一点，将文件创建掩模清除：\verb$umask(0);$。
+  \item 关闭文件描述符。
+  \item 设置信号处理。如SIGCHLD信号(非必须)。
+\end{enumerate}
+
+以下是APUE给出的守护进程创建实例：
+\begin{lstlisting}[language=C]
+#include "apue.h"
+#include <syslog.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+
+void
+daemonize(const char *cmd)
+{
+    int                 i, fd0, fd1, fd2;
+    pid_t               pid;
+    struct rlimit       rl;
+    struct sigaction    sa;
+    /*
+     * Clear file creation mask.
+     */
+    umask(0);
+
+    /*
+     * Get maximum number of file descriptors.
+     */
+    if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+        err_quit("%s: can't get file limit", cmd);
+
+    /*
+     * Become a session leader to lose controlling TTY.
+     */
+    if ((pid = fork()) < 0)
+        err_quit("%s: can't fork", cmd);
+    else if (pid != 0) /* parent */
+        exit(0);
+        
+    setsid();
+
+    /*
+     * Ensure future opens won't allocate controlling TTYs.
+     */
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGHUP, &sa, NULL) < 0)
+        err_quit("%s: can't ignore SIGHUP");
+    if ((pid = fork()) < 0)
+        err_quit("%s: can't fork", cmd);
+    else if (pid != 0) /* parent */
+        exit(0);
+
+    /*
+     * Change the current working directory to the root so
+     * we won't prevent file systems from being unmounted.
+     */
+    if (chdir("/") < 0)
+        err_quit("%s: can't change directory to /");
+
+    /*
+     * Close all open file descriptors.
+     */
+    if (rl.rlim_max == RLIM_INFINITY)
+        rl.rlim_max = 1024;
+    for (i = 0; i < rl.rlim_max; i++)
+        close(i);
+
+    /*
+     * Attach file descriptors 0, 1, and 2 to /dev/null.
+     */
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
+
+    /*
+     * Initialize the log file.
+     */
+    openlog(cmd, LOG_CONS, LOG_DAEMON);
+    if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+        syslog(LOG_ERR, "unexpected file descriptors %d %d %d",
+          fd0, fd1, fd2);
+        exit(1);
+    }
+}
+
+
+    
+\end{lstlisting}

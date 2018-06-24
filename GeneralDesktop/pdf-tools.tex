@@ -1,0 +1,92 @@
+%!Mode:: "TeX:UTF-8"
+\section{PDF阅读、编辑和转换}
+
+\subsection{PDF阅读与批注}
+acroread软件包包含了Adobe Reader, 兼容性好，可以调节背景色。但功能相对于Acrobat十分受限, 没有批注、书签等功能，运行效率也低下。
+
+okular可以实现pdf的批注（F6或tools->review）和背景色改变。其缺点是，如果在gnome环境下安装需要下载几十MB的包。
+
+mendeley可以实现批注，但批注只是内部识别。不能调节背景色。
+
+xournal添加文字注释，下划线，通过export功能保存修改结果;但是Xournal对于篇幅较长的PDF文档太耗尽内存，因为它会将PDF文档中所有的页面都转化为图像数据置于内存之中并且不再释放。我们可以首先对文档进行分割。据说只要别大范围拖动滚动条，内存占用便不大。
+
+evince，Foxit4Linux，永中阅读器既不能标记，又不能改变背景色。
+
+综上，对于pdf阅读，较好的有okular，wine上的foxit，cajviewer。
+
+pdfgrep(CLI)可以从pdf中查找正则表达式，用法类似于grep。diffpdf可以比较两个pdf文件的不同。
+
+\subsection{PDF书签编辑}
+pdfmod是目前发现的唯一一个制作书签的开源工具，但编辑不便，无法调整书签的显示顺序。Windows下的Foxit Reader可以制作pdf书签，linux版本的则不可。evince制作的书签似乎只是内部识别。因此，在Linux下最好wine一个Windows版的Foxit Reader。
+
+\subsection{PDF页面级编辑}
+
+pdfshuffler可以合并、分裂、排序页面，在precise pangolion尝试出错，显示没有EOF标记。
+
+pdftk为CLI工具，功能包括合并，分裂，删页，反序，旋转，加解密，其中合并pdf的方式包括连接和互插。pdfchain是pdftk的一个GUI前端。
+\begin{verbatim}
+ pdftk 1.pdf 2.pdf 3.pdf cat output 123.pdf
+\end{verbatim}
+
+在mac os x上安装pdftk:
+\begin{verbatim}
+brew tap docmunch/pdftk
+brew install pdftk
+\end{verbatim}
+
+pdfmod可以用于删页、插入其他文件、导出页面、修改各页相对顺序(通过鼠标拖动，有时比pdftk方便)、编辑索引(书签)，修改文件属性。
+
+Mac OS X自带PDF编辑工具：
+\begin{verbatim}
+"/System/Library/Automator/Combine PDF Pages.action/Contents/Resources/join.py"  \
+-o 12.pdf 1.pdf 2.pdf
+\end{verbatim}
+
+
+\subsection{PDF元素级编辑}
+pdfedit添加文字注释(英文)，划线，删除文档元素，删加页面;感觉不太稳定，运行十分缓慢，经常在打开文件时内核转储。
+
+可以使用inscape或gimp提取PDF中的一页，进行复杂的修改，然后使用pdf删除合并工具恢复成完整的PDF文件。
+
+openoffice.org-pdfimport包让LibreOffice能够直接导入PDF文件，进行文字修改，再保存为odg图形文件，或者选择导出为pdf。但导入PDF时文件内的图片常常会丢失，排版可能会被破坏。所以LibreOffice目前还不能算作PDF阅读器或者编辑器。
+
+flpsed可以添加英文文字，但可能会损坏PDF，使其不能被其他阅读器打开。
+
+pdfstudio功能强大，但系付费软件。
+
+\subsection{PDF元数据}
+pdfmod可以修改文件元数据，如作者、标题等。pdfinfo命令行工具可以显示元数据。
+pdffonts显示文件字体信息。
+
+\subsection{PDF格式转换}
+ImageMagick可以实现pdf和图片的相互转换, 使用convert命令。
+\begin{verbatim}
+ convert [input-options] input-file [output-options] output-file
+\end{verbatim}
+
+\begin{verbatim}
+convert -density 700 -quality 100 draft.pdf draft.jpg
+\end{verbatim}
+详细内容参\ref{sec:imagemagick}。
+
+cups-pdf用于将其他格式的文件如图片打印为pdf。cups-pdf打印保存位置由/etc/cups/cups-pdf.conf文件配置，一般为～/PDF，或者/var/spool/cups-pdf。
+
+pdftotext实现pdf到文本的转换，效果一般不理想。
+
+gpdftext是一款编辑器，可以直接导入pdf文件进行文字编辑，再保存成文本或pdf格式，但是会丢失所有除文字内容之外的信息，包括格式、排版、分页信息。
+
+pdftohtml实现pdf到html的转换，效果往往不理想。可能需要指定编码格式，如
+\verb+pdftohtml -enc GBK haha.pdf +
+
+pdfimages提取pdf中的图片，默认保存为ppm格式。
+\verb+pdfimages -j haha.pdf+。
+j选项指定保存为jpg格式。
+
+pdf2ps和ps2pdf实现pdf和ps之间的转换，基于ghostscript机制。当前ps2pdf默认使用ps2pdf14，即pdf为1.4版本。可以直接使用ps2pdf15.pdftops也能实现pdf到ps之间的转换。
+
+pdf2djvu，pdf2dsc,pdftoppm, pdf2svg分别实现pdf到djvu,dsc,ppm, svg的转换。SVG可缩放矢量图形（Scalable Vector Graphics）是基于  svg logo可扩展标记语言（XML），用于描述二维矢量图形的一种图形格式。
+
+chm2pdf可以将chm转换为pdf。
+
+
+

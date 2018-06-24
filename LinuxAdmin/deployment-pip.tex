@@ -1,0 +1,103 @@
+\section{Pip tricks}
+
+
+\subsection{Selecting a fast source mirror}
+
+\begin{verbatim}
+pip install dnspython -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+\end{verbatim}
+
+Here is a list of mirrors in mainland China:
+\begin{verbatim}
+http://pypi.douban.com/  
+http://pypi.hustunique.com/  
+http://pypi.sdutlinux.org/  
+http://pypi.mirrors.ustc.edu.cn/  
+http://mirrors.aliyun.com/
+\end{verbatim}
+
+
+In file  ~/.pip/pip.conf:
+
+\begin{verbatim}
+[global]
+trusted-host=mirrors.aliyun.com
+index-url=http://mirrors.aliyun.com/pypi/simple
+\end{verbatim}
+
+\subsection{requirements freezing}
+
+\begin{verbatim}
+    pip freeze > requirements.txt
+    pip install -r requirements.txt
+\end{verbatim}
+
+\subsection{create a local mirror}
+
+\begin{verbatim}
+    https://aboutsimon.com/blog/2012/02/24/Create-a-local-PyPI-mirror.html
+\end{verbatim}
+
+\subsection{package installation}
+
+To download package wheels without installing it:
+\begin{verbatim}
+pip download --platform=manylinux1_x86_64 --python-version 27 
+    --only-binary=:all: -r requirement.txt
+\end{verbatim}
+To download package source tars without installing it:
+\begin{verbatim}
+pip download --no-binary=:all: virtualenv
+\end{verbatim}
+
+In an offline environment, package installation with pre-downloaded installers is like:
+
+\begin{verbatim}
+pip install --no-index --find-links="~/download" fabric 
+\end{verbatim}
+
+
+\subsection{show package information}
+
+
+\begin{verbatim}
+[user@host]$ pip show fabric
+Name: fabric
+Version: 2.1.3
+Summary: High level SSH command execution
+Home-page: http://fabfile.org
+Author: Jeff Forcier
+Author-email: jeff@bitprophet.org
+License: BSD
+Location: /Users/mingzhe/anaconda/lib/python3.6/site-packages
+Requires: cryptography, paramiko, invoke
+\end{verbatim}
+
+Direct dependancies of a package is listed. For a more detailed dependency graph on installed packages, pipdeptree tool can be used.
+
+\begin{verbatim}
+   pip install pipdeptree
+   pipdeptree -p fabric 
+\end{verbatim}}
+
+
+\subsection{Anaconda as pip}
+
+Anaconda can act as pip, even in offline environment:
+\begin{verbatim}
+    conda install fabric --offline python=2.7
+    conda list
+\end{verbatim}
+By specifying Python version when creating a virtual environment we effectively have a way for Python2/Python3 coexistance.
+
+Anaconda can be configured to used a customized download site in order to accelerate package downloading. An example of ~/.condarc is
+
+\begin{verbatim}
+channels:
+ - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+ - defaults
+show_channel_urls: true
+
+\end{verbatim}
+
+

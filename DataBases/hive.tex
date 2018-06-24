@@ -1,0 +1,88 @@
+\section{Hive}
+
+To start hive in CLI mode, type \verb$hive$ or
+
+\begin{verbatim}
+beeline -u jdbc:hive2://
+\end{verbatim}
+
+
+Check built-in functions:
+
+Hive Function Meta commands
+
+\begin{itemize}
+  \item 
+SHOW FUNCTIONS– lists Hive functions and operators
+  \item 
+DESCRIBE FUNCTION [function name]– displays short description of the function
+  \item 
+DESCRIBE FUNCTION EXTENDED [function name]– access extended description of the function
+\end{itemize}
+
+
+\url{https://www.qubole.com/resources/cheatsheet/hive-function-cheat-sheet/}
+
+
+
+\subsection{basic commands}
+
+Database/Schema create:
+
+\begin{verbatim}
+  create database NAME;
+\end{verbatim}
+
+Table create:
+\begin{verbatim}
+CREATE EXTERNAL TABLE test_p(
+id int,
+name string 
+)
+partitioned by (date STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\,' LINES TERMINATED BY '\n' 
+STORED AS TEXTFILE;
+\end{verbatim}
+
+
+Data loading:
+
+\begin{verbatim}
+LOAD DATA [LOCAL] INPATH 'filepath' [OVERWRITE] INTO TABLE tablename [PARTITION (partcol1=val1, partcol2=val2 ...)]
+\end{verbatim}
+
+
+Data insert:
+\begin{verbatim}
+insert overwrite table session_hour_partition_save PARTITION (date='20170101',hour='01') select ....
+\end{verbatim}
+
+From Hive to HDFS：
+\begin{verbatim}
+insert overwrite  directory '/user/hive/tmp' select * from test;
+\end{verbatim}
+
+\subsection{Mapjoin: a trick to accelerate small table joins}
+
+
+  Mapjoin is a little-known feature of Hive. 
+  It allows a table to be loaded into memory so that a (very fast) join could be performed entirely within a mapper without having to use a Map/Reduce step. 
+  If your queries frequently rely on small table joins (e.g. cities or countries, etc.) you might see a very substantial speed-up from using mapjoins.
+There are two ways to enable it. 
+First is by using a hint, which looks like \verb$/*+ MAPJOIN(aliasname), MAPJOIN(anothertable) */$. 
+This C-style comment should be placed immediately following the SELECT. 
+It directs Hive to load aliasname (which is a table or alias of the query) into memory.
+
+
+\begin{verbatim}
+  SELECT /*+ MAPJOIN(c) */ * FROM orders o JOIN cities c ON (o.city_id = c.id);
+\end{verbatim}
+
+Another (better, in my opinion) way to turn on mapjoins is to let Hive do it automatically.
+ Simply set hive.auto.convert.join to true in your config, 
+ and Hive will automatically use mapjoins for any tables smaller than hive.mapjoin.smalltable.filesize (default is 25MB).
+
+Mapjoins have a limitation in that the same table or alias cannot be used to join on different columns in the same query. 
+(This makes sense because presumably Hive uses a HashMap keyed on the column(s) used in the join, and such a HashMap would be of no use for a join on different keys).
+The workaround is very simple - do not use the same aliases in your query.
+

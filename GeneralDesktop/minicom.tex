@@ -1,0 +1,38 @@
+%!Mode:: "TeX:UTF-8"
+\section{Minicom}
+
+\subsection{Minicom配置}
+
+创建或编辑配置文件，保存为/etc/minirc.Filename或/etc/minicom/minirc.Filename，因系统而异。
+\begin{lstlisting}[language=bash]
+minicom -s Filename
+\end{lstlisting}
+配置文件指定设备名、波特率等。Dell服务器的串口设备名为/dev/ttyS0, 4个USB接口的设备名为/dev/ttyUSB0-/dev/ttyUSB3。对于Hili的串口连接，要求码率为115200, 软、硬件流控制都设置为No。
+
+配置文件格式如下：
+\begin{lstlisting}
+    # Machine-generated file - use ``minicom -s'' to change parameters. 
+     pr port             /dev/ttyUSB0 
+     pu baudrate         115200 
+     pu bits             8 
+     pu parity           N 
+     pu stopbits         1 
+     pu rtscts           No
+\end{lstlisting}
+
+\subsection{Minicom登录}
+按照指定配置文件，登录串口设备:
+\begin{lstlisting}[language=bash]
+minicom Filename
+\end{lstlisting}
+
+minirc.dfl指定了默认配置，minicom命令不加任何参数时安装该文件进行初始化。
+
+登录后ctrl+a z显示各种快捷键选项，ctrl+a x退出并reset,ctrl+a q退出不reset。
+
+ssh远程登录并登录minicom，执行：
+\begin{lstlisting}[language=bash]
+ssh -t HOSTNAME minicom Filename
+\end{lstlisting}
+\label{sshMinicom}
+

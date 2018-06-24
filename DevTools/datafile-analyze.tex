@@ -1,0 +1,55 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{文件分析工具}
+
+\subsection{统计代码行数}
+例如，统计.h文件包含的非空行数：
+\begin{verbatim}
+  find . -name "*.h"|xargs cat|grep -v ^$|wc -l 
+\end{verbatim}
+如果不需要空行过滤功能，就不需要使用cat和grep，可用这样写：
+\begin{verbatim}
+   wc -l `find . -name "*.h"`|tail -n1
+\end{verbatim}
+匹配多种文件类型:
+\begin{verbatim}
+find . -name "*.c" -o -name "*.h"|xargs wc -l
+\end{verbatim}
+这条命令统计了.h和.c文件中包含的行数。注意如果没有xargs，就变成了统计文件数目。
+
+\subsection{文本文件分析}
+diff用于逐行比较。其他工具包括awk，sed等。
+
+对于源代码，有indent工具。
+
+
+\subsection{十六进制读写}
+
+od, hexdump等工具将文件按照8进制、16进制、ASCII等形式打印出来。hexdiff同时打开两个文件，进行比较。
+
+hexer工具能够以vi风格的界面编辑数据文件，而ghex则基于Gnome窗口系统。其他工具大多基于curses家族，包括hexedit, lfhex, dhex等。
+
+vim使用\verb$:%!xxd$变为十六进制显示模式，再追加一个\verb$-r$命令则复原。
+
+\subsection{目标文件分析}
+
+strings:寻找文件中的字符串。可用于分析可执行文件。
+
+size：显示目标文件中各段的大小(text,data,bss)。
+
+readelf显示ELF文件各种信息。
+
+nm或objdump -t:打印目标文件中的符号表。
+
+objdump -h 给出文件中各段的头部信息。
+
+objdump -D反汇编，-S将反汇编程序同源代码对照显示。
+
+
+
+
+
+
+
+
+

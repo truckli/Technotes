@@ -1,0 +1,213 @@
+%!Mode:: "TeX:UTF-8"
+\section{Vim文本编辑}
+
+vimdiff即vim -d，view即vim -R。
+
+
+\subsection{快速键入}
+本节C表示Ctrl键。
+在insert模式下:\\
+C-W 删除当前单词(同Bash) \\
+C-U 删除当前句子(同Bash)\\
+C-P，C-N  自动补全，补全内容分别从前方或后方搜索\\
+C-A 键入上次在INSERT模式下键入的内容，并进入INSERT模式\\
+C-Y 键入上次在INSERT模式下键入的内容\\
+C-X C-F 自动补全，文件名\\
+C-X C-L 自动补全，整行\\
+C-X C-D  自动补全，宏定义\\
+
+在Normal模式下，CTRL A 和CTRL X分别将光标下的数字加1或减1
+
+\subsection{快速配对区域操作}
+快速处理\verb+''、""、()、[]、{}、<> +等配对标点符号中的文本内容，包括更改、删除、复制等。
+\begin{verbatim}
+ci(  快速修改()内的内容,即删除后进入insert模式
+di(  快速删除()内的内容
+yi(  快速复制()内的内容
+\end{verbatim}
+将上述i替换为a，()本身也会被选取。
+
+
+\subsection{跨文档复制粘贴}
+一般地，复制到指定寄存器的方法为：
+
+普通模式下\verb|"+寄存器名+y|。
+
+插入某寄存器内容的方法为：
+
+普通模式下\verb|"+寄存器名+p|或编辑模式下\verb|Ctrl+R+寄存器名|。
+
+有两个特殊的寄存器： 选择寄存器(寄存器``)为可视模式下选择的内容，剪贴板(寄存器+)为用图形界面选择的内容。
+
+
+\subsection{跨文件字符替换}
+每个文件在vim被称为缓冲区。
+
+方法一:命令录制。
+\begin{verbatim}
+qq,:wnext,q.
+\end{verbatim}
+
+方法二：bufdo, argdo, windo等。
+\begin{verbatim}
+:wa
+:bufdo %s/foo/bar/ge |update
+\end{verbatim}
+
+\subsection{文档统计}
+显示当前文件名称与行数
+\begin{verbatim}
+:f 或 Ctrl+G
+\end{verbatim}
+显示某单词word出现的次数
+\begin{verbatim}
+%s/word//gn
+\end{verbatim}
+中文字数统计(近似方法)
+\begin{verbatim}
+%s/\S//gn
+缺点是将非中文字符也算做一个字，如英文单词、标点等。
+:%s/[^[:print:][:cntrl:]]//gn
+缺点是中文标点也算作了汉字
+:%s/[\u4e00-\u9fa5]//gn
+使用unicode匹配，不成功，可能是因为utf8编码的文件不支持unicode匹配
+\end{verbatim}
+
+
+注意wc -m命令也可以统计字符数，但是把空白字符也算作内了。
+
+\subsection{基于空格的列操作}
+\verb+\S,\s+分别表示非空格和空格，后带\verb%\+%表示至少为一。再结合括号和数字引用，可以基于空格进行各种列操作。
+
+例1：在非空行前后添加内容：
+\verb#:%s/^\s*\(\S\+.*\)$/haha;\1wawa;#
+
+例2：只保留第一列，其余删除：
+\verb%5,12s/\(\S\+\)\s\+.*/\1/g%
+
+\subsection{折行的开与关}
+zR 打开所有折行;zr打开下一级折行;zM关闭所有折行;zm 关闭上一级折行
+zo 打开折行;zc 重新关闭折行
+zf 创建折行;zfap zf命令作用于ap(一个段落)
+
+\subsection{屏幕错乱}
+Ctrl+L即可。
+
+\subsection{键入特殊字符}
+外国人姓名之间的点号：fcitx激活时键入[即可。
+\begin{verbatim}
+:digraphs 查看VIM支持的特殊字符
+\end{verbatim}
+Insert模式使用CTRL-K {key1 key2}键入特殊字符。
+如输入拼音a的四个声调，分别为\verb+a-(或a～)，a‘，a<,a`(或a！)+。希腊字符\[\alpha,\beta\]分别为\verb+a*, b*+。
+
+\subsection{键入Unicode字符}
+Insert模式使用CTRL-V {digits}来插入一个由{digits}指定其ASCII码的字符. 
+
+用这种方法你可以插入0到255的所有字符.如果你键入的数字少于两个, 那么Vim会在遇到一个非数字字符时终止这个命令. 要避免非得键入一个非数字字符才能让这个命令结束,你可以在数字前加上一个或两个0来凑足3个数.
+
+\begin{verbatim}
+CTRL-V 009.
+\end{verbatim}
+
+要用十六进制来表示你的ASCII, 在CTRL-V后面附加一个"x":
+\begin{verbatim}
+CTRL-V x7f
+\end{verbatim}
+
+接下来的两个方法还可以让你键入一个16bit或32bit的数字(比如,用来指定一个Unicode字符):
+\begin{verbatim}
+CTRL-V o123
+CTRL-V u1234
+CTRL-V U12345678
+\end{verbatim}
+
+\subsection{快速插入日期}
+可以定义如下键盘映射，使得在Insert模式下，F8可以键入日期:
+\begin{verbatim}
+imap <F8> <Esc>:read !date +\%F<CR>i
+使用了date系统命令，\是为了转义%号，在Bash中不需要
+格式%F相当于%Y-%m-%d
+\end{verbatim}
+
+\subsection{大小写转换}
+在替换命令中，一个字符前面加\verb+\u+会被转为大写，\verb+\l+会被转为小写。
+Normal模式下大写转化的命令是gu或者gU, 分别对应小写转换和大写转换。
+guw 、gue将当前单词转为小写，而gU5w、gU5e将5个单词转为大写。
+gU0从光标所在位置到行首，都变为大写。
+gU\$光标所在位置到行尾，都变为大写。
+gUG从光标所在位置到文章最后一个字符，都变为大写。
+gU1G从光标所在位置到文章第一个字符，都变为大写。
+
+
+\subsection{列选择模式}
+Normal模式下CtrlV会进入列选择模式，可以用来对表格的列进行选择操作。
+
+
+\subsection{缩写}
+iab命令定义在Insert模式下的缩写，如
+
+\begin{verbatim}
+iab ssend SSEND_HAHA
+\end{verbatim}
+iunab取消缩写，iab列出缩写。
+
+\subsection{C程序缩进}
+设置缩进为4,并用空格代替TAB:
+\begin{verbatim}
+set softtabstop=4
+set shiftwidth=4
+set expandtab
+\end{verbatim}
+== 为当前行整理缩进
+=a{ 为当前代码块整理缩进
+=G 从当前行到文件结尾，整理缩进
+gg=G 为整个文件整理缩进
+
+
+\subsection{英文拼写检查}
+\begin{verbatim}
+:setlocal spell spelllang=en_us 
+:set spell
+:setlocal nospell
+:set nospell
+\end{verbatim}
+
+
+\subsection{vim选项的值}
+\begin{verbatim}
+:se[t] 显示所有不等于默认值的选项
+:set all 显示所有选项
+:set option? 显示选项的值
+:set option 对于Toggle类型的选项，将其值设置为on；其他类型的选项，显示其值
+\end{verbatim}
+
+\subsection{重新载入vimrc}
+\begin{verbatim}
+:source ~/.vimrc
+:so ~/.vimrc
+\end{verbatim}
+
+\subsection{换行符在替换命令中的表示}
+如果是匹配换行符，直接用\$即可。如果想替换成换行符，在替换命令中用由ctrl+V+M获得\^M符号。
+\begin{verbatim}
+​:s/char/^M/
+\end{verbatim}
+
+\subsection{最短匹配}
+
+\begin{verbatim}
+\{-}最短匹配
+\{}最长匹配，如同*
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+

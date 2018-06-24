@@ -1,0 +1,71 @@
+%!Mode:: "TeX:UTF-8"
+
+
+
+\section{Network Traffic Measurement} \label{sec:netmeasure} 
+vnstat, sar, slurm, ifstat, system-monitor等工具可查看网卡总流量。iptraf，iftop可查看连接的流量。
+
+\subsection{简单测量}
+最原始的办法,是连续两次使用date;ifconfig命令,计算一定时间间隔内的数据量。
+也可以通过查看/proc/net/dev获取数据量。
+在Gnome3下,可以使用一个叫做netspeed的gnome shell插件。
+
+\subsection{vnstat工具}
+\begin{shellcmd}
+#-ru 0 使其以byte为单位,1使其以bit为单位.
+vnstat -l -ru 0 #持续采样 
+vnstat -tr #统计网速，5秒内的采样平均计算所得。
+\end{shellcmd}
+
+\subsection{iftop工具}
+显示带宽使用情况。3列显示，分别表示过去2s，10s，40s内的统计带宽。
+\begin{verbatim}
+iftop -h | [-nNpbBP] [-i interface] [-f filter code] [-F net/mask]
+\end{verbatim}
+例如：
+\begin{shellcmd}
+#-B表示以byte而非bit为单位,-P显示端口号
+sudo iftop -B -P 
+\end{shellcmd}
+工具默认自动将IP地址转换为主机名，会产生一定的DNS流量，扰乱测试。为讲其关闭，可使用-n命令。
+
+\subsection{sar工具}
+也可以使用sar工具.在Redhat/Fedora下,sar工具位于sysstat软件包中.
+\begin{shellcmd}
+#最后的数字表示刷新时间间隔,单位为秒
+sar -n DEV 3 
+\end{shellcmd}
+
+经我验证，sar统计的字节数为以太网层，包括其头部和尾部(虽然Linux抓不到帧尾的FCS)，不包括前导码和帧间隔。
+
+\subsection{ifstat工具}
+\begin{shellcmd}
+ifstat -a
+\end{shellcmd}
+
+\subsection{ntop工具}
+Ntop是一种监控网络流量工具，用ntop显示网络的使用情况比其他一些网络管理软件更加直观、详细。Ntop甚至可以列出每个节点计算机的网络带宽利用率。它是一个灵活的、功能齐全的，用来监控和解决局域网问题的工具；尤其当ntop与nprobe配合使用，其功能更加显著。它同时提供命令行输入和web页面，可应用于嵌入式web服务。跟 top 监视系统活动状况相似，ntop 是一个用来实时监视网络使用情况的工具。由于 ntop 具有 Web 界面模式，因此无论是配置还是使用都很容易在短时间之内快速上手。
+
+\subsection{iptraf工具}
+Interactive Colorful IP LAN Monitor。可查看每条连接的信息。
+\begin{verbatim}
+iptraf -i eth0
+\end{verbatim}
+
+
+\subsection{slurm工具}
+ Simple Linux Utility for Resource Management，查看网络流量的一个工具。
+ \begin{verbatim}
+ slurm -i eth0
+ \end{verbatim}
+
+彩色curse节目，有部分文字是白色，在浅色背景下看不清楚。
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,119 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{PC芯片组}
+芯片组（chipset, PC chipset, or chip set）是一组共同工作的集成电路（“芯片”），并作为一个产品销售。它负责将电脑的核心——微处理器和机器的其他部分相连接，是决定主板级别的重要部件。以往，芯片组由多颗芯片组成，慢慢的简化为两颗芯片。
+
+在计算机领域，“芯片组”术语通常是特指计算机主板或扩展卡上的芯片。当讨论基于英特尔的奔腾级处理器的个人电脑时，芯片组一词通常指两个主要的主板芯片组：北桥和南桥。芯片组的制造商可以，通常也是独立于主板的制造商。比如PC主板芯片组包括NVIDIA的nForce芯片组和威盛电子公司的KT880，都是为AMD处理器开发的，或英特尔许多芯片组。
+
+
+\subsection{南北桥结构}
+
+北桥（英语：Northbridge）是基于Intel处理器的个人电脑主板芯片组两枚芯片中的一枚，北桥设计用来处理高速信号，通常处理中央处理器、随机存取存储器、AGP或PCI Express的端口，还有与南桥之间的通信。
+
+
+\tikzset{ box/.style={
+rectangle, minimum width=1.3cm,very thick, draw=gray!50!black!50, text centered,
+text width=0.2\textwidth, top color=white, bottom color=gray!50!black!20},
+diamondbox/.style={diamond, 
+draw=gray!50!black!, top color=white, bottom color=gray!50!black!10,
+minimum width=3cm, minimum height=1.5cm, very thick, inner sep=0pt, text centered},
+ellipbox/.style={ellipse,minimum width=1.3cm, minimum height=.8cm, draw=gray!50!black!, very thick, text width=0.07\textwidth, inner sep=0pt},
+every node/.style={text badly centered, font=\footnotesize}
+}
+
+%自定义命令：用于流程图判断语句
+\newcommand{\abovelabel}[1]{node[midway, above, text width=20mm]{#1}}
+\newcommand{\rightlabel}[1]{node[midway, right]{#1}}
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+	\matrix[row sep=8mm, column sep=30mm]
+	{
+            &\node[box](cpu){CPU};&\node[box](cache){高速缓存};\\
+            \node[box](graphic card){显卡槽};&\node[box](north){北桥};&\node[box](mem){内存};\\
+            \node(usb){USB设备};&\node(south1){};&\node(ide){IDE硬盘};\\
+            \node(isa){ISA设备(过时)};&\node(south2){};&\node(sata){SATA硬盘};\\
+            \node(pci slots){PCI槽};&\node(south3){};&\node(onboard graph){Onboard显卡控制器};\\
+            \node(phy){以太网};&\node(south4){};&\node(audio){声卡};\\
+            \node(cmos){CMOS内存};&\node(south5){};&\node[box](flash rom){Flash Rom};\\
+            &\node[box](super io){Super I/O};\\
+	};
+
+	\begin{scope}[every path/.style={draw, thick}]
+            \path (cpu) -- (north) \rightlabel{FSB}; 
+            \path (cpu) -- (cache) \abovelabel{BSB}; 
+            \path (graphic card) -- (north) \abovelabel{高速图形总线(PCI-E或AGP)} -- (mem) \abovelabel{内存总线}; 
+            \path (north) -- (south1) \rightlabel{桥间总线}; 
+	    \path (usb) -- (south1) \abovelabel{USB总线}-- (ide) \abovelabel{IDE总线};
+	    \path (isa) -- (south2) \abovelabel{ISA总线}-- (sata) \abovelabel{SATA总线};
+	    \path (pci slots) -- (south3) \abovelabel{PCI总线}-- (onboard graph) \abovelabel{PCI总线};
+	    \path (phy) -- (south4) \abovelabel{PCI等总线}-- (audio) \abovelabel{PCI总线};
+	    \path (cmos) -- (south5) \abovelabel{PCI等总线} -- (flash rom) \abovelabel{LPC总线};
+	    \path (south5) -- (super io) \rightlabel{LPC总线};
+	\end{scope}
+        
+        \node[box, fit=(south1)(south5)](south){南桥};
+
+    \end{tikzpicture}
+    \caption{MainBoard}
+\end{figure}
+
+传统的北桥内建内存控制器，让处理器连接前端总线，而处理器和内存总线则跑相同的时脉。随后，芯片组分开处理器和内存总线的频率，让前端总线只代表处理器和北桥之间的通道。
+
+北桥留下来的只剩下AGP或PCI Express控制器和与南桥通信，有时北桥会和南桥整合在同颗芯片中，有一些北桥则连绘图处理器也整合进去，而另外支援AGP或PCI Express接口。整合式北桥会侦测到附加在AGP插槽上有安装显卡，并停止其绘图处理器功能，但有些北桥可以允许同时使用整合式显卡和安装外加显卡，作为多显示输出。
+
+南桥设计用来处理低速信号，通过北桥与CPU联系。各芯片组厂商的南桥名称都有所不同，例如英特尔称之为ICH，NVIDIA的称为MCP，ATI的称为IXP/SB。
+
+南桥包含大多数周边设备接口、多媒体控制器和通讯接口功能。例如PCI控制器、ATA控制器、USB控制器、网络控制器、音效控制器。各世代的南桥效能大多雷同，但偶然听到某些南桥会有较差的Serial ATA或USB效能。目前所有的南桥制造商都提供SATA磁盘阵列功能，NVIDIA则允许SATA和ATA硬盘机混合组成磁盘阵列。最新的英特尔Matrix RAID技术，让RAID-0和RAID-1组态可以在两颗硬盘机中同时使用。
+
+大多数南桥都能直接连接Gigabit Lan PHY（实体层芯片，用来处理连接讯号），高阶的南桥通常拥有两组Gigabit Lan PHY，不过中阶的主板则只支援一组。而NVIDIA最新的南桥则支援带宽合并、封包排序和TCP/IP加速等高级网络卡功能。现在大部份高级南桥则支援Azalia高传真音效，借着编码芯片支援7.1声道音效。
+
+大多数南桥都支援PCI Express Hub，但主板制造商通常采用北桥所提供的PCI Express Lane。
+
+存放BIOS配置信息的存储部件为CMOS内存，或称非易失性BIOS内存。传统上，BIOS信息存放于易失性的CMOS SRAM中，断点后借助电池的支持来保证信息不丢失。目前BIOS信息存放于EEPROM或flash中，电池只用于维持时钟硬件(RTC, real-time clocking)。CMOS RAM和电池都是南桥的一部分。
+
+Super I/O可外接串口、并口(主要用于打印机)、PS/2鼠标和键盘、软盘、温度传感器和风扇转速监测等。Super I/O始于20世纪80年代，早期为附加芯片，后集成于主板。Super I/O早期用ISA总线同CPU通信。随着PCI总线的普及，Super I/O甚至成为主板上集成ISA总线的主要理由。后来Super I/O通过LPC(Low Pin Count)总线同CPU通信。Super I/O替主板实现了许多功能，简化主板设计，节约了成本。
+
+Intel Hub Architecture(IHA)可用来取代南桥与北桥，IHA芯片组亦分成二大项：Graphics and Memory Controller Hub (GMCH)与I/O Controller Hub (ICH)。
+
+随着Soc(System-on-a-Chip)技术的流行，现代设备逐渐将北桥集成到CPU冲模(die)上，而将南桥直接与CPU相连，如Intel的Sandy Bridge和AMD Fusion处理器(均发布于2011年)。预期于2013年发布的Intel Haswell将会把南桥与CPU集成到同一盒(package)中。
+
+\subsection{单芯片芯片组}
+
+AMD在Athlon 64时代将内存总线整个拿掉，直接设计到处理器中，让北桥的功能只是支援外加显卡接口，例如AGP和PCI Express x16。由于北桥的重要性降低，有厂商索性将南北桥合并，成为单一芯片组，例如NVIDIA的nForce 4。这样可以减低芯片组的制造成本，但电脑的效能会降低。
+
+单芯片芯片组已推出多年，例如SiS 730。但直到最近nForce 4的出现才逐渐流行。现在的单芯片芯片组，不像以往般复杂，因Athlon 64已内建内存控制器，取代了北桥的功能。纵使芯片组变成单芯片，习惯上亦沿用旧名称。
+
+\subsection{总线}
+
+前端总线（FSB，Front Side Bus）是指中央处理器数据总线的专门术语，此总线负责中央处理器和北桥芯片间的数据传递。某些带有L2和L3缓存(Cache)的计算机，通过后端总线（Back Side Bus）实现这些缓存和中央处理器的连接，而此总线的数据传输速率总是高于前端总线。
+
+大多数现代总线（GTL+和EV6）是CPU和芯片组的连接主干。芯片组（通常由南桥和北桥组成）是和系统中其他总线的连接节点。PCI、AGP和内存总线均和芯片组相连，以使设备间数据能相互传送。
+
+这些第二级系统总线的运行速率取决于前端总线的速率。总之，高的前端总线速率意味着计算机的高处理性能。
+
+早期连接南北桥的总线为PCI总线，现在主要是DMI(Intel)和UMI(AMD)。
+
+在PC发展初期，由于处理器速度不高，大部份元件的时脉均保持同步，直至80486时代，在处理器制程持续进步下，处理器速度也加速成长，当时由于其他外部元件受电气结构所限，而无法跟进成长，因此Intel首次于处理器时脉中加入倍频设计，首颗处理器为Intel 80486DX2，外部传输时脉是处理器的一半，及后处理器成长速度仍远超过外部元件，两者速度差距越来越大。直至Pentium III时代，处理器时脉已超越1GHz，但外部传输时脉仍仅有133MHz。
+
+正常来说，外频速度越高代表处理器在同一周期下可读写越多的数据，因此，外频速度很可能会变成系统效能上的瓶颈，为解决处理器带宽不足的问题，Intel于Pentium 4时代加入Quad Pumped Bus架构，使其在同一周期内可传送4笔数据，此举令外部传输时脉不变下，传输效率却可提升四倍。
+
+前端总线(FSB、外频)的速度指的是CPU和北桥芯片间总线的速度。而系统总线(BusSpeed)的概念是建立在数位脉冲信号震荡速度基础之上的，也就是说，100MHz系统总线(BusSpeed)特指数位脉冲信号在每秒钟震荡一百万次，它更多的影响了PCI及其他总线的频率。之所以前端总线（FSB、外频）与系统总线（BusSpeed）这两个概念容易混淆，主要的原因是在以前的很长一段时间里，前端总线(FSB、外频)与系统总线（BusSpeed）是相同速率，因此往往直接称系统总线（BusSpeed）为外频，最终造成这样的误会。
+
+中央处理器的时脉速度（简称内频）由系统总线速率（bus speed）乘上倍频系数决定。例如，一个时脉速度为 700MHz 的处理器，可能运行于 100MHz 的系统总线上。这说明处理器内的时钟倍频器的倍率设置为7，即中央处理器被设定为以7倍于系统总线的速率运行：100 MHz×7 = 700 MHz。通过改变倍频系数或系统总线速率，可以得到不同的时脉速度。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

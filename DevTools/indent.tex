@@ -1,0 +1,11 @@
+%!Mode:: "TeX:UTF-8"
+\section{Indent代码排版工具}
+
+欲实现Cavium风格的代码,有
+\begin{verbatim}
+indent *.c -bli0 -i4 -npsl -cli4 -npcs
+\end{verbatim}
+
+其中,bli表示brace indentation, i选项表示indentation, npsl(dont-break-procedure-type)表示函数返回类型需与函数名称在同一行;cli表示case-label-indentation, 表示case语言缩进的距离。npcs表示no-sapce-after-function-call-names,函数调用时函数名称后无空格。
+
+关于if等语句之后的\verb+{+括号是否在换行，有两种方式：br(braces-on-if-line)和bl(braces-after-if-line)。对于br选项，一般同时指定ce选项(cuddle-else)或nce选项，前者让\verb+}+和else在同一行。对于bl选项，一般同时指定bli选项，表示\verb+{+缩进距离，如不指定，GNU indent默认使用GNU风格，即缩进2个空格。类似于if语句，函数定义和struct定义也存在大括号是否在同一行的问题。对于函数，可以指定brf或blf（默认）；对于struct，可以指定brs和blf。

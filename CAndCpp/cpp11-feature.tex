@@ -1,0 +1,232 @@
+%!Mode:: "TeX:UTF-8"
+\section{C++ 2011}
+
+\url{http://developer.51cto.com/art/201112/305880.htm}
+
+C++11是曾经被叫做C++0x，是对目前C++语言的扩展和修正，C++11不仅包含核心语言的新机能，而且扩展了C++的标准程序库（STL），并入了大部分的C++ Technical Report 1（TR1）程序库(数学的特殊函数除外)。
+
+C++之前的标准有C++98和C++03,二者差别很小。C++14旨在作为C++11的一个小扩展，主要提供漏洞修复和小的改进。
+例如，在C++11中，lambda函数的形式参数需要被声明为具体的类型。C++14放宽了这一要求，允许lambda函数的形式参数声明中使用类型说明符auto。
+
+C++11包括大量的新特性：它现在支持Lambda表达式，对象类型自动推断，统一的初始化语法，委托构造函数，deleted和defaulted函数声明,nullptr，以及最重要的右值引用。
+
+
+\subsection{自动类型推导}
+\begin{lstlisting}[language=C++]
+auto a; // 错误，auto是通过初始化表达式进行类型推导，如果没有初始化表达式，就无法确定a的类型  
+auto d = 1.0;  
+auto str = "Hello World";  
+auto ch = 'A';  
+auto func = less<int>();  
+vector<int> iv;  
+auto ite = iv.begin();  
+auto p = new foo() // 对自定义类型进行类型推导 
+\end{lstlisting}
+
+\textbf{decltype}实际上有点像\textbf{auto}的反函数，auto可以让你声明一个变量，而decltype则可以从一个变量或表达式中得到类型，有实例如下：
+\begin{lstlisting}[language=C++]
+int x = 3;  
+decltype(x) y = x;
+
+template <typename Creator>  
+auto processProduct(const Creator& creator) -> decltype(creator.makeObject()) {  
+    auto val = creator.makeObject();  
+    // do somthing with val  
+} 
+\end{lstlisting}
+
+\subsection{nullptr}
+nullptr是为了解决原来C++中NULL的二义性问题而引进的一种新的类型，对于一些重载函数，NULL的类型不确定是整型还是指针。
+\begin{lstlisting}[language=C++]
+void f(int); //1  
+void f(char *);//2  
+f(0); //C++03: which f is called?
+f(nullptr) //C++11: unambiguous, calls 2
+\end{lstlisting}
+
+\subsection{序列for循环}
+\begin{lstlisting}[language=C++]
+map<string, int> m{{"a", 1}, {"b", 2}, {"c", 3}};  
+for (auto p : m){  
+    cout<<p.first<<" : "<<p.second<<endl;  
+} 
+\end{lstlisting}
+
+\subsection{Lambda表达式}
+lambda表达式类似Javascript中的闭包，它可以用于创建并定义匿名的函数对象，以简化编程工作。Lambda的语法如下：
+\begin{verbatim}
+[函数对象参数]（操作符重载函数参数）->返回值类型{函数体}
+\end{verbatim}
+
+
+\subsection{变长参数的模板}
+由于在C++11中引入了变长参数模板，所以发明了新的数据类型：tuple，tuple是一个N元组，可以传入1个， 2个甚至多个不同类型的数据:
+\begin{lstlisting}[language=C++]
+auto t1 = make_tuple(1, 2.0, "C++ 11");  
+auto t2 = make_tuple(1, 2.0, "C++ 11", {1, 0, 2}); 
+\end{lstlisting}
+这样就避免了从前的pair中嵌套pair的丑陋做法，使得代码更加整洁。
+
+\subsection{右值引用}
+左值是一个指向某内存空间的表达式，并且我们可以用\&操作符获得该内存空间的地址。右值就是非左值的表达式。
+
+在 C++03及之前的标准，临时对象(称为右值"R-values"，位于赋值运算符之右)无法被改变，在 C 中亦同(且被视为无法和 const T\& 做出区分)。
+如果一个表达式返回一个临时变量，则该表达式是右值。
+
+C++11 增加一个新的非常数引用(reference)类型，称作右值引用(R-value reference)，标记为T \&\&。普通的引用现在被称为左值引用。
+右值引用所引用的临时对象可以在该临时对象被初始化之后做修改，这是为了允许move语义。
+
+右值引用至少解决了这两个问题：实现move语义;完美转发(Perfect forwarding)。
+右值引用允许函数在编译期根据参数是左值还是右值来建立分支。
+
+\begin{lstlisting}[language=C++]
+void foo(X& x); // 左值引用重载
+void foo(X&& x); // 右值引用重载
+X x;
+X foobar();
+foo(x);//参数是左值
+foo(foobar());//参数是右值
+\end{lstlisting}
+
+右值引用类型既可以被当作左值也可以被当作右值，判断的标准是，如果它有名字，那就是左值，否则就是右值。
+\begin{lstlisting}[language=C++]
+void foo(X&& x)
+{
+   X anotherX = x; // x被当做左值，调用X(X const & rhs)
+}
+/**********************************/
+X&& goo();
+X x = goo(); // 调用X(X&& rhs)，goo的返回值没有名字
+/**********************************/
+Base(Base const & rhs); // non-move semantics
+Base(Base&& rhs); // move semantics
+Derived(Derived const & rhs) 
+   : Base(rhs)
+{
+   // Derived-specific stuff
+}
+Derived(Derived&& rhs) 
+   : Base(rhs) // 错误：rhs是个左值
+{
+   // ...
+}
+Derived(Derived&& rhs) 
+   : Base(std::move(rhs)) // good, calls Base(Base&& rhs)
+{
+   // Derived-specific stuff
+}
+\end{lstlisting}
+
+
+\subsection{统一形的初始化}
+在引入C++11之前，只有数组能使用初始化列表，其他容器想要使用初始化列表，只能用以下方法：
+\begin{lstlisting}[language=C++]
+int arr[3] = {1, 2, 3}  
+vector<int> v(arr, arr + 3); 
+\end{lstlisting}
+
+在C++11中，我们可以使用以下语法来进行替换：
+\begin{lstlisting}[language=C++]
+int arr[3]{1, 2, 3};  
+vector<int> iv{1, 2, 3};
+vector vs<string>={ "first", "second", "third"};
+map<int, string>{{1, "a"}, {2, "b"}};  
+string str{"Hello World"}; 
+\end{lstlisting}
+
+\subsection{委托构造函数}
+C++11允许构造函数调用其他构造函数，这种做法称作委托或转接(delegation)。
+\begin{lstlisting}[language=C++]
+class SomeType {
+  int number;
+  string name;
+  SomeType( int i, string& s ) : number(i), name(s){}
+public:
+  SomeType( )           : SomeType( 0, "invalid" ){}
+  SomeType( int i )     : SomeType( i, "guest" ){}
+  SomeType( string& s ) : SomeType( 1, s ){ PostInit(); }
+};
+\end{lstlisting}
+
+\subsection{使用或禁用对象的默认函数}
+在传统C++中，若使用者没有提供， 则编译器会自动为对象生成默认构造函数(default constructor)、 复制构造函数(copy constructor)，赋值运算符(copy assignment operator operator=) 以及析构函数(destructor)。
+问题在于原先的c++无法精确地控制这些默认函数的生成。
+比方说，要让类型不能被拷贝，必须将复制构造函数与赋值运算符声明为private，并不去定义它们。
+尝试使用这些未定义的函数会导致编译期或链接期的错误。
+但这种手法并不是一个理想的解决方案。
+此外，编译器产生的默认构造函数与使用者定义的构造函数无法同时存在。
+\textbf{若用户定义了任何构造函数，编译器便不会生成默认构造函数； 但有时同时带有上述两者提供的构造函数也是很有用的}。
+
+
+C++11 允许显式地表明采用或拒用编译器提供的内置函数。例如要求类型带有默认构造函数，可以用以下的语法：
+\begin{lstlisting}[language=C++]
+struct A   
+{   
+	A()=default;
+    virtual ~A()=default;
+};
+\end{lstlisting}
+Deleted函数对防止对象复制很有用，回想一下C++自动为类声明一个副本构造函数和一个赋值操作符，要禁用复制，声明这两个特殊的成员函数=delete即可：
+\begin{lstlisting}[language=C++]
+struct NonCopyable
+{
+  NonCopyable & operator=(const NonCopyable&) = delete;
+  NonCopyable(const NonCopyable&) = delete;
+  NonCopyable() = default;
+};
+\end{lstlisting}
+禁止类型以operator new配置内存：
+\begin{lstlisting}[language=C++]
+struct NonNewable
+{
+  void *operator new(std::size_t) = delete;
+};
+\end{lstlisting}
+
+\subsection{线程库}
+站在程序员的角度来看，C++11最重要的新功能毫无疑问是并行操作，C++11拥有一个代表执行线程的线程类，在并行环境中用于同步，async()函数模板启动并行任务，为线程独特的数据声明\verb$thread_local$存储类型。如果你想找C++11线程库的快速教程，请阅读Anthony William的“C++0x中更简单的多线程”。
+
+\subsection{常量表达式}
+C++11新标准规定，允许将变量声明为constexpr类型以便由编译器来验证变量的值是否是一个常量表达式。声明为constexpr的变量一定是一个常量，而且必须用常量表达式初始化：
+\begin{lstlisting}[language=C++]
+constexpr int GetFive() {return 5;}
+int some_value[GetFive() + 5]；
+constexpr int mf = 20; // 20是常量表达式  
+constexpr int limit = mf + 1;// mf + 1是常量表达式  
+constexpr int sz = size();//当size是一个constexpr函数时才可编译
+\end{lstlisting}
+
+\subsection{新的智能指针类}
+C++98只定义了一个智能指针类\verb$auto_ptr$，它现在已经被废弃了，C++11引入了新的智能指针类\verb$shared_ptr$和最近添加的\verb$unique_ptr$，两者都兼容其它标准库组件，因此你可以在标准容器内安全保存这些智能指针，并使用标准算法操作它们。
+
+\subsection{新的算法}
+C++11标准库定义了新的算法: \verb$all_of(),any_of(),none_of(),copy_n(),iota()$操作:
+\begin{lstlisting}[language=C++]
+#include <algorithm>      
+//are all of the elements positive?  
+all_of(first, first+n, ispositive()); //false  
+//is there at least one positive element?   
+any_of(first, first+n, ispositive());//true    
+// are none of the elements positive?    
+none_of(first, first+n, ispositive()); //false 
+int source[5]={0,12,34,50,80};  
+int target[5];  
+//copy 5 elements from source to target  
+copy_n(source,5,target);
+\end{lstlisting}
+
+算法iota()创建了一个值顺序递增的范围，好像分配一个初始值给*first，然后使用前缀++使值递增，在下面的代码中，iota()分配连续值{10,11,12,13,14}给数组arr，并将{‘a’,’b’,’c’}分配给char数组c。
+\begin{lstlisting}[language=C++]
+include <numeric> 
+int a[5]={0};  
+char c[3]={0};  
+iota(a, a+5, 10); //changes a to {10,11,12,13,14}  
+iota(c, c+3, 'a'); //{'a','b','c'}
+\end{lstlisting}
+
+C++11仍然缺乏一些有用的库，如XML API，套接字，GUI，反射以及前面提到的一个合适的自动垃圾回收器，但C++11的确也带来了许多新特性，让C++变得更加安全，高效，易学易用。
+
+\subsection{Boost}
+除了加入C++11的功能之外，boost还包含其他的实用库，如crc，uuid，有理数，环形数组，内存池，system，filesystem，python支持等。
+
+

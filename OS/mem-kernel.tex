@@ -1,0 +1,59 @@
+%!Mode:: "TeX:UTF-8"
+ 
+\section{内核中的内存分配}
+\subsection{内存空间}
+内核被安装在物理空间的第2个MB处(0x00100000)开始。典型的内核配置让内核能容入3MB空间内。
+BIOS会使用第一个MB的某些内存。
+启动早期，内核会通过BIOS获取系统中物理内存大小。
+
+进程线性空间前3GB(0x00000000 to 0xbfffffff)可在用户态和内核态下访问, 后1GB(0xc0000000 to 0xffffffff)只能在内核态访问。
+PAGE\_OFFSET宏被定义为0xc0000000。
+
+\subsection{kmalloc}
+1、  kmalloc()是内核中最常见的内存分配方式，它最终调用伙伴系统的\_\_get\_free\_pages()函数分配，根据传递给这个函数的flags参数，决定这个函数的分配适合什么场合，如果标志是GFP\_KERNEL则仅仅可以用于进程上下文中，如果标志GFP\_ATOMIC则可以用于中断上下文或者持有锁的代码段中。
+kmalloc返回的线形地址是直接映射的，而且用连续物理页满足分配请求，且内置了最大请求数（2**5=32页）。
+ 
+2、  kmap()是主要用在高端存储器页框的内核映射中，一般是这么使用的:
+使用alloc\_pages()在高端存储器区得到struct page结构，然后调用kmap(struct *page)在内核地址空间PAGE\_OFFSET+896M之后的地址空间中（PKMAP\_BASE到FIXADDR\_STAR）建立永久映射(如果page结构对应的是低端物理内存的页，该函数仅仅返回该页对应的虚拟地址)
+kmap()也可能引起睡眠，所以不能用在中断和持有锁的代码中。
+不过kmap 只能对一个物理页进行分配，所以尽量少用。
+ 
+3、  vmalloc优先使用高端物理内存，但性能上会打些折扣。
+vmalloc分配的物理页不会被交换出去; 
+vmalloc返回的虚地址大于(PAGE\_OFFSET + SIZEOF(phys memory) + GAP)，为VMALLOC\_START----VMALLOC\_END之间的线形地址; 
+vmalloc使用的是vmlist链表，与管理用户进程的vm\_area\_struct要区别,而后者会swapped；
+ 
+4、  使用kmap的原因：
+对于高端物理内存(896M之后)，并没有和内核地址空间建立一一对应的关系(即虚拟地址=物理地址+PAGE\_OFFSET这样的关系)，所以不能使用get\_free\_pages()这样的页分配器进行内存的分配，而必须使用alloc\_pages()这样的伙伴系统算法的接口得到struct *page结构，然后将其映射到内核地址空间，注意这个时候映射后的地址并非和物理地址相差PAGE\_OFFSET.
+
+\subsection{slab分配器}
+
+在内核编程中，可能经常会有一些数据结构需要反复使用和释放，按照通常的思路，可能是使用kmalloc和kfree来实现。
+但是这种方式效率不高，Linux为我们提供了更加高效的方法——Slab高速缓存管理器。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

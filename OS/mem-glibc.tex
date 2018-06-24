@@ -1,0 +1,50 @@
+%!Mode:: "TeX:UTF-8"
+\section{Glibc的malloc实现}
+\label{sec:glibc-malloc}
+
+在程序开发中，堆和栈是最常使用的两个内存区，在Linux下栈分为用户栈和内核栈，内核栈具有固定大小，而用户栈可以通过ulimit来设定，最大8M。
+
+Glibc分配算法思想：
+\begin{itemize}
+\item 小于等于64字节：用pool算法分配
+\item 64到512字节之间：在最佳凭配算法分配和pool算法分配中取一种合适的
+\item 大于等于512字节：用最佳凭配算法分配
+\item 大于等于128K：直接调用OS提供的函数(如mmap)分配
+\end{itemize}
+
+\begin{lstlisting}[language=C++]
+typedef struct free_list {
+  spin_lock_t lock;/* spin lock for mutual exclusion */
+  header_t head;/* head of free list for this size */
+  #ifdef DEBUG
+  int in_use;  /* # mallocs - # frees */
+  #endif DEBUG
+} *free_list_t;
+
+typedef union header {
+  union header *next;
+  struct free_list *fl;
+} *header_t;
+
+#define MIN_SIZE 8/* minimum block size */
+#define NBUCKETS 29
+
+/*block size 8,16,24，...,64*/
+static struct free_list malloc_free_list[NBUCKETS];
+\end{lstlisting}
+
+内存碎片包括内部碎片和外部碎片。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

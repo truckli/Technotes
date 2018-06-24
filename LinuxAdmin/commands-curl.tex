@@ -1,0 +1,59 @@
+%!Mode:: "TeX:UTF-8"
+\section{Curl}
+ \begin{verbatim}
+curl -svo /dev/null test/abc -x 127.0.0.1:2432
+
+curl -X PUT \
+     -H 'Content-Type: application/json' \
+          -d '{"firstName":"Kris", "lastName":"Jordan"}'
+               echo.httpkit.com
+
+curl -X PUT \
+     -H 'Content-Type: application/json' \
+     -d @example.json
+     echo.httpkit.com
+
+curl -d "firstName=Kris" \
+     -d "lastName=Jordan" \
+     echo.httpkit.com
+
+curl -F "firstName=Kris" \
+     -F "publicKey=@idrsa.pub;type=text/plain" \
+     echo.httpkit.com
+
+ \end{verbatim}
+
+
+-x server address
+
+-H Specify headers
+
+-X Specify method
+
+-A Specify User-Agent value
+
+-o local file name
+
+-O use remote file name as local name
+
+ -d/--data <data>   HTTP POST data, to send as
+ application/x-www-form-urlencoded. Use '@' to send a file as body.
+
+-F specify body to send as multipart/form-data
+
+-s/--silent        Silent mode. Don't output anything
+
+-i/--include       Include protocol headers in the output (H/F)
+
+
+
+
+
+
+
+
+
+
+
+
+

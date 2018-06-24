@@ -1,0 +1,33 @@
+%!Mode:: "TeX:UTF-8"
+\section{SGI STL源码学习笔记}
+
+vector动态增长是乘以2的关系，未必是2的幂。
+c[idx]没有边界检查，而c.at(idx)方式访问元素会抛出range\_error。
+
+STL三大组件：容器，算法，迭代器。SGI STL又加上仿函数，适配器，配置器。
+
+STL序列式容器：vector,deque,list, forward\_list，priority\_queue，stack适配器，queue适配器（SGI定义了非标准的slist，以算法形式存在的heap）。
+
+STL关联式容器：set,map,multiset,multimap（SGI定义了非标准的hashtable，hashset，hashmap等，以算法形式存在的RBTree）。
+
+有了hashmap(unordered\_map)，为什么还要保留基于红黑树的map？
+第一，平衡二叉树的查找时间未必比常数查找时间慢多少(100W记录只需20次比较)，而哈希表未必有多快(设计不当，以及哈希函数耗时)；
+第二，哈希表占用大量的内存空间，是以空间换时间的方法。
+
+insert操作执行前插并范围刚插入的值，erase则返回被删除的下一个值。以下代码删除偶数，复制奇数：
+\begin{lstlisting}[language=C++] 
+vector<int> vi = {0,1,2,3,4,5,6,7,8,9};
+auto iter = vi.begin(); // call begin , not cbegin because we’re changing vi
+while (iter != vi.end()) {
+	if (*iter % 2) {
+		iter = vi.insert(iter, *iter); // duplicate the current element
+		iter += 2; // advance past this element and the one inserted before it
+	} else
+		iter = vi.erase(iter);// remove even elements	
+	// don’t advance the iterator; iter denotes the element after the one we erased
+}
+\end{lstlisting}
+
+
+
+

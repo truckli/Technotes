@@ -1,0 +1,64 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Build and SCM systems}
+
+\href{https://about.gitlab.com/}{GitLab}, the software, is a web-based Git repository manager with wiki and issue tracking features.
+ 
+\href{https://jenkins-ci.org/}{Jenkins} is an open source continuous integration tool written in Java.
+ It is a server-based system running in a servlet container such as Apache Tomcat. 
+ It supports SCM tools including AccuRev, CVS, Subversion, Git, Mercurial, Perforce, Clearcase and RTC, 
+ and can execute Apache Ant and Apache Maven based projects as well as arbitrary shell scripts and Windows batch commands.
+
+\href{http://ant.apache.org/}{Apache Ant} is a software tool for automating
+software build processes, which originated from the Apache Tomcat project in early 2000.
+ It was a replacement for the unix make build tool, and was created due to a number of problems with the unix make.
+It is similar to Make but is implemented using the Java language, requires the Java platform, and is best suited to building Java projects.
+ The main known usage of Ant is the build of Java applications. 
+ Ant supplies a number of built-in tasks allowing to compile, assemble, test and run Java applications. 
+Ant can also be used effectively to build non Java applications, for instance C or C++ applications.
+
+\href{https://maven.apache.org/}{Maven} is a build automation tool used primarily for Java projects.
+Maven addresses two aspects of building software: First, it describes how
+software is built, and second, it describes its dependencies. 
+Contrary to preceding tools like Apache Ant, it uses conventions for the build procedure, and only exceptions need to be written down. 
+An XML file describes the software project being built, its dependencies on other external modules and components, the build order, directories, and required plug-ins.
+
+
+\subsection{Qmake,CMake}
+qmake是一个协助简化跨平台进行项目开发的构建过程的工具程序，Qt附带的工具之一 。qmake能够自动生成Makefile、Microsoft Visual Studio 项目文件 和 xcode 项目文件。不管源代码是否是用Qt写的，都能使用qmake，因此qmake能用于很多软件的构建过程。
+
+手写Makefile是比较困难而且容易出错，尤其在进行跨平台开发时必须针对不同平台分别撰写Makefile，会增加跨平台开发复杂性与困难度。qmake会根据项目文件（.pro）里面的信息自动生成适合平台的 Makefile。开发者能够自行撰写项目文件或是由qmake本身产生。qmake包含额外的功能来方便 Qt 开发，如自动的包含moc 和 uic 的编译规则。
+
+CMake是个开源的跨平台自动化建构系统，它用配置文件控制建构过程（build process）的方式和Unix的Make相似，只是CMake的配置文件取名为CmakeLists.txt。Cmake并不直接建构出最终的软件，而是产生标准的建构文件（如Unix的Makefile或Windows Visual C++的projects/workspaces），然后再依一般的建构方式使用。这使得熟悉某个集成开发环境（IDE）的开发者可以用标准的方式建构他的软件，这种可以使用各平台的原生建构系统的能力是CMake和SCons等其他类似系统的区别之处。CMake可以编译源代码、制做程序库、产生适配器（wrapper）、还可以用任意的顺序建构可执行文件。CMake支持in-place建构（二进文件和源代码在同一个目录树中）和out-of-place建构（二进文件在别的目录里），因此可以很容易从同一个源代码目录树中建构出多个二进文件。CMake也支持静态与动态程序库的建构。
+
+“CMake”这个名字是"cross platform make"的缩写。虽然名字中含有"make"，但是CMake和Unix上常见的“make”系统是分开的，而且更为高级。
+
+
+%!Mode:: "TeX:UTF-8"
+
+\subsection{Scons}
+
+\begin{verbatim}
+  Program('program', ['prog.c', 'file1.c', 'file2.c'])
+  Program('program', 
+ 	 ['hello.cpp', 'bloom_filter.c'], 
+ 	 CPPPATH = ['/home/truckli/Coding/wheels/Boost/boost_1_59_0'],
+ 	 LIBS='boost_system', 
+ 	 LIBPATH=['/home/truckli/Coding/wheels/Boost/boost_1_59_0/stage/lib'])
+
+\end{verbatim}
+
+\begin{verbatim}
+env = Environment(CPPPATH = ['/home/truckli/Coding/wheels/Boost/boost_1_59_0'])
+env.Program('program', ['hello.cpp', 'bloom_filter.c'], LIBS='boost_system', LIBPATH=['/home/truckli/Coding/wheels/Boost/boost_1_59_0/stage/lib'])
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+

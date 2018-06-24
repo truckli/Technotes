@@ -1,0 +1,55 @@
+%!Mode:: "TeX:UTF-8"
+
+\section{Subversion}
+
+Project creation:
+\begin{verbatim}
+  svn import -m "start up" ../http4ipa/ svn://192.168.8.221/http4ipa
+\end{verbatim}
+
+Set a dir's ignores:
+\begin{verbatim}
+svn propedit svn:ignore *.bak
+svn propset svn:ignore "ignore1 ignore2" your_dir_name
+\end{verbatim}
+
+Version comparison:
+\begin{verbatim}
+svn diff -rHEAD
+svn diff -r 18153:18168
+\end{verbatim}
+Notice: old commit is to be placed first.
+
+Version rollback:
+\begin{verbatim}
+svn update
+svn merge -r 150:140 .
+svn commit -m "Rolled back to r140"
+\end{verbatim}
+
+Remove all missing files:
+\begin{verbatim}
+svn st | grep '^!' | awk '{print $2}' | xargs svn delete --force
+\end{verbatim}
+
+SVN CHEAT SHEET:
+\url{http://web.archive.org/web/20121021221547/http://cheat.errtheblog.com/s/svn/}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

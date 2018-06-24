@@ -1,0 +1,108 @@
+%!Mode:: "TeX:UTF-8"
+\section{STL lower\_bound和upper\_bound实现}
+
+两个算法用于在有序序列中定位到给定值的起止范围。
+如果确实存在该值，lower\_bound返回第一个位置，upper\_bound返回最后一个位置的下一个位置。
+如果不存在该值，均返回适合插入该值的位置，这个位置未必在STL风格的前闭后开[first,last)范围内，可能正位于last位置，
+因此下列代码中保持搜索范围为双闭区间[first,last]。
+
+\begin{lstlisting}[language=C++]
+
+template <class ForwardIterator, class T, class Distance>
+ForwardIterator __lower_bound(ForwardIterator first, ForwardIterator last,
+                              const T& value, Distance*,
+                              forward_iterator_tag) {
+  Distance len = 0;
+  distance(first, last, len);
+  Distance half;
+  ForwardIterator middle;
+
+  while (len > 0) {
+    half = len >> 1;
+    middle = first;
+    advance(middle, half);
+    if (*middle < value) {
+      first = middle;
+      ++first;
+      len = len - half - 1;
+    }
+    else
+      len = half;
+  }
+  return first;
+}
+
+template <class RandomAccessIterator, class T, class Distance>
+RandomAccessIterator __lower_bound(RandomAccessIterator first,
+                                   RandomAccessIterator last, const T& value,
+                                   Distance*, random_access_iterator_tag) {
+  Distance len = last - first;
+  Distance half;
+  RandomAccessIterator middle;
+
+  while (len > 0) {
+    half = len >> 1;
+    middle = first + half;
+    if (*middle < value) {
+      first = middle + 1;
+      len = len - half - 1;
+    }
+    else
+      len = half;
+  }
+  return first;
+}
+
+template <class RandomAccessIterator, class T, class Distance>
+RandomAccessIterator __upper_bound(RandomAccessIterator first,
+                                   RandomAccessIterator last, const T& value,
+                                   Distance*, random_access_iterator_tag) {
+  Distance len = last - first;
+  Distance half;
+  RandomAccessIterator middle;
+
+  while (len > 0) {
+    half = len >> 1;
+    middle = first + half;
+    if (value < *middle)
+      len = half;
+    else {
+      first = middle + 1;
+      len = len - half - 1;
+    }
+  }
+  return first;
+}
+
+template <class ForwardIterator, class T>
+inline ForwardIterator upper_bound(ForwardIterator first, ForwardIterator last,
+                                   const T& value) {
+  return __upper_bound(first, last, value, distance_type(first),
+                       iterator_category(first));
+}
+
+template <class ForwardIterator, class T, class Compare, class Distance>
+ForwardIterator __upper_bound(ForwardIterator first, ForwardIterator last,
+                              const T& value, Compare comp, Distance*,
+                              forward_iterator_tag) {
+  Distance len = 0;
+  distance(first, last, len);
+  Distance half;
+  ForwardIterator middle;
+
+  while (len > 0) {
+    half = len >> 1;
+    middle = first;
+    advance(middle, half);
+    if (comp(value, *middle))
+      len = half;
+    else {
+      first = middle;
+      ++first;
+      len = len - half - 1;
+    }
+  }
+  return first;
+}
+
+\end{lstlisting}

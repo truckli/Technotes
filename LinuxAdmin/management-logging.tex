@@ -1,0 +1,127 @@
+%!Mode:: "TeX:UTF-8"
+\section{日志信息}
+
+
+\subsection{查看用户连接信息}
+连接时间日志一般由/var/log/wtmp和/var/run/utmp这两个文件记录，不过这两个文件都无法使用tail或cat命令直接查看。该文件由系统自动更新。Linux提供了如 w, who, finger, id, last, lastlog,ac等命令读取这部分的信息。
+\begin{description}
+    \item[finger]user information lookup program.用户详细信息，甚至包括电话号码。 
+    \item[w]Show who is logged on and what they are doing.
+    \item[last]show listing of last logged in users.\verb+last|grep reboot+记录了开机时间。 
+    \item[lastlog] reports the most recent login of all users or of a given user
+    \item[users]print the user names of users currently logged in to the current host. 其实就是第一列。
+    \item[ac]ac应是accounting的缩写。打印用户连接时间的总和，指多个pty
+    \item[id]当前用户的id和组id
+    \item[uptime]查看开机时间，其实就是w输出的第一行
+\end{description}
+
+The utmp file allows one to discover information about who is currently using the system. 
+
+The  wtmp  file records all logins and logouts.
+
+\subsection{命令历史记录}
+.bash\_history 记录了Bash命令历史,但不包含最近执行的命令。
+
+/var/log/apt/目录下的文件记录了apt相关的命令执行历史。
+
+\subsection{进程清算(accounting)}
+
+acct是一个系统调用：
+
+\begin{verbatim}
+ #include <unistd.h>
+ int acct(const char *filename);
+\end{verbatim}
+
+The  acct()  system  call  enables  or  disables process accounting.  If called with the name of an existing file as its argument,
+accounting is turned on, and records for each terminating process are appended to filename as it terminates.  An argument of  NULL
+causes accounting to be turned off.
+
+例如：
+\verb+ acct("/var/log/pacct");+
+
+accton为系统命令，清算一段时间内终结的进程, 记录于清算文件中, 默认为/var/log/account/pacct。lastcomm用来读取清算文件。
+\verb+ accton [OPTION] on|off|filename+
+
+例如：
+\begin{verbatim}
+sudo accton somefile
+sudo accton off
+lastcomm -f somefile
+\end{verbatim}
+
+默认的pacct清算似乎早已默认开启，使得\verb+sudo accton on+命令显得多余。
+
+
+\subsection{内核日志}
+dmesg: 显示内核信息
+
+\subsection{系统与服务日志}
+由syslog的服务管理，比如下面的日志文件都是由syslog日志服务驱动的：      
+/var/log/lastlog ：记录最后一次用户成功登陆的时间、登陆IP等信息 
+
+/var/log/messages 包括整体系统信息，其中也包含系统启动期间的日志。此外，mail，cron，daemon，kern和auth等内容也记录在var/log/messages日志中。
+
+/var/log/secure ：Linux系统安全日志，记录用户和工作组变坏情况、用户登陆认证情况 
+
+/var/log/btmp ：记录Linux登陆失败的用户、时间以及远程IP地址 
+
+/var/log/cron ：记录crond计划任务服务执行情况
+
+/var/log/dmesg — 包含内核缓冲信息（kernel ring buffer）。在系统启动时，会在屏幕上显示许多与硬件有关的信息。可以用dmesg查看它们。
+
+/var/log/boot.log — 包含系统启动时的日志
+
+syslog服务由配置文件/etc/syslog.conf或/etc/rsyslog.conf.
+
+/etc/syslog.conf的内容格式为：
+\begin{verbatim}
+消息类型.错误级别    动作域
+\end{verbatim}
+
+消息类型(facility)包括：
+auth, authpriv (for security information of a sensitive nature), cron, daemon, ftp, kern , 
+lpr, mail, news, security (deprecated synonym for auth), syslog, user, uucp, 
+local0, local1, \ldots,  local7。
+
+
+错误级别包括： emerg, alert, crit, err, warning, notice, info, debug。优先级依次降低。
+
+动作域即日志文件路径，如为星号则表示在各个日志文件、用户终端都输出。
+
+
+
+\subsection{logger}
+logger程序为syslog提供了shell接口。
+-p选项设置了消息的facility和level，如 -p local3.info。
+
+\subsection{日志转储}
+Linux中使用logrotate命令进行日志转储。
+可以配合cron计划任务轻松实现日志文件的定时转储, /etc/logrotate.conf提供了日志转储的相关配置。
+各个应用自身的转储配置存放于/etc/logrotate.d中，被/etc/logrotate.conf所读取。
+包括发送电子邮件。
+
+\begin{verbatim}
+/var/log/active-prober.log {
+        su root root
+        weekly
+        missingok
+        rotate 5
+        size=500
+        sharedscripts
+        postrotate
+                echo "Trimming active-prober.conf", $(date) >> /root/datefile
+        endscript
+}
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+

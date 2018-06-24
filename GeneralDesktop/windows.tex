@@ -1,0 +1,53 @@
+%!Mode:: "TeX:UTF-8"
+\section{Windows CLI Techniques} 
+
+\subsection{Showing System Info}
+
+General system information, including hardware model, OS version, and physical memory usage.
+\begin{verbatim}
+systeminfo
+\end{verbatim}
+
+Information about network interfaces:
+\begin{verbatim}
+ipconfig /all
+\end{verbatim}
+
+To show available memory(in KB),
+\begin{verbatim}
+wmic OS get FreePhysicalMemory
+\end{verbatim}
+
+Get CPU usage:
+\begin{verbatim}
+wmic cpu get loadpercentage
+\end{verbatim}
+
+\subsection{MAC address manual specification}
+
+Locate the NIC from the device manager.
+From the ATTRIBUTE dialogue, modify the tag called Network Address. 
+
+
+\subsection{Process Management}
+List processes with most memory-consuming ones ahead:
+
+\begin{verbatim}
+# nh: no-header line
+# sort -k: sort by some key field
+tasklist -nh | grep -v System | sort -r -k 5
+\end{verbatim}
+
+Kill a process by PID or name:
+\begin{verbatim}
+taskkill -pid 7920 -f
+taskkill -im ebook* -f
+\end{verbatim}
+
+\subsection{netstat}
+
+
+\begin{verbatim}
+netstat -ab
+\end{verbatim}
+
