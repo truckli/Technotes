@@ -13,4 +13,5 @@ Then we can use Pandoc to generate a docx file:
 
 \begin{verbatim}
  pandoc  -o x.docx --bibliography x.bib x.md
+ pandoc  -o x.pdf --latex-engine=xelatex -V mainfont=SimSun  x.md
 \end{verbatim}

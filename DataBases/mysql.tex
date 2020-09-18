@@ -65,6 +65,19 @@ con.query('SET GLOBAL wait_timeout=28800')
 con.query('SET GLOBAL interactive_timeout=28800')
 \end{verbatim}
 
+\subsection{security management}
+
+If you have never set a root password for MySQL, the server does not require a password at all for connecting as root. To set up a root password for the first time, use the mysqladmin command at the shell prompt as follows:
+
+\begin{verbatim}
+mysqladmin -u root password NEWPASS 
+\end{verbatim}
+
+If you want to change (or update) a root password to the new password 'newpass', then you need to use the following command:
+
+\begin{verbatim}
+mysqladmin -u root -p OLDPASS NEWPASS 
+\end{verbatim}
 
 \subsection{MySQL with Python}
 
